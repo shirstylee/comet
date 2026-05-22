@@ -1,0 +1,46 @@
+name: comet
+description: "Mobile game library app"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.6
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo.png"
+
+flutter_native_splash:
+  background_image: "assets/splash.png"
+
+  android: true
+  ios: false
+  web: false
+
+  fullscreen: true
+  android_gravity: fill
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo.png
+    - assets/splash.png
+    - assets/welcome_gallery.png
