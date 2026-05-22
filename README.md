@@ -1,4 +1,4 @@
-# comet
+# Comet
 
 Mobile game library app
 
