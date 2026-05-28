@@ -1,46 +1,55 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/library_game_model.dart';
+import '../../../storage/library_storage.dart';
 import '../../game_progress/game_progress_screen.dart';
-import '../library_screen.dart';
 
-class LibraryGameCard extends StatelessWidget {
+class LibraryGameCard extends StatefulWidget {
   const LibraryGameCard({
     super.key,
     required this.game,
+    required this.imageIndex,
   });
 
-  final LibraryGame game;
+  final LibraryGameModel game;
+  final int imageIndex;
 
-  void _openProgressScreen(BuildContext context) {
-    Navigator.push(
+  @override
+  State<LibraryGameCard> createState() => _LibraryGameCardState();
+}
+
+class _LibraryGameCardState extends State<LibraryGameCard> {
+  late LibraryGameModel currentGame = widget.game;
+
+  Future<void> _openProgressScreen(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => GameProgressScreen(
-          title: game.title,
-          status: game.status,
-          userHours: game.hours,
-          userMinutes: 30,
-          apiHours: _getApiHours(game.title),
-          rating: game.rating,
+          gameId: currentGame.id,
+          title: currentGame.title,
+          status: currentGame.status,
+          userHours: currentGame.userHours,
+          userMinutes: currentGame.userMinutes,
+          apiHours: currentGame.apiHours,
+          rating: currentGame.userRating ?? currentGame.apiRating ?? 0,
         ),
       ),
     );
-  }
 
-  int _getApiHours(String title) {
-    final normalizedTitle = title.toLowerCase();
+    final updatedGame = await LibraryStorage.getGameById(currentGame.id);
 
-    if (normalizedTitle.contains('elden')) return 80;
-    if (normalizedTitle.contains('witcher')) return 120;
-    if (normalizedTitle.contains('cyberpunk')) return 70;
-    if (normalizedTitle.contains('red dead')) return 180;
+    if (!mounted || updatedGame == null) return;
 
-    return 80;
+    setState(() {
+      currentGame = updatedGame;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusColors = _statusColors(game.status);
+    final statusColors = _statusColors(currentGame.status);
+    final rating = currentGame.userRating ?? currentGame.apiRating ?? 0;
 
     return GestureDetector(
       onTap: () => _openProgressScreen(context),
@@ -57,7 +66,7 @@ class LibraryGameCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: _CoverGradient(index: game.imageIndex),
+                    child: _CoverGradient(index: widget.imageIndex),
                   ),
                   Positioned.fill(
                     child: DecoratedBox(
@@ -89,7 +98,7 @@ class LibraryGameCard extends StatelessWidget {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        game.status.toUpperCase(),
+                        currentGame.status.toUpperCase(),
                         style: TextStyle(
                           color: statusColors.text,
                           fontSize: 10,
@@ -111,7 +120,7 @@ class LibraryGameCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          game.title,
+                          currentGame.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -139,7 +148,7 @@ class LibraryGameCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              game.rating.toStringAsFixed(1),
+                              rating.toStringAsFixed(1),
                               style: const TextStyle(
                                 color: Color(0xFFF4F3F3),
                                 fontSize: 12,
@@ -161,7 +170,7 @@ class LibraryGameCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${game.hours}Ч',
+                        '${currentGame.userHours}Ч',
                         style: const TextStyle(
                           color: Color(0xFF78716C),
                           fontSize: 12,
@@ -177,7 +186,7 @@ class LibraryGameCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${game.year}',
+                        '${currentGame.year ?? '—'}',
                         style: const TextStyle(
                           color: Color(0xFF78716C),
                           fontSize: 12,
@@ -209,6 +218,12 @@ class LibraryGameCard extends StatelessWidget {
           text: const Color(0xFF61ACFE),
           background: const Color(0x3361ACFE),
           border: const Color(0x4D61ACFE),
+        );
+      case 'планирую':
+        return _StatusColors(
+          text: const Color(0xFFA8A29E),
+          background: const Color(0x3378716C),
+          border: const Color(0x4D78716C),
         );
       default:
         return _StatusColors(

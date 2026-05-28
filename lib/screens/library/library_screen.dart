@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../models/library_game_model.dart';
+import '../../storage/library_storage.dart';
 import 'widgets/empty_library_state.dart';
 import 'widgets/library_filter_chip.dart';
 import 'widgets/library_game_card.dart';
@@ -22,46 +24,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
   final List<String> filters = ['Все', 'Пройдено', 'Играю', 'Планирую'];
   int selectedFilterIndex = 0;
 
-  final List<LibraryGame> games = const [
-    LibraryGame(
-      title: 'Witcher 3: Wild Hunt',
-      status: 'Пройдено',
-      hours: 120,
-      year: 2015,
-      rating: 5.0,
-      imageIndex: 0,
-    ),
-    LibraryGame(
-      title: 'Cyberpunk 2077',
-      status: 'Играю',
-      hours: 45,
-      year: 2020,
-      rating: 4.8,
-      imageIndex: 1,
-    ),
-    LibraryGame(
-      title: 'Elden Ring',
-      status: 'Планирую',
-      hours: 0,
-      year: 2022,
-      rating: 4.9,
-      imageIndex: 2,
-    ),
-    LibraryGame(
-      title: 'Red Dead Redemption 2',
-      status: 'Пройдено',
-      hours: 180,
-      year: 2018,
-      rating: 5.0,
-      imageIndex: 3,
-    ),
-  ];
+  List<LibraryGameModel> games = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+
+    _loadGames();
+
     searchController.addListener(() {
       setState(() {});
+    });
+  }
+
+  Future<void> _loadGames() async {
+    final loadedGames = await LibraryStorage.getAllGames();
+
+    loadedGames.sort((a, b) {
+      return b.addedAt.compareTo(a.addedAt);
+    });
+
+    if (!mounted) return;
+
+    setState(() {
+      games = loadedGames;
+      isLoading = false;
     });
   }
 
@@ -71,7 +59,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.dispose();
   }
 
-  List<LibraryGame> get filteredGames {
+  List<LibraryGameModel> get filteredGames {
     final query = searchController.text.trim().toLowerCase();
     final selectedFilter = filters[selectedFilterIndex];
 
@@ -133,7 +121,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               const SizedBox(height: 24),
 
               SizedBox(
-                height: 42,
+                height: 44,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: filters.length,
@@ -158,22 +146,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
               const SizedBox(height: 32),
 
-              if (!hasGames)
+              if (isLoading)
+                const _LibraryLoadingState()
+              else if (!hasGames)
                 const EmptyLibraryState()
               else if (visibleGames.isEmpty)
-                const _NothingFoundState()
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: visibleGames.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 28),
-                  itemBuilder: (context, index) {
-                    return LibraryGameCard(
-                      game: visibleGames[index],
-                    );
-                  },
-                ),
+                  const _NothingFoundState()
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: visibleGames.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 28),
+                    itemBuilder: (context, index) {
+                      return LibraryGameCard(
+                        game: visibleGames[index],
+                        imageIndex: index,
+                      );
+                    },
+                  ),
             ],
           ),
         ),
@@ -346,6 +337,22 @@ class _SortButton extends StatelessWidget {
   }
 }
 
+class _LibraryLoadingState extends StatelessWidget {
+  const _LibraryLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 80),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF75EEFD),
+        ),
+      ),
+    );
+  }
+}
+
 class _NothingFoundState extends StatelessWidget {
   const _NothingFoundState();
 
@@ -365,22 +372,4 @@ class _NothingFoundState extends StatelessWidget {
       ),
     );
   }
-}
-
-class LibraryGame {
-  const LibraryGame({
-    required this.title,
-    required this.status,
-    required this.hours,
-    required this.year,
-    required this.rating,
-    required this.imageIndex,
-  });
-
-  final String title;
-  final String status;
-  final int hours;
-  final int year;
-  final double rating;
-  final int imageIndex;
 }

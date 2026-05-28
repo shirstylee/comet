@@ -2,6 +2,7 @@ import '../models/game_model.dart';
 
 const List<GameModel> mockGames = [
   GameModel(
+    id: 1,
     title: 'The Witcher 3: Wild Hunt',
     year: 2015,
     genre: 'RPG',
@@ -9,6 +10,7 @@ const List<GameModel> mockGames = [
     hours: 150,
   ),
   GameModel(
+    id: 2,
     title: 'The Witcher 2: Assassins of Kings',
     year: 2011,
     genre: 'RPG',
@@ -16,6 +18,7 @@ const List<GameModel> mockGames = [
     hours: 40,
   ),
   GameModel(
+    id: 3,
     title: 'The Witcher',
     year: 2007,
     genre: 'RPG',
@@ -24,6 +27,7 @@ const List<GameModel> mockGames = [
     hasCover: false,
   ),
   GameModel(
+    id: 4,
     title: 'Cyberpunk 2077',
     year: 2020,
     genre: 'RPG',
@@ -31,6 +35,7 @@ const List<GameModel> mockGames = [
     hours: 70,
   ),
   GameModel(
+    id: 5,
     title: 'Elden Ring',
     year: 2022,
     genre: 'Action RPG',

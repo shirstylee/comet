@@ -1,5 +1,6 @@
 class GameModel {
   const GameModel({
+    required this.id,
     required this.title,
     required this.year,
     required this.genre,
@@ -8,6 +9,7 @@ class GameModel {
     this.hasCover = true,
   });
 
+  final int id;
   final String title;
   final int year;
   final String genre;

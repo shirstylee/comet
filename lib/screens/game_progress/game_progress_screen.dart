@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../storage/library_storage.dart';
 import 'widgets/action_card.dart';
 import 'widgets/progress_card.dart';
 import 'widgets/stat_card.dart';
@@ -8,6 +9,7 @@ import 'widgets/timeline_item.dart';
 class GameProgressScreen extends StatefulWidget {
   const GameProgressScreen({
     super.key,
+    required this.gameId,
     required this.title,
     this.status = 'Играю',
     this.userHours = 42,
@@ -16,6 +18,7 @@ class GameProgressScreen extends StatefulWidget {
     this.rating = 4.8,
   });
 
+  final int gameId;
   final String title;
   final String status;
   final int userHours;
@@ -34,6 +37,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   static const Color textSecondary = Color(0xFFAAABAB);
 
   bool isFavorite = true;
+
+  late String currentStatus = widget.status;
 
   late int userHours = widget.userHours;
   late int userMinutes = widget.userMinutes;
@@ -60,6 +65,12 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
   String get playedTimeText {
     return '$userHours ч.\n$userMinutes мин.';
+  }
+
+  Color get statusColor {
+    if (currentStatus == 'Пройдено') return const Color(0xFFBBFFB3);
+    if (currentStatus == 'Планирую') return const Color(0xFF61ACFE);
+    return accent;
   }
 
   int get lastStageIndex => stages.length - 1;
@@ -101,6 +112,133 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
+    );
+  }
+
+  Future<void> _saveStatus(String newStatus) async {
+    final game = await LibraryStorage.getGameById(widget.gameId);
+
+    if (game == null) {
+      return;
+    }
+
+    final updatedGame = game.copyWith(
+      status: newStatus,
+    );
+
+    await LibraryStorage.updateGame(updatedGame);
+  }
+
+  Future<void> _changeStatus(String newStatus) async {
+    setState(() {
+      currentStatus = newStatus;
+    });
+
+    await _saveStatus(newStatus);
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Статус изменён: $newStatus');
+  }
+
+  void _openStatusSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.55),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111414),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withOpacity(0.16),
+                  blurRadius: 34,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: textSecondary.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Выберите статус',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Статус прохождения игры',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  _StatusMenuItem(
+                    icon: Icons.sports_esports_rounded,
+                    title: 'Играю',
+                    subtitle: 'Игра сейчас в процессе',
+                    color: accent,
+                    isSelected: currentStatus == 'Играю',
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      await _changeStatus('Играю');
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _StatusMenuItem(
+                    icon: Icons.check_circle_outline_rounded,
+                    title: 'Пройдено',
+                    subtitle: 'Игра полностью завершена',
+                    color: const Color(0xFFBBFFB3),
+                    isSelected: currentStatus == 'Пройдено',
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      await _changeStatus('Пройдено');
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _StatusMenuItem(
+                    icon: Icons.bookmark_border_rounded,
+                    title: 'Планирую',
+                    subtitle: 'Игра добавлена в планы',
+                    color: const Color(0xFF61ACFE),
+                    isSelected: currentStatus == 'Планирую',
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      await _changeStatus('Планирую');
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -405,9 +543,10 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                     Expanded(
                       child: GameStatCard(
                         title: 'Статус',
-                        value: widget.status,
-                        valueColor: accent,
+                        value: currentStatus,
+                        valueColor: statusColor,
                         compactValue: true,
+                        onTap: _openStatusSelector,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -472,10 +611,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                         icon: Icons.check_circle_outline_rounded,
                         title: 'Закончить',
                         subtitle: 'Завершить прохождение',
-                        onTap: () {
-                          _showTemporaryMessage(
-                            'Завершение прохождения будет добавлено позже',
-                          );
+                        onTap: () async {
+                          await _changeStatus('Пройдено');
                         },
                       ),
                     ),
@@ -540,6 +677,94 @@ class _TimeInputField extends StatelessWidget {
             color: Color(0xFF75EEFD),
             fontSize: 14,
             fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusMenuItem extends StatelessWidget {
+  const _StatusMenuItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? color.withOpacity(0.10) : const Color(0xFF1D2020),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? color.withOpacity(0.42) : Colors.transparent,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: isSelected ? color : const Color(0xFFF4F3F3),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFFAAABAB),
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                isSelected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                color: isSelected ? color : const Color(0xFF747675),
+                size: 24,
+              ),
+            ],
           ),
         ),
       ),

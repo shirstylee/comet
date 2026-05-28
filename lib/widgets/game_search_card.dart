@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/game_model.dart';
+import '../models/game_stage_model.dart';
+import '../models/library_game_model.dart';
 import '../screens/details/game_details_screen.dart';
+import '../storage/library_storage.dart';
 
 class GameSearchCard extends StatelessWidget {
   const GameSearchCard({
@@ -24,6 +27,75 @@ class GameSearchCard extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (_) => GameDetailsScreen(game: game),
+      ),
+    );
+  }
+
+  Future<void> _addGameToLibrary(BuildContext context) async {
+    final alreadyAdded = await LibraryStorage.containsGame(game.id);
+
+    if (!context.mounted) return;
+
+    if (alreadyAdded) {
+      Navigator.pop(context);
+
+      _showSnackBar(
+        context,
+        '${game.title} уже есть в коллекции',
+      );
+
+      return;
+    }
+
+    final libraryGame = LibraryGameModel(
+      id: game.id,
+      title: game.title,
+      status: 'Планирую',
+      addedAt: DateTime.now(),
+      year: game.year,
+      apiRating: game.rating,
+      apiHours: game.hours,
+      userHours: 0,
+      userMinutes: 0,
+      userRating: null,
+      comment: null,
+      isFavorite: false,
+      stages: const [
+        GameStageModel(
+          title: 'Начало игры',
+          subtitle: 'В процессе',
+          isDone: false,
+        ),
+      ],
+    );
+
+    await LibraryStorage.addGame(libraryGame);
+
+    if (!context.mounted) return;
+
+    Navigator.pop(context);
+
+    _showSnackBar(
+      context,
+      '${game.title} добавлена в коллекцию',
+    );
+  }
+
+  void _showSnackBar(BuildContext context, String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1A1D1D),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -123,26 +195,7 @@ class GameSearchCard extends StatelessWidget {
                         ],
                       ),
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '${game.title} добавлена в коллекцию',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: const Color(0xFF1A1D1D),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: () => _addGameToLibrary(context),
                         icon: const Icon(
                           Icons.add_rounded,
                           color: Color(0xFF00575F),
@@ -199,7 +252,6 @@ class GameSearchCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Основная информация о найденной игре.
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -245,8 +297,6 @@ class GameSearchCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
-                    // Краткие метрики игры.
                     Row(
                       children: [
                         Container(

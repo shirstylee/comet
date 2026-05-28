@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../models/game_model.dart';
+import '../../models/game_stage_model.dart';
+import '../../models/library_game_model.dart';
+import '../../storage/library_storage.dart';
 
 class GameDetailsScreen extends StatefulWidget {
   const GameDetailsScreen({
@@ -19,11 +22,50 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
 
   bool isDescriptionExpanded = false;
 
-  void _showAddedMessage() {
+  Future<void> _addGameToLibrary() async {
+    final alreadyAdded = await LibraryStorage.containsGame(widget.game.id);
+
+    if (!mounted) return;
+
+    if (alreadyAdded) {
+      _showMessage('${widget.game.title} уже есть в коллекции');
+      return;
+    }
+
+    final libraryGame = LibraryGameModel(
+      id: widget.game.id,
+      title: widget.game.title,
+      status: 'Планирую',
+      addedAt: DateTime.now(),
+      year: widget.game.year,
+      apiRating: widget.game.rating,
+      apiHours: widget.game.hours,
+      userHours: 0,
+      userMinutes: 0,
+      userRating: null,
+      comment: null,
+      isFavorite: false,
+      stages: const [
+        GameStageModel(
+          title: 'Начало игры',
+          subtitle: 'В процессе',
+          isDone: false,
+        ),
+      ],
+    );
+
+    await LibraryStorage.addGame(libraryGame);
+
+    if (!mounted) return;
+
+    _showMessage('${widget.game.title} добавлена в коллекцию');
+  }
+
+  void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${widget.game.title} добавлена в коллекцию',
+          text,
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
@@ -39,22 +81,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
   }
 
   void _showTrailerUnavailable() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Трейлер будет доступен после подключения API',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: const Color(0xFF1A1D1D),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+    _showMessage('Трейлер будет доступен после подключения API');
   }
 
   @override
@@ -77,7 +104,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                       _PrimaryButton(
                         text: 'Добавить в коллекцию',
                         icon: Icons.add_rounded,
-                        onTap: _showAddedMessage,
+                        onTap: _addGameToLibrary,
                       ),
                       const SizedBox(height: 32),
                       _TrailerButton(

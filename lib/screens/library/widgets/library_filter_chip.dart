@@ -18,29 +18,23 @@ class LibraryFilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 42,
+        height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF75EEFD)
+              ? const Color(0xFF25B0BE)
               : const Color(0xFF232626),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: isSelected
-                ? Colors.transparent
-                : Colors.white.withOpacity(0.06),
-          ),
         ),
         alignment: Alignment.center,
         child: Text(
-          text.toUpperCase(),
+          text,
           style: TextStyle(
             color: isSelected
-                ? const Color(0xFF00575F)
-                : const Color(0xFFF4F3F3),
+                ? const Color(0xFF00272B)
+                : const Color(0xFFAAABAB),
             fontSize: 14,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-            letterSpacing: 0.8,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
