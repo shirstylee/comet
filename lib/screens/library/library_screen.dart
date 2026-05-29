@@ -33,9 +33,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     _loadGames();
 
-    searchController.addListener(() {
-      setState(() {});
-    });
+    searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    if (!mounted) return;
+
+    setState(() {});
   }
 
   Future<void> _loadGames() async {
@@ -55,20 +59,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   void dispose() {
+    searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.dispose();
   }
 
   List<LibraryGameModel> get filteredGames {
     final query = searchController.text.trim().toLowerCase();
-    final selectedFilter = filters[selectedFilterIndex];
+    final selectedFilter = filters[selectedFilterIndex].toLowerCase();
 
     return games.where((game) {
-      final matchesSearch =
-          query.isEmpty || game.title.toLowerCase().startsWith(query);
+      final title = game.title.trim().toLowerCase();
+      final status = game.status.trim().toLowerCase();
 
-      final matchesFilter = selectedFilter == 'Все' ||
-          game.status.toLowerCase() == selectedFilter.toLowerCase();
+      final matchesSearch = query.isEmpty || title.contains(query);
+
+      final matchesFilter = selectedFilter == 'все' || status == selectedFilter;
 
       return matchesSearch && matchesFilter;
     }).toList();
@@ -160,6 +166,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 28),
                     itemBuilder: (context, index) {
                       return LibraryGameCard(
+                        key: ValueKey(visibleGames[index].id),
                         game: visibleGames[index],
                         imageIndex: index,
                       );

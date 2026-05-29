@@ -150,38 +150,41 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 320,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: _HeroBackground(
-                title: game.title,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 115),
+        child: SizedBox(
+          height: 320,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: _HeroBackground(
+                  title: game.title,
+                ),
               ),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      background.withOpacity(0.05),
-                      background.withOpacity(0.4),
-                      background,
-                    ],
-                    stops: const [0.0, 0.55, 1.0],
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        background.withOpacity(0.05),
+                        background.withOpacity(0.4),
+                        background,
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
                   ),
                 ),
               ),
-            ),
-            const Positioned(
-              left: 16,
-              right: 16,
-              bottom: 4,
-              child: _GenreBadges(),
-            ),
-          ],
+              const Positioned(
+                left: 16,
+                right: 16,
+                bottom: 4,
+                child: _GenreBadges(),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../search/search_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,19 +15,39 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int currentIndex = 0;
 
-  final List<Widget> screens = const [
-    HomeScreen(),
-    LibraryScreen(),
-    _TempScreen(title: 'Оценки'),
-    _TempScreen(title: 'Профиль'),
+  final GlobalKey<_LibraryTabHolderState> libraryTabKey =
+  GlobalKey<_LibraryTabHolderState>();
+
+  late final List<Widget> screens = [
+    const HomeScreen(),
+    _LibraryTabHolder(key: libraryTabKey),
+    const _TempScreen(title: 'Оценки'),
+    const _TempScreen(title: 'Профиль'),
   ];
+
+  Future<void> _openSearchScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SearchScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    libraryTabKey.currentState?.refreshLibrary();
+
+    setState(() {
+      currentIndex = 1;
+    });
+  }
 
   void _openAddMenu() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.55),
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Container(
@@ -81,16 +102,21 @@ class _MainScreenState extends State<MainScreen> {
                     title: 'Добавить игру',
                     subtitle: 'Найти игру и добавить её в коллекцию',
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(bottomSheetContext);
+                      _openSearchScreen();
                     },
                   ),
                   const SizedBox(height: 12),
                   _AddMenuItem(
                     icon: Icons.chat_bubble_outline_rounded,
                     title: 'Оставить комментарий',
-                    subtitle: 'Добавить заметку или мнение об игре',
+                    subtitle: 'Сначала выберите игру из библиотеки',
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(bottomSheetContext);
+
+                      setState(() {
+                        currentIndex = 1;
+                      });
                     },
                   ),
                 ],
@@ -143,6 +169,30 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LibraryTabHolder extends StatefulWidget {
+  const _LibraryTabHolder({super.key});
+
+  @override
+  State<_LibraryTabHolder> createState() => _LibraryTabHolderState();
+}
+
+class _LibraryTabHolderState extends State<_LibraryTabHolder> {
+  int refreshKey = 0;
+
+  void refreshLibrary() {
+    setState(() {
+      refreshKey++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LibraryScreen(
+      key: ValueKey(refreshKey),
     );
   }
 }

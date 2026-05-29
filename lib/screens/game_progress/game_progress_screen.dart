@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../models/game_stage_model.dart';
 import '../../storage/library_storage.dart';
-import 'widgets/action_card.dart';
 import 'widgets/progress_card.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/timeline_item.dart';
@@ -39,11 +39,13 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   bool isFavorite = true;
 
   late String currentStatus = widget.status;
+  int currentRating = 0;
+  String currentReview = '';
 
   late int userHours = widget.userHours;
   late int userMinutes = widget.userMinutes;
 
-  late List<_GameStage> stages = [
+  List<_GameStage> stages = const [
     _GameStage(
       title: 'Начало игры',
       subtitle: 'В процессе',
@@ -51,7 +53,15 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedGameData();
+  }
+
   double get progressValue {
+    if (widget.apiHours <= 0) return 0;
+
     final played = userHours + userMinutes / 60;
     final calculated = played / widget.apiHours;
 
@@ -65,6 +75,12 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
   String get playedTimeText {
     return '$userHours ч.\n$userMinutes мин.';
+  }
+
+  String get ratingText {
+    if (currentRating <= 0) return '— ★';
+
+    return '$currentRating ★';
   }
 
   Color get statusColor {
@@ -115,6 +131,44 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     );
   }
 
+  Future<void> _loadSavedGameData() async {
+    final game = await LibraryStorage.getGameById(widget.gameId);
+
+    if (!mounted || game == null) return;
+
+    setState(() {
+      currentStatus = game.status;
+      userHours = game.userHours;
+      userMinutes = game.userMinutes;
+      currentRating = game.userRating == null
+          ? 0
+          : game.userRating!.round().clamp(1, 10).toInt();
+      currentReview = game.comment ?? '';
+
+      if (game.stages.isNotEmpty) {
+        stages = game.stages.map(_GameStage.fromModel).toList();
+      }
+    });
+
+    if (game.stages.isEmpty) {
+      await _saveStages();
+    }
+  }
+
+  Future<void> _saveStages() async {
+    final game = await LibraryStorage.getGameById(widget.gameId);
+
+    if (game == null) {
+      return;
+    }
+
+    final updatedGame = game.copyWith(
+      stages: stages.map((stage) => stage.toModel()).toList(),
+    );
+
+    await LibraryStorage.updateGame(updatedGame);
+  }
+
   Future<void> _saveStatus(String newStatus) async {
     final game = await LibraryStorage.getGameById(widget.gameId);
 
@@ -124,6 +178,42 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
     final updatedGame = game.copyWith(
       status: newStatus,
+    );
+
+    await LibraryStorage.updateGame(updatedGame);
+  }
+
+  Future<void> _saveTime({
+    required int hours,
+    required int minutes,
+  }) async {
+    final game = await LibraryStorage.getGameById(widget.gameId);
+
+    if (game == null) {
+      return;
+    }
+
+    final updatedGame = game.copyWith(
+      userHours: hours,
+      userMinutes: minutes,
+    );
+
+    await LibraryStorage.updateGame(updatedGame);
+  }
+
+  Future<void> _saveReview({
+    required int rating,
+    required String review,
+  }) async {
+    final game = await LibraryStorage.getGameById(widget.gameId);
+
+    if (game == null) {
+      return;
+    }
+
+    final updatedGame = game.copyWith(
+      userRating: rating.toDouble(),
+      comment: review.trim().isEmpty ? null : review.trim(),
     );
 
     await LibraryStorage.updateGame(updatedGame);
@@ -139,6 +229,149 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     if (!mounted) return;
 
     _showTemporaryMessage('Статус изменён: $newStatus');
+  }
+
+  Future<void> _changeTime({
+    required int hours,
+    required int minutes,
+  }) async {
+    setState(() {
+      userHours = hours;
+      userMinutes = minutes;
+    });
+
+    await _saveTime(
+      hours: hours,
+      minutes: minutes,
+    );
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Время сохранено');
+  }
+
+  Future<void> _openReviewScreen() async {
+    final result = await Navigator.push<_ReviewResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ReviewScreen(
+          title: widget.title,
+          rating: currentRating,
+          review: currentReview,
+        ),
+      ),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      currentRating = result.rating;
+      currentReview = result.review;
+    });
+
+    await _saveReview(
+      rating: result.rating,
+      review: result.review,
+    );
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Отзыв сохранён');
+  }
+
+  Future<void> _completeGame() async {
+    await _changeStatus('Пройдено');
+  }
+
+  Future<void> _completeStage(int index) async {
+    if (index < 0 || index >= stages.length) return;
+
+    final stage = stages[index];
+
+    setState(() {
+      stages[index] = stage.copyWith(
+        type: TimelineItemType.done,
+        subtitle: todayText,
+        completedAt: DateTime.now(),
+      );
+    });
+
+    await _saveStages();
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Этап завершён');
+  }
+
+  Future<void> _deleteStage(int index) async {
+    if (index == 0) {
+      _showTemporaryMessage('Начальный этап нельзя удалить');
+      return;
+    }
+
+    if (stages.length <= 1) {
+      _showTemporaryMessage('Нельзя удалить последний этап');
+      return;
+    }
+
+    if (index < 0 || index >= stages.length) return;
+
+    setState(() {
+      stages.removeAt(index);
+
+      final newLastIndex = stages.length - 1;
+
+      if (stages[newLastIndex].type == TimelineItemType.done) {
+        stages[newLastIndex] = stages[newLastIndex].copyWith(
+          type: TimelineItemType.current,
+          subtitle: 'В процессе',
+          completedAt: null,
+        );
+      }
+    });
+
+    await _saveStages();
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Этап удалён');
+  }
+
+  Future<void> _addStage() async {
+    setState(() {
+      if (stages.isEmpty) {
+        stages = const [
+          _GameStage(
+            title: 'Начало игры',
+            subtitle: 'В процессе',
+            type: TimelineItemType.current,
+          ),
+        ];
+
+        return;
+      }
+
+      stages[lastStageIndex] = stages.last.copyWith(
+        type: TimelineItemType.done,
+        subtitle: todayText,
+        completedAt: DateTime.now(),
+      );
+
+      stages = [
+        ...stages,
+        const _GameStage(
+          title: 'Новый этап',
+          subtitle: 'В процессе',
+          type: TimelineItemType.current,
+        ),
+      ];
+    });
+
+    await _saveStages();
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Новый этап добавлен');
   }
 
   void _openStatusSelector() {
@@ -170,14 +403,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textSecondary.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+                  const _BottomSheetHandle(),
                   const SizedBox(height: 20),
                   const Text(
                     'Выберите статус',
@@ -252,13 +478,13 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.55),
       isScrollControlled: true,
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return Padding(
           padding: EdgeInsets.fromLTRB(
             16,
             0,
             16,
-            MediaQuery.of(context).viewInsets.bottom + 24,
+            MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
           ),
           child: Container(
             padding: const EdgeInsets.all(18),
@@ -281,14 +507,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textSecondary.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+                  const _BottomSheetHandle(),
                   const SizedBox(height: 20),
                   const Text(
                     'Изменить время',
@@ -341,18 +560,19 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           final newHours =
                               int.tryParse(hoursController.text.trim()) ?? 0;
-                          final newMinutes =
+                          final rawMinutes =
                               int.tryParse(minutesController.text.trim()) ?? 0;
+                          final newMinutes = rawMinutes.clamp(0, 59).toInt();
 
-                          setState(() {
-                            userHours = newHours;
-                            userMinutes = newMinutes.clamp(0, 59);
-                          });
+                          Navigator.pop(bottomSheetContext);
 
-                          Navigator.pop(context);
+                          await _changeTime(
+                            hours: newHours < 0 ? 0 : newHours,
+                            minutes: newMinutes,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
@@ -383,12 +603,13 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
   void _openStageActions(int index) {
     final stage = stages[index];
+    final isStartStage = index == 0;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.55),
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Container(
@@ -412,14 +633,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textSecondary.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+                  const _BottomSheetHandle(),
                   const SizedBox(height: 20),
                   Text(
                     stage.title,
@@ -430,63 +644,55 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+                  if (isStartStage) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Этот этап нельзя переименовать или удалить',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 22),
-                  _StageMenuItem(
-                    icon: Icons.edit_rounded,
-                    title: 'Переименовать',
-                    subtitle: 'Изменить название этапа',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showTemporaryMessage(
-                        'Переименование будет добавлено позже',
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
+                  if (!isStartStage) ...[
+                    _StageMenuItem(
+                      icon: Icons.edit_rounded,
+                      title: 'Переименовать',
+                      subtitle: 'Изменить название этапа',
+                      onTap: () {
+                        Navigator.pop(bottomSheetContext);
+                        _showTemporaryMessage(
+                          'Переименование будет добавлено позже',
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   _StageMenuItem(
                     icon: Icons.check_circle_outline_rounded,
                     title: 'Завершить',
                     subtitle: 'Отметить этап как пройденный',
-                    onTap: () {
-                      setState(() {
-                        stages[index] = stage.copyWith(
-                          type: TimelineItemType.done,
-                          subtitle: todayText,
-                        );
-                      });
-
-                      Navigator.pop(context);
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      await _completeStage(index);
                     },
                   ),
-                  const SizedBox(height: 12),
-                  _StageMenuItem(
-                    icon: Icons.delete_outline_rounded,
-                    title: 'Удалить',
-                    subtitle: 'Убрать этап из истории',
-                    danger: true,
-                    onTap: () {
-                      if (stages.length <= 1) {
-                        Navigator.pop(context);
-                        return;
-                      }
-
-                      setState(() {
-                        stages.removeAt(index);
-
-                        final newLastIndex = stages.length - 1;
-
-                        if (stages[newLastIndex].type ==
-                            TimelineItemType.done) {
-                          stages[newLastIndex] = stages[newLastIndex].copyWith(
-                            type: TimelineItemType.current,
-                            subtitle: 'В процессе',
-                          );
-                        }
-                      });
-
-                      Navigator.pop(context);
-                    },
-                  ),
+                  if (!isStartStage) ...[
+                    const SizedBox(height: 12),
+                    _StageMenuItem(
+                      icon: Icons.delete_outline_rounded,
+                      title: 'Удалить',
+                      subtitle: 'Убрать этап из истории',
+                      danger: true,
+                      onTap: () async {
+                        Navigator.pop(bottomSheetContext);
+                        await _deleteStage(index);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -496,25 +702,6 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     );
   }
 
-  void _addStage() {
-    setState(() {
-      stages[lastStageIndex] = stages.last.copyWith(
-        type: TimelineItemType.done,
-        subtitle: todayText,
-      );
-
-      stages.add(
-        const _GameStage(
-          title: 'Новый этап',
-          subtitle: 'В процессе',
-          type: TimelineItemType.current,
-        ),
-      );
-    });
-
-    _showTemporaryMessage('Новый этап добавлен');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -522,7 +709,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 96, 16, 120),
+            padding: const EdgeInsets.fromLTRB(16, 115, 16, 120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -561,8 +748,10 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                     Expanded(
                       child: GameStatCard(
                         title: 'Оценка',
-                        value: '${widget.rating.toStringAsFixed(1)} ★',
+                        value: ratingText,
                         valueColor: const Color(0xFFBBFFB3),
+                        compactValue: true,
+                        onTap: _openReviewScreen,
                       ),
                     ),
                   ],
@@ -593,30 +782,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                 const SizedBox(height: 4),
                 _AddStageButton(onTap: _addStage),
                 const SizedBox(height: 28),
-                Row(
-                  children: [
-                    Expanded(
-                      child: GameActionCard(
-                        icon: Icons.star_rate_rounded,
-                        title: 'Оставить оценку',
-                        subtitle: 'Оценить игру',
-                        onTap: () {
-                          _showTemporaryMessage('Оценка будет добавлена позже');
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: GameActionCard(
-                        icon: Icons.check_circle_outline_rounded,
-                        title: 'Закончить',
-                        subtitle: 'Завершить прохождение',
-                        onTap: () async {
-                          await _changeStatus('Пройдено');
-                        },
-                      ),
-                    ),
-                  ],
+                _FinishGameButton(
+                  onTap: _completeGame,
                 ),
               ],
             ),
@@ -631,6 +798,583 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ReviewResult {
+  const _ReviewResult({
+    required this.rating,
+    required this.review,
+  });
+
+  final int rating;
+  final String review;
+}
+
+class _ReviewScreen extends StatefulWidget {
+  const _ReviewScreen({
+    required this.title,
+    required this.rating,
+    required this.review,
+  });
+
+  final String title;
+  final int rating;
+  final String review;
+
+  @override
+  State<_ReviewScreen> createState() => _ReviewScreenState();
+}
+
+class _ReviewScreenState extends State<_ReviewScreen> {
+  static const Color background = Color(0xFF0C0F0F);
+  static const Color surface = Color(0xFF111414);
+  static const Color surfaceLight = Color(0xFF232626);
+  static const Color accent = Color(0xFF75EEFD);
+  static const Color textPrimary = Color(0xFFF4F3F3);
+  static const Color textSecondary = Color(0xFFAAABAB);
+
+  static const int maxReviewLength = 500;
+
+  late int selectedRating = widget.rating;
+  late final TextEditingController reviewController =
+  TextEditingController(text: widget.review);
+
+  @override
+  void initState() {
+    super.initState();
+
+    reviewController.addListener(() {
+      if (!mounted) return;
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    reviewController.dispose();
+    super.dispose();
+  }
+
+  String get ratingText {
+    if (selectedRating <= 0) return '—/10';
+
+    return '$selectedRating/10';
+  }
+
+  void _saveReview() {
+    if (selectedRating <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Сначала выберите оценку',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    Navigator.pop(
+      context,
+      _ReviewResult(
+        rating: selectedRating,
+        review: reviewController.text,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reviewLength = reviewController.text.length;
+
+    return Scaffold(
+      backgroundColor: background,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 115, 16, 48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _ReviewHeroImage(),
+                const SizedBox(height: 24),
+                Center(
+                  child: Text(
+                    widget.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: textPrimary,
+                      fontSize: 36,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.9,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Ваша оценка',
+                              style: TextStyle(
+                                color: textPrimary,
+                                fontSize: 24,
+                                height: 1.25,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            ratingText,
+                            style: const TextStyle(
+                              color: accent,
+                              fontSize: 30,
+                              height: 1.2,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _ReviewRatingGrid(
+                        selectedRating: selectedRating,
+                        onRatingSelected: (rating) {
+                          setState(() {
+                            selectedRating = rating;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Text(
+                    'Отзыв',
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 20,
+                      height: 1.4,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 240,
+                  padding: const EdgeInsets.fromLTRB(24, 12, 16, 16),
+                  decoration: BoxDecoration(
+                    color: surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Stack(
+                    children: [
+                      TextField(
+                        controller: reviewController,
+                        maxLines: null,
+                        maxLength: maxReviewLength,
+                        cursorColor: accent,
+                        style: const TextStyle(
+                          color: textPrimary,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Поделитесь своими впечатлениями...',
+                          hintStyle: TextStyle(
+                            color: textSecondary,
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
+                          border: InputBorder.none,
+                          counterText: '',
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Text(
+                          '$reviewLength из $maxReviewLength символов',
+                          style: const TextStyle(
+                            color: textSecondary,
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 48),
+                _SaveReviewButton(
+                  onTap: _saveReview,
+                ),
+              ],
+            ),
+          ),
+          const _ReviewTopBar(),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewTopBar extends StatelessWidget {
+  const _ReviewTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        color: const Color(0xCC0C0F0F),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Color(0xFF75EEFD),
+                size: 28,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Оценить игру',
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Color(0xFFF4F3F3),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                ),
+              ),
+            ),
+            const SizedBox(width: 28),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewHeroImage extends StatelessWidget {
+  const _ReviewHeroImage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 358,
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.8),
+            blurRadius: 50,
+            offset: const Offset(0, 25),
+          ),
+        ],
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF162323),
+            Color(0xFF39432C),
+            Color(0xFF0C0F0F),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: Icon(
+              Icons.sports_esports_rounded,
+              color: Colors.white.withOpacity(0.12),
+              size: 120,
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    const Color(0xFF0C0F0F),
+                    const Color(0xFF0C0F0F).withOpacity(0.2),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewRatingGrid extends StatelessWidget {
+  const _ReviewRatingGrid({
+    required this.selectedRating,
+    required this.onRatingSelected,
+  });
+
+  final int selectedRating;
+  final ValueChanged<int> onRatingSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(5, (index) {
+            final rating = index + 1;
+
+            return _ReviewRatingCircle(
+              rating: rating,
+              isSelected: selectedRating == rating,
+              onTap: () => onRatingSelected(rating),
+            );
+          }),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(5, (index) {
+            final rating = index + 6;
+
+            return _ReviewRatingCircle(
+              rating: rating,
+              isSelected: selectedRating == rating,
+              onTap: () => onRatingSelected(rating),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReviewRatingCircle extends StatelessWidget {
+  const _ReviewRatingCircle({
+    required this.rating,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final int rating;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color =
+    isSelected ? const Color(0xFF75EEFD) : const Color(0xFFAAABAB);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0x2675EEFD)
+                : const Color(0xFF1D2020),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF75EEFD)
+                  : const Color(0x1A464848),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? const Color(0xFF75EEFD).withOpacity(0.22)
+                    : Colors.black.withOpacity(0.20),
+                blurRadius: isSelected ? 18 : 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$rating',
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              height: 1.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SaveReviewButton extends StatelessWidget {
+  const _SaveReviewButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 64,
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF75EEFD),
+              Color(0xFF25B0BE),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(0.15),
+              blurRadius: 40,
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: onTap,
+          icon: const Icon(
+            Icons.save_rounded,
+            color: Color(0xFF00575F),
+            size: 22,
+          ),
+          label: const Text(
+            'СОХРАНИТЬ ОТЗЫВ',
+            style: TextStyle(
+              color: Color(0xFF00575F),
+              fontSize: 18,
+              height: 1.4,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomSheetHandle extends StatelessWidget {
+  const _BottomSheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 4,
+      decoration: BoxDecoration(
+        color: const Color(0xFFAAABAB).withOpacity(0.35),
+        borderRadius: BorderRadius.circular(999),
+      ),
+    );
+  }
+}
+
+class _FinishGameButton extends StatelessWidget {
+  const _FinishGameButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 58,
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF75EEFD),
+              Color(0xFF25B0BE),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(0.20),
+              blurRadius: 26,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: onTap,
+          icon: const Icon(
+            Icons.check_circle_outline_rounded,
+            color: Color(0xFF00575F),
+            size: 24,
+          ),
+          label: const Text(
+            'Закончить прохождение',
+            style: TextStyle(
+              color: Color(0xFF00575F),
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -857,21 +1601,43 @@ class _GameStage {
     required this.title,
     required this.subtitle,
     required this.type,
+    this.completedAt,
   });
 
   final String title;
   final String subtitle;
   final TimelineItemType type;
+  final DateTime? completedAt;
+
+  static _GameStage fromModel(GameStageModel model) {
+    return _GameStage(
+      title: model.title,
+      subtitle: model.subtitle,
+      type: model.isDone ? TimelineItemType.done : TimelineItemType.current,
+      completedAt: model.completedAt,
+    );
+  }
+
+  GameStageModel toModel() {
+    return GameStageModel(
+      title: title,
+      subtitle: subtitle,
+      isDone: type == TimelineItemType.done,
+      completedAt: completedAt,
+    );
+  }
 
   _GameStage copyWith({
     String? title,
     String? subtitle,
     TimelineItemType? type,
+    DateTime? completedAt,
   }) {
     return _GameStage(
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
       type: type ?? this.type,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 }

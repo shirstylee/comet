@@ -19,7 +19,23 @@ class LibraryGameCard extends StatefulWidget {
 }
 
 class _LibraryGameCardState extends State<LibraryGameCard> {
-  late LibraryGameModel currentGame = widget.game;
+  late LibraryGameModel currentGame;
+
+  @override
+  void initState() {
+    super.initState();
+
+    currentGame = widget.game;
+  }
+
+  @override
+  void didUpdateWidget(covariant LibraryGameCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.game.id != widget.game.id) {
+      currentGame = widget.game;
+    }
+  }
 
   Future<void> _openProgressScreen(BuildContext context) async {
     await Navigator.push(
@@ -49,7 +65,7 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
   @override
   Widget build(BuildContext context) {
     final statusColors = _statusColors(currentGame.status);
-    final rating = currentGame.userRating ?? currentGame.apiRating ?? 0;
+    final rating = (currentGame.userRating ?? currentGame.apiRating ?? 0).round();
 
     return GestureDetector(
       onTap: () => _openProgressScreen(context),
@@ -148,7 +164,7 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              rating.toStringAsFixed(1),
+                              '$rating',
                               style: const TextStyle(
                                 color: Color(0xFFF4F3F3),
                                 fontSize: 12,
