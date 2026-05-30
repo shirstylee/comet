@@ -8,6 +8,16 @@ import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../game_progress/game_progress_screen.dart';
 
+String _formatRating(double rating) {
+  final roundedRating = double.parse(rating.toStringAsFixed(1));
+
+  if (roundedRating == roundedRating.roundToDouble()) {
+    return roundedRating.toInt().toString();
+  }
+
+  return roundedRating.toStringAsFixed(1);
+}
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -634,7 +644,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                       child: Row(
                         children: [
                           Text(
-                            rating.toStringAsFixed(1),
+                            _formatRating(rating),
                             style: const TextStyle(
                               color: Color(0xFF22D3EE),
                               fontSize: 30,
@@ -710,7 +720,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          '${game.userHours}\nч',
+                          '${game.userHours}ч',
                           style: const TextStyle(
                             color: Color(0xFF22D3EE),
                             fontSize: 12,
@@ -891,7 +901,7 @@ class _SmallReviewCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          rating.toStringAsFixed(1),
+                          _formatRating(rating),
                           style: const TextStyle(
                             color: Color(0xFF22D3EE),
                             fontSize: 18,

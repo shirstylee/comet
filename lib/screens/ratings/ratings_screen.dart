@@ -5,6 +5,16 @@ import '../../storage/library_storage.dart';
 import '../game_progress/game_progress_screen.dart';
 import '../search/search_screen.dart';
 
+String _formatRating(double rating) {
+  final roundedRating = double.parse(rating.toStringAsFixed(1));
+
+  if (roundedRating == roundedRating.roundToDouble()) {
+    return roundedRating.toInt().toString();
+  }
+
+  return roundedRating.toStringAsFixed(1);
+}
+
 class RatingsScreen extends StatefulWidget {
   const RatingsScreen({super.key});
 
@@ -628,7 +638,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            averageRating.toStringAsFixed(1),
+            _formatRating(averageRating),
             style: const TextStyle(
               color: Color(0xFFF4F3F3),
               fontSize: 56,
@@ -947,7 +957,7 @@ class _RecentlyRatedCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        rating.toStringAsFixed(1),
+                        _formatRating(rating),
                         style: TextStyle(
                           color: color,
                           fontSize: 26,
@@ -1121,7 +1131,7 @@ class _GenreChip extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            rating.toStringAsFixed(1),
+            _formatRating(rating),
             style: TextStyle(
               color: color,
               fontSize: 16,
@@ -1255,7 +1265,7 @@ class _GamePickerItem extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                hasRating ? rating.toStringAsFixed(1) : '—',
+                hasRating ? _formatRating(rating) : '—',
                 style: TextStyle(
                   color: hasRating
                       ? const Color(0xFF75EEFD)

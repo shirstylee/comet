@@ -21,11 +21,21 @@ class _MainScreenState extends State<MainScreen> {
   GlobalKey<_LibraryTabHolderState>();
 
   late final List<Widget> screens = [
-    const HomeScreen(),
+    HomeScreen(
+      onAllGamesTap: _openLibraryTab,
+    ),
     _LibraryTabHolder(key: libraryTabKey),
     const RatingsScreen(),
     const ProfileScreen(),
   ];
+
+  void _openLibraryTab() {
+    libraryTabKey.currentState?.refreshLibrary();
+
+    setState(() {
+      currentIndex = 1;
+    });
+  }
 
   Future<void> _openSearchScreen() async {
     await Navigator.push(

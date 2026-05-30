@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../models/library_game_model.dart';
+import '../../storage/library_storage.dart';
+import '../game_progress/game_progress_screen.dart';
 import '../search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.onAllGamesTap,
+  });
+
+  final VoidCallback? onAllGamesTap;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -12,46 +20,208 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   static const Color background = Color(0xFF0C0F0F);
 
-  // Временное состояние главной страницы.
-  // Позже данные будут загружаться из локального хранилища.
-  final bool hasGames = false;
+  final List<String> filters = [
+    'Все',
+    'Пройдено',
+    'Играю',
+    'Планирую',
+  ];
+
+  int selectedFilterIndex = 0;
+
+  List<LibraryGameModel> games = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGames();
+  }
+
+  Future<void> _loadGames() async {
+    final loadedGames = await LibraryStorage.getAllGames();
+
+    if (!mounted) return;
+
+    loadedGames.sort((a, b) => b.addedAt.compareTo(a.addedAt));
+
+    setState(() {
+      games = loadedGames;
+      isLoading = false;
+    });
+  }
+
+  bool get hasGames => games.isNotEmpty;
+
+  int get completedCount {
+    return games.where((game) => game.status == 'Пройдено').length;
+  }
+
+  int get playingCount {
+    return games.where((game) => game.status == 'Играю').length;
+  }
+
+  String get averageRatingText {
+    final ratings = games
+        .where((game) => game.userRating != null)
+        .map((game) => game.userRating!.clamp(1, 10).toDouble())
+        .toList();
+
+    if (ratings.isEmpty) {
+      return '-';
+    }
+
+    final sum = ratings.fold<double>(0, (previous, rating) {
+      return previous + rating;
+    });
+
+    final average = sum / ratings.length;
+
+    return _formatRating(average);
+  }
+
+  String _formatRating(double rating) {
+    final roundedRating = double.parse(rating.toStringAsFixed(1));
+
+    if (roundedRating == roundedRating.roundToDouble()) {
+      return roundedRating.toInt().toString();
+    }
+
+    return roundedRating.toStringAsFixed(1);
+  }
+
+  List<LibraryGameModel> get filteredGames {
+    final selectedFilter = filters[selectedFilterIndex];
+
+    if (selectedFilter == 'Все') {
+      return games.take(3).toList();
+    }
+
+    return games.where((game) => game.status == selectedFilter).take(3).toList();
+  }
+
+  Future<void> _openSearchScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SearchScreen(),
+      ),
+    );
+
+    await _loadGames();
+  }
+
+  Future<void> _openGameProgress(LibraryGameModel game) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GameProgressScreen(
+          gameId: game.id,
+          title: game.title,
+          status: game.status,
+          userHours: game.userHours,
+          userMinutes: game.userMinutes,
+          apiHours: game.apiHours,
+          rating: game.userRating ?? game.apiRating ?? 0,
+        ),
+      ),
+    );
+
+    await _loadGames();
+  }
+
+  void _openAllGames() {
+    if (widget.onAllGamesTap != null) {
+      widget.onAllGamesTap!();
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF1D2020),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 96),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(
+              color: Color(0x3322D3EE),
+            ),
+          ),
+          content: const Text(
+            'Откройте вкладку «Игры» в нижнем меню',
+            style: TextStyle(
+              color: Color(0xFFF4F3F3),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final visibleGames = filteredGames;
+
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _HomeHeader(),
+        child: RefreshIndicator(
+          color: const Color(0xFF75EEFD),
+          backgroundColor: const Color(0xFF111414),
+          onRefresh: _loadGames,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _HomeHeader(
+                  onSearchTap: _openSearchScreen,
+                ),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Блок краткой статистики пользователя.
-              _StatsSection(hasGames: hasGames),
+                if (isLoading)
+                  const _HomeLoadingState()
+                else ...[
+                  _StatsSection(
+                    completedCount: completedCount,
+                    playingCount: playingCount,
+                    averageRating: averageRatingText,
+                  ),
 
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-              // Фильтры для быстрого просмотра библиотеки.
-              const _FilterChips(),
+                  _FilterChips(
+                    filters: filters,
+                    selectedIndex: selectedFilterIndex,
+                    onSelected: (index) {
+                      setState(() {
+                        selectedFilterIndex = index;
+                      });
+                    },
+                  ),
 
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-              // Последние действия пользователя в приложении.
-              _RecentActivitySection(hasGames: hasGames),
+                  _RecentActivitySection(
+                    hasGames: hasGames,
+                    visibleGames: visibleGames,
+                    onAllGamesTap: _openAllGames,
+                    onGameTap: _openGameProgress,
+                  ),
 
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-              // Основная кнопка перехода к добавлению игры.
-              _AddGameButton(
-                onTap: () {
-                  // TODO: Добавить переход на экран поиска или добавления игры.
-                },
-              ),
-            ],
+                  _AddGameButton(
+                    onTap: _openSearchScreen,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -60,7 +230,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader();
+  const _HomeHeader({
+    required this.onSearchTap,
+  });
+
+  final VoidCallback onSearchTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -116,17 +290,8 @@ class _HomeHeader extends StatelessWidget {
                 size: 28,
               ),
             ),
-
-            // Кнопка перехода к поиску игр.
             IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SearchScreen(),
-                  ),
-                );
-              },
+              onPressed: onSearchTap,
               icon: const Icon(
                 Icons.search_rounded,
                 color: accent,
@@ -142,10 +307,14 @@ class _HomeHeader extends StatelessWidget {
 
 class _StatsSection extends StatelessWidget {
   const _StatsSection({
-    required this.hasGames,
+    required this.completedCount,
+    required this.playingCount,
+    required this.averageRating,
   });
 
-  final bool hasGames;
+  final int completedCount;
+  final int playingCount;
+  final String averageRating;
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +325,7 @@ class _StatsSection extends StatelessWidget {
             Expanded(
               child: _StatCard(
                 title: 'ПРОЙДЕНО',
-                value: hasGames ? '4' : '0',
+                value: '$completedCount',
                 subtitle: 'игры',
                 color: const Color(0xFFBBFFB3),
               ),
@@ -165,7 +334,7 @@ class _StatsSection extends StatelessWidget {
             Expanded(
               child: _StatCard(
                 title: 'ИГРАЮ',
-                value: hasGames ? '3' : '0',
+                value: '$playingCount',
                 subtitle: 'активных',
                 color: const Color(0xFF61ACFE),
               ),
@@ -175,7 +344,7 @@ class _StatsSection extends StatelessWidget {
         const SizedBox(height: 16),
         _StatCard(
           title: 'СРЕДНЯЯ ОЦЕНКА',
-          value: hasGames ? '4.7' : '-',
+          value: averageRating,
           subtitle: '★',
           color: const Color(0xFF75EEFD),
         ),
@@ -229,13 +398,17 @@ class _StatCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 36,
-                  height: 1,
-                  fontWeight: FontWeight.w900,
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 36,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -262,22 +435,16 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _FilterChips extends StatefulWidget {
-  const _FilterChips();
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({
+    required this.filters,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
 
-  @override
-  State<_FilterChips> createState() => _FilterChipsState();
-}
-
-class _FilterChipsState extends State<_FilterChips> {
-  int selectedIndex = 0;
-
-  final List<String> filters = [
-    'Все',
-    'Пройдено',
-    'Играю',
-    'Планирую',
-  ];
+  final List<String> filters;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -291,11 +458,7 @@ class _FilterChipsState extends State<_FilterChips> {
           final bool isSelected = selectedIndex == index;
 
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                selectedIndex = index;
-              });
-            },
+            onTap: () => onSelected(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               height: 36,
@@ -328,59 +491,52 @@ class _FilterChipsState extends State<_FilterChips> {
 class _RecentActivitySection extends StatelessWidget {
   const _RecentActivitySection({
     required this.hasGames,
+    required this.visibleGames,
+    required this.onAllGamesTap,
+    required this.onGameTap,
   });
 
   final bool hasGames;
+  final List<LibraryGameModel> visibleGames;
+  final VoidCallback onAllGamesTap;
+  final ValueChanged<LibraryGameModel> onGameTap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const _SectionHeader(),
+        _SectionHeader(
+          onAllGamesTap: onAllGamesTap,
+        ),
         const SizedBox(height: 24),
-        if (hasGames)
-          const Column(
-            children: [
-              _GameActivityCard(
-                title: 'Elden Ring',
-                subtitle: '2ч сессия\nсегодня',
-                status: _GameCardStatus.playing,
-                imageGradient: [
-                  Color(0xFF1A322D),
-                  Color(0xFFD7B95A),
-                ],
-              ),
-              SizedBox(height: 16),
-              _GameActivityCard(
-                title: 'Cyberpunk\n2077',
-                subtitle: '1ч сессия\nвчера',
-                status: _GameCardStatus.playing,
-                imageGradient: [
-                  Color(0xFF1F0B2E),
-                  Color(0xFFFF2BD6),
-                ],
-              ),
-              SizedBox(height: 16),
-              _GameActivityCard(
-                title: "Baldur's\nGate 3",
-                subtitle: 'ПРОЙДЕНО',
-                status: _GameCardStatus.completed,
-                imageGradient: [
-                  Color(0xFF111F12),
-                  Color(0xFF65724C),
-                ],
-              ),
-            ],
-          )
+        if (!hasGames)
+          const _EmptyActivityState()
+        else if (visibleGames.isEmpty)
+          const _NoFilteredGamesState()
         else
-          const _EmptyActivityState(),
+          Column(
+            children: [
+              for (int i = 0; i < visibleGames.length; i++) ...[
+                _GameActivityCard(
+                  game: visibleGames[i],
+                  imageIndex: i,
+                  onTap: () => onGameTap(visibleGames[i]),
+                ),
+                if (i != visibleGames.length - 1) const SizedBox(height: 16),
+              ],
+            ],
+          ),
       ],
     );
   }
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader();
+  const _SectionHeader({
+    required this.onAllGamesTap,
+  });
+
+  final VoidCallback onAllGamesTap;
 
   @override
   Widget build(BuildContext context) {
@@ -399,7 +555,7 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: onAllGamesTap,
           child: const Text(
             'ВСЕ\nИГРЫ',
             textAlign: TextAlign.center,
@@ -453,144 +609,227 @@ class _EmptyActivityState extends StatelessWidget {
   }
 }
 
-enum _GameCardStatus {
-  playing,
-  completed,
+class _NoFilteredGamesState extends StatelessWidget {
+  const _NoFilteredGamesState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 44, horizontal: 8),
+      child: Text(
+        'По выбранному фильтру игр пока нет',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Color(0xFFAAABAB),
+          fontSize: 16,
+          height: 1.4,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }
 
 class _GameActivityCard extends StatelessWidget {
   const _GameActivityCard({
-    required this.title,
-    required this.subtitle,
-    required this.status,
-    required this.imageGradient,
+    required this.game,
+    required this.imageIndex,
+    required this.onTap,
   });
 
-  final String title;
-  final String subtitle;
-  final _GameCardStatus status;
-  final List<Color> imageGradient;
+  final LibraryGameModel game;
+  final int imageIndex;
+  final VoidCallback onTap;
+
+  bool get isCompleted => game.status == 'Пройдено';
+
+  String get title {
+    return game.title;
+  }
+
+  String get subtitle {
+    if (isCompleted) {
+      return 'ПРОЙДЕНО';
+    }
+
+    final hasPlayedTime = game.userHours > 0 || game.userMinutes > 0;
+
+    if (!hasPlayedTime) {
+      return 'нет сессий';
+    }
+
+    final hoursText = game.userHours > 0 ? '${game.userHours}ч' : '';
+    final minutesText = game.userMinutes > 0 ? ' ${game.userMinutes}м' : '';
+
+    return '${hoursText}${minutesText.trimRight()} сессия';
+  }
+
+  List<Color> get imageGradient {
+    final gradients = [
+      [
+        const Color(0xFF1A322D),
+        const Color(0xFFD7B95A),
+      ],
+      [
+        const Color(0xFF1F0B2E),
+        const Color(0xFFFF2BD6),
+      ],
+      [
+        const Color(0xFF111F12),
+        const Color(0xFF65724C),
+      ],
+      [
+        const Color(0xFF143C45),
+        const Color(0xFF75EEFD),
+      ],
+    ];
+
+    return gradients[imageIndex % gradients.length];
+  }
 
   @override
   Widget build(BuildContext context) {
-    // От статуса зависит вид правой кнопки и подпись карточки.
-    final bool completed = status == _GameCardStatus.completed;
-
-    return Container(
-      height: completed ? 112 : 116,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111414),
+    return Material(
+      color: const Color(0xFF111414),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: imageGradient,
-              ),
-            ),
+        child: Container(
+          constraints: const BoxConstraints(
+            minHeight: 112,
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 2,
-                  style: const TextStyle(
-                    color: Color(0xFFF4F3F3),
-                    fontSize: 18,
-                    height: 1.22,
-                    fontWeight: FontWeight.w800,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Opacity(
+                opacity: isCompleted ? 0.58 : 1,
+                child: Container(
+                  width: 64,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: imageGradient,
+                    ),
+                  ),
+                  child: Icon(
+                    game.isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.sports_esports_rounded,
+                    color: Colors.white.withOpacity(0.18),
+                    size: 30,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Row(
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      completed
-                          ? Icons.check_circle_rounded
-                          : Icons.access_time_rounded,
-                      color: completed
-                          ? const Color(0xFFBBFFB3)
-                          : const Color(0xFFAAABAB),
-                      size: 13,
-                    ),
-                    const SizedBox(width: 6),
                     Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: completed
-                            ? const Color(0xFFBBFFB3)
-                            : const Color(0xFFAAABAB),
-                        fontSize: 14,
-                        height: 1.3,
-                        fontWeight:
-                        completed ? FontWeight.w800 : FontWeight.w500,
-                        letterSpacing: completed ? 1.2 : 0,
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFF4F3F3),
+                        fontSize: 18,
+                        height: 1.22,
+                        fontWeight: FontWeight.w800,
                       ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Icon(
+                          isCompleted
+                              ? Icons.check_circle_rounded
+                              : Icons.access_time_rounded,
+                          color: isCompleted
+                              ? const Color(0xFFBBFFB3)
+                              : const Color(0xFFAAABAB),
+                          size: isCompleted ? 11 : 12,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isCompleted
+                                  ? const Color(0xFFBBFFB3)
+                                  : const Color(0xFFAAABAB),
+                              fontSize: isCompleted ? 12 : 13,
+                              height: 1.25,
+                              fontWeight: isCompleted
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                              letterSpacing: isCompleted ? 1.0 : 0,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          if (completed)
-            Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              decoration: BoxDecoration(
-                color: const Color(0xFF232626),
-                borderRadius: BorderRadius.circular(999),
               ),
-              alignment: Alignment.center,
-              child: const Text(
-                'Завершено',
-                style: TextStyle(
-                  color: Color(0xFFAAABAB),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            )
-          else
-            Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              decoration: BoxDecoration(
-                color: const Color(0xFF75EEFD),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.play_arrow_rounded,
-                    color: Color(0xFF00575F),
-                    size: 18,
+              const SizedBox(width: 8),
+              if (isCompleted)
+                Container(
+                  height: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF232626),
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  SizedBox(width: 4),
-                  Text(
-                    'Играть',
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Завершено',
                     style: TextStyle(
-                      color: Color(0xFF00575F),
-                      fontSize: 14,
+                      color: Color(0xFFAAABAB),
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                ],
-              ),
-            ),
-        ],
+                )
+              else
+                Container(
+                  height: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF75EEFD),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.play_arrow_rounded,
+                        color: Color(0xFF00575F),
+                        size: 15,
+                      ),
+                      SizedBox(width: 3),
+                      Text(
+                        'Играть',
+                        style: TextStyle(
+                          color: Color(0xFF00575F),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -647,6 +886,22 @@ class _AddGameButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeLoadingState extends StatelessWidget {
+  const _HomeLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 160),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF75EEFD),
         ),
       ),
     );

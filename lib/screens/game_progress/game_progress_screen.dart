@@ -36,7 +36,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   static const Color textPrimary = Color(0xFFF4F3F3);
   static const Color textSecondary = Color(0xFFAAABAB);
 
-  bool isFavorite = true;
+  bool isFavorite = false;
 
   late String currentStatus = widget.status;
   int currentRating = 0;
@@ -113,22 +113,24 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   }
 
   void _showTemporaryMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        backgroundColor: const Color(0xFF1A1D1D),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+      );
   }
 
   Future<void> _loadSavedGameData() async {
@@ -140,6 +142,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       currentStatus = game.status;
       userHours = game.userHours;
       userMinutes = game.userMinutes;
+      isFavorite = game.isFavorite;
       currentRating = game.userRating == null
           ? 0
           : game.userRating!.round().clamp(1, 10).toInt();
@@ -217,6 +220,32 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     );
 
     await LibraryStorage.updateGame(updatedGame);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final game = await LibraryStorage.getGameById(widget.gameId);
+
+    if (game == null) {
+      return;
+    }
+
+    final newFavoriteValue = !isFavorite;
+
+    setState(() {
+      isFavorite = newFavoriteValue;
+    });
+
+    final updatedGame = game.copyWith(
+      isFavorite: newFavoriteValue,
+    );
+
+    await LibraryStorage.updateGame(updatedGame);
+
+    if (!mounted) return;
+
+    _showTemporaryMessage(
+      newFavoriteValue ? 'Добавлено в избранное' : 'Удалено из избранного',
+    );
   }
 
   Future<void> _changeStatus(String newStatus) async {
@@ -791,11 +820,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           _TopBar(
             title: widget.title,
             isFavorite: isFavorite,
-            onFavoriteTap: () {
-              setState(() {
-                isFavorite = !isFavorite;
-              });
-            },
+            onFavoriteTap: _toggleFavorite,
           ),
         ],
       ),

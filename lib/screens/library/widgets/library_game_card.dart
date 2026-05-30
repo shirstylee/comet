@@ -9,10 +9,14 @@ class LibraryGameCard extends StatefulWidget {
     super.key,
     required this.game,
     required this.imageIndex,
+    required this.onDelete,
+    required this.onGameChanged,
   });
 
   final LibraryGameModel game;
   final int imageIndex;
+  final VoidCallback onDelete;
+  final VoidCallback onGameChanged;
 
   @override
   State<LibraryGameCard> createState() => _LibraryGameCardState();
@@ -60,12 +64,21 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
     setState(() {
       currentGame = updatedGame;
     });
+
+    widget.onGameChanged();
+  }
+
+  void _handleMenuAction(String value) {
+    if (value == 'delete') {
+      widget.onDelete();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final statusColors = _statusColors(currentGame.status);
-    final rating = (currentGame.userRating ?? currentGame.apiRating ?? 0).round();
+    final rating =
+    (currentGame.userRating ?? currentGame.apiRating ?? 0).round();
 
     return GestureDetector(
       onTap: () => _openProgressScreen(context),
@@ -122,6 +135,40 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                           letterSpacing: 1,
                         ),
                       ),
+                    ),
+                  ),
+                  if (currentGame.isFavorite)
+                    Positioned(
+                      left: 16,
+                      bottom: 14,
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: const Color(0x99111414),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0x4475EEFD),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF75EEFD).withOpacity(0.14),
+                              blurRadius: 18,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.favorite_rounded,
+                          color: Color(0xFF75EEFD),
+                          size: 19,
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    right: 10,
+                    top: 8,
+                    child: _CardMenuButton(
+                      onSelected: _handleMenuAction,
                     ),
                   ),
                 ],
@@ -248,6 +295,71 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
           border: const Color(0x4D78716C),
         );
     }
+  }
+}
+
+class _CardMenuButton extends StatelessWidget {
+  const _CardMenuButton({
+    required this.onSelected,
+  });
+
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      color: const Color(0xFF1D2020),
+      elevation: 12,
+      offset: const Offset(0, 38),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(
+          color: Color(0x1AFFFFFF),
+        ),
+      ),
+      onSelected: onSelected,
+      itemBuilder: (context) {
+        return [
+          const PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFFF7A7A),
+                  size: 20,
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Удалить из библиотеки',
+                  style: TextStyle(
+                    color: Color(0xFFFF7A7A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ];
+      },
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: const Color(0x99111414),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withOpacity(0.08),
+          ),
+        ),
+        child: const Icon(
+          Icons.more_horiz_rounded,
+          color: Color(0xFFF4F3F3),
+          size: 22,
+        ),
+      ),
+    );
   }
 }
 
