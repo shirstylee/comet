@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../models/user_profile_model.dart';
+import '../../storage/profile_storage.dart';
 import '../main/main_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {
@@ -68,7 +70,13 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         backgroundColor: const Color(0xFFE57373),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -78,7 +86,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     );
   }
 
-  void goToMainScreen() {
+  Future<void> goToMainScreen() async {
     if (avatarFile == null) {
       showError('Загрузите аватар');
       return;
@@ -98,6 +106,17 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       showError('Выберите минимум 3 жанра');
       return;
     }
+
+    await ProfileStorage.saveProfile(
+      UserProfileModel(
+        name: nicknameController.text.trim(),
+        status: statusController.text.trim(),
+        favoriteGenres: selectedGenres.toList(),
+        avatarPath: avatarFile?.path,
+      ),
+    );
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,

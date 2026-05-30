@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../profile/profile_screen.dart';
+import '../ratings/ratings_screen.dart';
 import '../search/search_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -21,8 +23,8 @@ class _MainScreenState extends State<MainScreen> {
   late final List<Widget> screens = [
     const HomeScreen(),
     _LibraryTabHolder(key: libraryTabKey),
-    const _TempScreen(title: 'Оценки'),
-    const _TempScreen(title: 'Профиль'),
+    const RatingsScreen(),
+    const ProfileScreen(),
   ];
 
   Future<void> _openSearchScreen() async {
@@ -108,14 +110,14 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   const SizedBox(height: 12),
                   _AddMenuItem(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    title: 'Оставить комментарий',
-                    subtitle: 'Сначала выберите игру из библиотеки',
+                    icon: Icons.star_border_rounded,
+                    title: 'Оставить оценку',
+                    subtitle: 'Открыть экран оценок',
                     onTap: () {
                       Navigator.pop(bottomSheetContext);
 
                       setState(() {
-                        currentIndex = 1;
+                        currentIndex = 2;
                       });
                     },
                   ),
@@ -266,31 +268,6 @@ class _AddMenuItem extends StatelessWidget {
                 size: 26,
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TempScreen extends StatelessWidget {
-  const _TempScreen({
-    required this.title,
-  });
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0C0F0F),
-      body: Center(
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFFF4F3F3),
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
           ),
         ),
       ),
