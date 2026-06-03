@@ -40,12 +40,27 @@ class _SearchScreenState extends State<SearchScreen> {
         return;
       }
 
-      // Поиск начинается именно с первой буквы названия.
-      // Например, запрос "witcher" не найдет "The Witcher".
       results = mockGames.where((game) {
-        return game.title.toLowerCase().startsWith(query);
+        return _matchesGameTitle(
+          title: game.title,
+          query: query,
+        );
       }).toList();
     });
+  }
+
+  bool _matchesGameTitle({
+    required String title,
+    required String query,
+  }) {
+    final normalizedTitle = title.toLowerCase();
+
+    final words = normalizedTitle
+        .split(RegExp(r'[^a-zа-я0-9]+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+
+    return words.any((word) => word.startsWith(query));
   }
 
   void _clearSearch() {

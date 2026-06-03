@@ -8,6 +8,7 @@ class LibraryGameModel {
     required this.addedAt,
     this.imageUrl,
     this.year,
+    this.genre = 'Action',
     this.apiRating,
     this.apiHours = 80,
     this.userHours = 0,
@@ -25,6 +26,9 @@ class LibraryGameModel {
 
   final String? imageUrl;
   final int? year;
+
+  final String genre;
+
   final double? apiRating;
   final int apiHours;
 
@@ -58,6 +62,7 @@ class LibraryGameModel {
     DateTime? addedAt,
     String? imageUrl,
     int? year,
+    String? genre,
     double? apiRating,
     int? apiHours,
     int? userHours,
@@ -74,6 +79,7 @@ class LibraryGameModel {
       addedAt: addedAt ?? this.addedAt,
       imageUrl: imageUrl ?? this.imageUrl,
       year: year ?? this.year,
+      genre: genre ?? this.genre,
       apiRating: apiRating ?? this.apiRating,
       apiHours: apiHours ?? this.apiHours,
       userHours: userHours ?? this.userHours,
@@ -93,6 +99,7 @@ class LibraryGameModel {
       'addedAt': addedAt.toIso8601String(),
       'imageUrl': imageUrl,
       'year': year,
+      'genre': genre,
       'apiRating': apiRating,
       'apiHours': apiHours,
       'userHours': userHours,
@@ -116,6 +123,7 @@ class LibraryGameModel {
           : DateTime.tryParse(map['addedAt'].toString()) ?? DateTime.now(),
       imageUrl: map['imageUrl'] as String?,
       year: map['year'] as int?,
+      genre: map['genre'] as String? ?? 'Action',
       apiRating: (map['apiRating'] as num?)?.toDouble(),
       apiHours: map['apiHours'] as int? ?? 80,
       userHours: map['userHours'] as int? ?? 0,

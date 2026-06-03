@@ -6,6 +6,25 @@ import 'widgets/progress_card.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/timeline_item.dart';
 
+String _formatStageDate(DateTime date) {
+  const months = [
+    'янв',
+    'фев',
+    'мар',
+    'апр',
+    'мая',
+    'июн',
+    'июл',
+    'авг',
+    'сен',
+    'окт',
+    'ноя',
+    'дек',
+  ];
+
+  return '${date.day} ${months[date.month - 1]}, ${date.year}';
+}
+
 class GameProgressScreen extends StatefulWidget {
   const GameProgressScreen({
     super.key,
@@ -92,24 +111,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   int get lastStageIndex => stages.length - 1;
 
   String get todayText {
-    final now = DateTime.now();
-
-    const months = [
-      'янв',
-      'фев',
-      'мар',
-      'апр',
-      'мая',
-      'июн',
-      'июл',
-      'авг',
-      'сен',
-      'окт',
-      'ноя',
-      'дек',
-    ];
-
-    return '${now.day} ${months[now.month - 1]}, ${now.year}';
+    return _formatStageDate(DateTime.now());
   }
 
   void _showTemporaryMessage(String text) {
@@ -366,12 +368,193 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     _showTemporaryMessage('Этап удалён');
   }
 
-  Future<void> _addStage() async {
+  Future<void> _saveEditedStage({
+    required int index,
+    required String title,
+  }) async {
+    if (index <= 0) {
+      return;
+    }
+
+    if (index >= stages.length) {
+      return;
+    }
+
+    final cleanTitle = title.trim();
+
+    if (cleanTitle.isEmpty) {
+      _showTemporaryMessage('Название этапа не может быть пустым');
+      return;
+    }
+
+    final stage = stages[index];
+
+    setState(() {
+      stages[index] = stage.copyWith(
+        title: cleanTitle,
+        subtitle: stage.type == TimelineItemType.done
+            ? stage.completedAt == null
+            ? stage.subtitle
+            : _formatStageDate(stage.completedAt!)
+            : 'В процессе',
+      );
+    });
+
+    await _saveStages();
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Этап переименован');
+  }
+
+  void _openStageNameEditor({
+    required int index,
+    required String title,
+  }) {
+    if (index <= 0) {
+      return;
+    }
+
+    final titleController = TextEditingController(text: title);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.55),
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111414),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withOpacity(0.16),
+                  blurRadius: 34,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _BottomSheetHandle(),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Переименовать этап',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Измените только название этапа',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  _StageNameInput(
+                    controller: titleController,
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF75EEFD),
+                            Color(0xFF25B0BE),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newTitle = titleController.text.trim();
+
+                          if (newTitle.isEmpty) {
+                            _showTemporaryMessage(
+                              'Название этапа не может быть пустым',
+                            );
+                            return;
+                          }
+
+                          Navigator.pop(bottomSheetContext);
+
+                          await _saveEditedStage(
+                            index: index,
+                            title: newTitle,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Сохранить',
+                          style: TextStyle(
+                            color: Color(0xFF00575F),
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _createStageWithTitle({
+    required String title,
+  }) async {
+    final cleanTitle = title.trim();
+
+    if (cleanTitle.isEmpty) {
+      _showTemporaryMessage('Название этапа не может быть пустым');
+      return;
+    }
+
     setState(() {
       if (stages.isEmpty) {
-        stages = const [
+        stages = [
           _GameStage(
             title: 'Начало игры',
+            subtitle: todayText,
+            type: TimelineItemType.done,
+            completedAt: DateTime.now(),
+          ),
+          _GameStage(
+            title: cleanTitle,
             subtitle: 'В процессе',
             type: TimelineItemType.current,
           ),
@@ -388,8 +571,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
       stages = [
         ...stages,
-        const _GameStage(
-          title: 'Новый этап',
+        _GameStage(
+          title: cleanTitle,
           subtitle: 'В процессе',
           type: TimelineItemType.current,
         ),
@@ -401,6 +584,129 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     if (!mounted) return;
 
     _showTemporaryMessage('Новый этап добавлен');
+  }
+
+  void _openNewStageNameEditor() {
+    final titleController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.55),
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111414),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withOpacity(0.16),
+                  blurRadius: 34,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _BottomSheetHandle(),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Новый этап',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Введите название нового этапа',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  _StageNameInput(
+                    controller: titleController,
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF75EEFD),
+                            Color(0xFF25B0BE),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newTitle = titleController.text.trim();
+
+                          if (newTitle.isEmpty) {
+                            _showTemporaryMessage(
+                              'Название этапа не может быть пустым',
+                            );
+                            return;
+                          }
+
+                          Navigator.pop(bottomSheetContext);
+
+                          await _createStageWithTitle(
+                            title: newTitle,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Создать этап',
+                          style: TextStyle(
+                            color: Color(0xFF00575F),
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _addStage() async {
+    _openNewStageNameEditor();
   }
 
   void _openStatusSelector() {
@@ -631,8 +937,11 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   }
 
   void _openStageActions(int index) {
+    if (index <= 0 || index >= stages.length) {
+      return;
+    }
+
     final stage = stages[index];
-    final isStartStage = index == 0;
 
     showModalBottomSheet(
       context: context,
@@ -673,33 +982,21 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  if (isStartStage) ...[
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Этот этап нельзя переименовать или удалить',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 13,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 22),
-                  if (!isStartStage) ...[
-                    _StageMenuItem(
-                      icon: Icons.edit_rounded,
-                      title: 'Переименовать',
-                      subtitle: 'Изменить название этапа',
-                      onTap: () {
-                        Navigator.pop(bottomSheetContext);
-                        _showTemporaryMessage(
-                          'Переименование будет добавлено позже',
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                  _StageMenuItem(
+                    icon: Icons.edit_rounded,
+                    title: 'Переименовать',
+                    subtitle: 'Изменить название этапа',
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+
+                      _openStageNameEditor(
+                        index: index,
+                        title: stage.title,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   _StageMenuItem(
                     icon: Icons.check_circle_outline_rounded,
                     title: 'Завершить',
@@ -709,19 +1006,17 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                       await _completeStage(index);
                     },
                   ),
-                  if (!isStartStage) ...[
-                    const SizedBox(height: 12),
-                    _StageMenuItem(
-                      icon: Icons.delete_outline_rounded,
-                      title: 'Удалить',
-                      subtitle: 'Убрать этап из истории',
-                      danger: true,
-                      onTap: () async {
-                        Navigator.pop(bottomSheetContext);
-                        await _deleteStage(index);
-                      },
-                    ),
-                  ],
+                  const SizedBox(height: 12),
+                  _StageMenuItem(
+                    icon: Icons.delete_outline_rounded,
+                    title: 'Удалить',
+                    subtitle: 'Убрать этап из истории',
+                    danger: true,
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      await _deleteStage(index);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -806,7 +1101,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                     subtitle: stages[i].subtitle,
                     type: stages[i].type,
                     isLast: i == stages.length - 1,
-                    onTap: () => _openStageActions(i),
+                    onTap: i == 0 ? null : () => _openStageActions(i),
                   ),
                 const SizedBox(height: 4),
                 _AddStageButton(onTap: _addStage),
@@ -1621,6 +1916,43 @@ class _StageMenuItem extends StatelessWidget {
   }
 }
 
+class _StageNameInput extends StatelessWidget {
+  const _StageNameInput({
+    required this.controller,
+  });
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1D2020),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: TextField(
+        controller: controller,
+        cursorColor: const Color(0xFF75EEFD),
+        style: const TextStyle(
+          color: Color(0xFFF4F3F3),
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+        ),
+        decoration: const InputDecoration(
+          labelText: 'Название этапа',
+          border: InputBorder.none,
+          labelStyle: TextStyle(
+            color: Color(0xFFAAABAB),
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GameStage {
   const _GameStage({
     required this.title,
@@ -1635,10 +1967,16 @@ class _GameStage {
   final DateTime? completedAt;
 
   static _GameStage fromModel(GameStageModel model) {
+    final type = model.isDone ? TimelineItemType.done : TimelineItemType.current;
+
     return _GameStage(
       title: model.title,
-      subtitle: model.subtitle,
-      type: model.isDone ? TimelineItemType.done : TimelineItemType.current,
+      subtitle: model.isDone
+          ? model.completedAt == null
+          ? model.subtitle
+          : _formatStageDate(model.completedAt!)
+          : 'В процессе',
+      type: type,
       completedAt: model.completedAt,
     );
   }
