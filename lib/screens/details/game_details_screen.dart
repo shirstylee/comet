@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/game_model.dart';
 import '../../models/game_stage_model.dart';
 import '../../models/library_game_model.dart';
+import '../../services/rawg_api_service.dart';
 import '../../storage/library_storage.dart';
 
 class GameDetailsScreen extends StatefulWidget {
@@ -20,28 +22,67 @@ class GameDetailsScreen extends StatefulWidget {
 class _GameDetailsScreenState extends State<GameDetailsScreen> {
   static const Color background = Color(0xFF0C0F0F);
 
+  final RawgApiService rawgApiService = RawgApiService();
+
+  late GameModel game;
+
   bool isDescriptionExpanded = false;
+  bool isLoadingDetails = true;
+  String? detailsError;
+
+  @override
+  void initState() {
+    super.initState();
+    game = widget.game;
+    _loadGameDetails();
+  }
+
+  Future<void> _loadGameDetails() async {
+    setState(() {
+      isLoadingDetails = true;
+      detailsError = null;
+    });
+
+    try {
+      final detailedGame = await rawgApiService.getGameDetails(widget.game);
+
+      if (!mounted) return;
+
+      setState(() {
+        game = detailedGame;
+        isLoadingDetails = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingDetails = false;
+        detailsError = 'Не удалось загрузить подробности игры';
+      });
+    }
+  }
 
   Future<void> _addGameToLibrary() async {
-    final alreadyAdded = await LibraryStorage.containsGame(widget.game.id);
+    final alreadyAdded = await LibraryStorage.containsGame(game.id);
 
     if (!mounted) return;
 
     if (alreadyAdded) {
-      _showMessage('${widget.game.title} уже есть в коллекции');
+      _showMessage('${game.title} уже есть в коллекции');
       return;
     }
 
     final libraryGame = LibraryGameModel(
-      id: widget.game.id,
-      title: widget.game.title,
+      id: game.id,
+      title: game.title,
       status: 'Планирую',
       addedAt: DateTime.now(),
-      year: widget.game.year,
-      genre: widget.game.genre,
-      platforms: widget.game.platforms,
-      apiRating: widget.game.rating,
-      apiHours: widget.game.hours,
+      imageUrl: game.imageUrl,
+      year: game.year,
+      genre: game.genre,
+      platforms: game.platforms,
+      apiRating: game.rating,
+      apiHours: game.hours,
       userHours: 0,
       userMinutes: 0,
       userRating: null,
@@ -60,7 +101,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
 
     if (!mounted) return;
 
-    _showMessage('${widget.game.title} добавлена в коллекцию');
+    _showMessage('${game.title} добавлена в коллекцию');
   }
 
   void _showMessage(String text) {
@@ -82,58 +123,185 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
     );
   }
 
-  void _showTrailerUnavailable() {
-    _showMessage('Трейлер будет доступен после подключения API');
+  Future<void> _openTrailer() async {
+    final trailerUrl = game.trailerUrl;
+
+    if (trailerUrl == null || trailerUrl.trim().isEmpty) {
+      _showMessage('Трейлер для этой игры не найден');
+      return;
+    }
+
+    await Clipboard.setData(
+      ClipboardData(text: trailerUrl),
+    );
+
+    if (!mounted) return;
+
+    _showMessage('Ссылка на трейлер скопирована');
   }
 
   @override
   Widget build(BuildContext context) {
-    final game = widget.game;
-
     return Scaffold(
       backgroundColor: background,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              _HeroSection(game: game),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 112),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _PrimaryButton(
-                        text: 'Добавить в коллекцию',
-                        icon: Icons.add_rounded,
-                        onTap: _addGameToLibrary,
-                      ),
-                      const SizedBox(height: 32),
-                      _TrailerButton(
-                        onTap: _showTrailerUnavailable,
-                      ),
-                      const SizedBox(height: 32),
-                      _RatingSection(game: game),
-                      const SizedBox(height: 32),
-                      _MetaCards(game: game),
-                      const SizedBox(height: 32),
-                      _AboutSection(
-                        isExpanded: isDescriptionExpanded,
-                        onToggle: () {
-                          setState(() {
-                            isDescriptionExpanded = !isDescriptionExpanded;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                      const _ScreenshotsSection(),
-                    ],
+          RefreshIndicator(
+            color: const Color(0xFF75EEFD),
+            backgroundColor: const Color(0xFF111414),
+            onRefresh: _loadGameDetails,
+            child: CustomScrollView(
+              slivers: [
+                _HeroSection(game: game),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 112),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isLoadingDetails) ...[
+                          const _LoadingDetailsBanner(),
+                          const SizedBox(height: 24),
+                        ],
+                        if (detailsError != null) ...[
+                          _DetailsErrorBanner(
+                            message: detailsError!,
+                            onRetry: _loadGameDetails,
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                        _PrimaryButton(
+                          text: 'Добавить в коллекцию',
+                          icon: Icons.add_rounded,
+                          onTap: _addGameToLibrary,
+                        ),
+                        const SizedBox(height: 32),
+                        _TrailerButton(
+                          hasTrailer: game.trailerUrl != null &&
+                              game.trailerUrl!.trim().isNotEmpty,
+                          onTap: _openTrailer,
+                        ),
+                        const SizedBox(height: 32),
+                        _RatingSection(game: game),
+                        const SizedBox(height: 32),
+                        _MetaCards(game: game),
+                        const SizedBox(height: 32),
+                        _AboutSection(
+                          game: game,
+                          isExpanded: isDescriptionExpanded,
+                          onToggle: () {
+                            setState(() {
+                              isDescriptionExpanded = !isDescriptionExpanded;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        _ScreenshotsSection(game: game),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           _TopHeader(title: game.title),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingDetailsBanner extends StatelessWidget {
+  const _LoadingDetailsBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111414),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF75EEFD).withOpacity(0.18),
+        ),
+      ),
+      child: const Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF75EEFD),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Загружаем подробности из RAWG API...',
+              style: TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailsErrorBanner extends StatelessWidget {
+  const _DetailsErrorBanner({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111414),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFF716C).withOpacity(0.22),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Color(0xFFFF716C),
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text(
+              'Повторить',
+              style: TextStyle(
+                color: Color(0xFF75EEFD),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -159,9 +327,7 @@ class _HeroSection extends StatelessWidget {
           child: Stack(
             children: [
               Positioned.fill(
-                child: _HeroBackground(
-                  title: game.title,
-                ),
+                child: _HeroBackground(game: game),
               ),
               Positioned.fill(
                 child: DecoratedBox(
@@ -171,7 +337,7 @@ class _HeroSection extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         background.withOpacity(0.05),
-                        background.withOpacity(0.4),
+                        background.withOpacity(0.35),
                         background,
                       ],
                       stops: const [0.0, 0.55, 1.0],
@@ -179,11 +345,11 @@ class _HeroSection extends StatelessWidget {
                   ),
                 ),
               ),
-              const Positioned(
+              Positioned(
                 left: 16,
                 right: 16,
                 bottom: 4,
-                child: _GenreBadges(),
+                child: _GenreBadges(game: game),
               ),
             ],
           ),
@@ -195,6 +361,36 @@ class _HeroSection extends StatelessWidget {
 
 class _HeroBackground extends StatelessWidget {
   const _HeroBackground({
+    required this.game,
+  });
+
+  final GameModel game;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = game.imageUrl;
+
+    if (imageUrl != null && imageUrl.trim().isNotEmpty) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _FallbackHeroBackground(title: game.title);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+
+          return _FallbackHeroBackground(title: game.title);
+        },
+      );
+    }
+
+    return _FallbackHeroBackground(title: game.title);
+  }
+}
+
+class _FallbackHeroBackground extends StatelessWidget {
+  const _FallbackHeroBackground({
     required this.title,
   });
 
@@ -310,11 +506,20 @@ class _ForestPainter extends CustomPainter {
 }
 
 class _GenreBadges extends StatelessWidget {
-  const _GenreBadges();
+  const _GenreBadges({
+    required this.game,
+  });
+
+  final GameModel game;
 
   @override
   Widget build(BuildContext context) {
-    final badges = ['RPG', 'ACTION', 'CD PROJEKT RED', '17+'];
+    final badges = <String>[
+      game.genre,
+      ...game.platforms.take(3),
+      if (game.esrbRating != null && game.esrbRating!.trim().isNotEmpty)
+        game.esrbRating!,
+    ].where((badge) => badge.trim().isNotEmpty).toList();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -334,7 +539,7 @@ class _GenreBadges extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Text(
-                badge,
+                badge.toUpperCase(),
                 maxLines: 1,
                 style: const TextStyle(
                   color: Color(0xFFF4F3F3),
@@ -471,9 +676,11 @@ class _PrimaryButton extends StatelessWidget {
 
 class _TrailerButton extends StatelessWidget {
   const _TrailerButton({
+    required this.hasTrailer,
     required this.onTap,
   });
 
+  final bool hasTrailer;
   final VoidCallback onTap;
 
   @override
@@ -483,14 +690,16 @@ class _TrailerButton extends StatelessWidget {
       height: 58,
       child: OutlinedButton.icon(
         onPressed: onTap,
-        icon: const Icon(
-          Icons.play_circle_outline_rounded,
-          color: Color(0xFFF4F3F3),
+        icon: Icon(
+          hasTrailer
+              ? Icons.play_circle_outline_rounded
+              : Icons.play_disabled_rounded,
+          color: const Color(0xFFF4F3F3),
           size: 25,
         ),
-        label: const Text(
-          'Трейлер',
-          style: TextStyle(
+        label: Text(
+          hasTrailer ? 'Трейлер' : 'Трейлер не найден',
+          style: const TextStyle(
             color: Color(0xFFF4F3F3),
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -518,14 +727,39 @@ class _RatingSection extends StatelessWidget {
   final GameModel game;
 
   String get ratingLabel {
-    if (game.rating >= 9.2) return 'Исключительно';
-    if (game.rating >= 8.0) return 'Отлично';
-    if (game.rating >= 7.0) return 'Хорошо';
-    return 'Средне';
+    if (game.rating >= 4.6) return 'Исключительно';
+    if (game.rating >= 4.0) return 'Отлично';
+    if (game.rating >= 3.5) return 'Хорошо';
+    if (game.rating > 0) return 'Средне';
+    return 'Нет оценки';
+  }
+
+  String get ratingsText {
+    final count = game.ratingsCount;
+
+    if (count == null || count <= 0) {
+      return 'Оценок пока нет';
+    }
+
+    return '$count оценок';
+  }
+
+  int get positiveFlex {
+    if (game.rating <= 0) return 25;
+
+    final calculated = (game.rating / 5 * 100).round();
+
+    if (calculated < 15) return 15;
+    if (calculated > 90) return 90;
+
+    return calculated;
   }
 
   @override
   Widget build(BuildContext context) {
+    final goodFlex = positiveFlex;
+    final otherFlex = 100 - goodFlex;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -551,9 +785,9 @@ class _RatingSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '7,321 оценок',
-            style: TextStyle(
+          Text(
+            ratingsText,
+            style: const TextStyle(
               color: Color(0xFFAAABAB),
               fontSize: 14,
             ),
@@ -561,33 +795,19 @@ class _RatingSection extends StatelessWidget {
           const SizedBox(height: 26),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
-                  flex: 75,
-                  child: ColoredBox(
+                  flex: goodFlex,
+                  child: const ColoredBox(
                     color: Color(0xFFBBFFB3),
                     child: SizedBox(height: 8),
                   ),
                 ),
                 Expanded(
-                  flex: 15,
-                  child: ColoredBox(
-                    color: Color(0xFF61ACFE),
-                    child: SizedBox(height: 8),
-                  ),
-                ),
-                Expanded(
-                  flex: 7,
-                  child: ColoredBox(
+                  flex: otherFlex,
+                  child: const ColoredBox(
                     color: Color(0xFF25B0BE),
-                    child: SizedBox(height: 8),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: ColoredBox(
-                    color: Color(0xFFFF716C),
                     child: SizedBox(height: 8),
                   ),
                 ),
@@ -595,12 +815,13 @@ class _RatingSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 26),
-          const Wrap(
+          Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _SmallBadge(text: '#1 RPG'),
-              _SmallBadge(text: '#1 TOP 2015'),
+              _SmallBadge(text: game.genre),
+              _SmallBadge(text: 'RAWG ${game.rating.toStringAsFixed(1)}'),
+              if (game.year > 0) _SmallBadge(text: 'TOP ${game.year}'),
             ],
           ),
         ],
@@ -616,6 +837,44 @@ class _MetaCards extends StatelessWidget {
 
   final GameModel game;
 
+  String get releaseText {
+    final released = game.released;
+
+    if (released == null || released.trim().isEmpty) {
+      return game.year.toString();
+    }
+
+    return released;
+  }
+
+  String get metacriticText {
+    final metacritic = game.metacritic;
+
+    if (metacritic == null || metacritic <= 0) {
+      return game.rating.toStringAsFixed(1);
+    }
+
+    return metacritic.toString();
+  }
+
+  String get developerText {
+    final developer = game.developer;
+
+    if (developer == null || developer.trim().isEmpty) {
+      return 'Не указан';
+    }
+
+    return developer;
+  }
+
+  String get platformsText {
+    if (game.platforms.isEmpty) {
+      return 'Не указаны';
+    }
+
+    return game.platforms.join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -623,16 +882,16 @@ class _MetaCards extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          const _MetaCard(
-            title: 'METASCORE',
-            value: '92',
+          _MetaCard(
+            title: game.metacritic == null ? 'РЕЙТИНГ' : 'METACRITIC',
+            value: metacriticText,
             icon: null,
             highlighted: true,
           ),
           const SizedBox(width: 8),
-          const _MetaCard(
+          _MetaCard(
             title: 'РЕЛИЗ',
-            value: 'May 18, 2015',
+            value: releaseText,
             icon: Icons.calendar_today_outlined,
           ),
           const SizedBox(width: 8),
@@ -642,10 +901,24 @@ class _MetaCards extends StatelessWidget {
             icon: Icons.access_time_rounded,
           ),
           const SizedBox(width: 8),
-          const _MetaCard(
+          _MetaCard(
+            title: 'РАЗРАБОТЧИК',
+            value: developerText,
+            icon: Icons.code_rounded,
+            wide: true,
+          ),
+          const SizedBox(width: 8),
+          _MetaCard(
             title: 'ПЛАТФОРМЫ',
-            value: 'PC, PS, Xbox',
+            value: platformsText,
             icon: Icons.sports_esports_rounded,
+            wide: true,
+          ),
+          const SizedBox(width: 8),
+          _MetaCard(
+            title: 'ВОЗРАСТ',
+            value: game.esrbRating ?? 'Не указан',
+            icon: Icons.verified_user_outlined,
             wide: true,
           ),
         ],
@@ -672,7 +945,7 @@ class _MetaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: wide ? 130 : 115,
+      width: wide ? 145 : 115,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFF232626),
@@ -711,6 +984,8 @@ class _MetaCard extends StatelessWidget {
               ),
               child: Text(
                 value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Color(0xFFBBFFB3),
                   fontSize: 20,
@@ -749,18 +1024,29 @@ class _MetaCard extends StatelessWidget {
 
 class _AboutSection extends StatelessWidget {
   const _AboutSection({
+    required this.game,
     required this.isExpanded,
     required this.onToggle,
   });
 
+  final GameModel game;
   final bool isExpanded;
   final VoidCallback onToggle;
 
-  static const String description =
-      'The Witcher 3: Wild Hunt is a story-driven, next-generation open world role-playing game set in a visually stunning fantasy universe full of meaningful choices and impactful consequences.';
+  String get description {
+    final apiDescription = game.description;
+
+    if (apiDescription == null || apiDescription.trim().isEmpty) {
+      return 'Описание для этой игры пока не найдено.';
+    }
+
+    return apiDescription;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final canExpand = description.length > 220;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -794,41 +1080,49 @@ class _AboutSection extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        GestureDetector(
-          onTap: onToggle,
-          child: Row(
-            children: [
-              Text(
-                isExpanded ? 'СВЕРНУТЬ' : 'РАСКРЫТЬ',
-                style: const TextStyle(
-                  color: Color(0xFF75EEFD),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.7,
+        if (canExpand) ...[
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onToggle,
+            child: Row(
+              children: [
+                Text(
+                  isExpanded ? 'СВЕРНУТЬ' : 'РАСКРЫТЬ',
+                  style: const TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.7,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                isExpanded
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                color: const Color(0xFF75EEFD),
-                size: 18,
-              ),
-            ],
+                const SizedBox(width: 4),
+                Icon(
+                  isExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: const Color(0xFF75EEFD),
+                  size: 18,
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 }
 
 class _ScreenshotsSection extends StatelessWidget {
-  const _ScreenshotsSection();
+  const _ScreenshotsSection({
+    required this.game,
+  });
+
+  final GameModel game;
 
   @override
   Widget build(BuildContext context) {
+    final screenshots = game.screenshots;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -841,32 +1135,62 @@ class _ScreenshotsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: 3,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              return Container(
-                width: 220,
-                decoration: BoxDecoration(
+        if (screenshots.isEmpty)
+          Container(
+            width: double.infinity,
+            height: 120,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF111414),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.04),
+              ),
+            ),
+            child: const Text(
+              'Скриншоты не найдены',
+              style: TextStyle(
+                color: Color(0xFFAAABAB),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 120,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: screenshots.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final screenshot = screenshots[index];
+
+                return ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF172026),
-                      index.isEven
-                          ? const Color(0xFFD28F4E)
-                          : const Color(0xFF25B0BE),
-                    ],
+                  child: Image.network(
+                    screenshot,
+                    width: 220,
+                    height: 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 220,
+                        height: 120,
+                        color: const Color(0xFF172026),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Color(0x80AAABAB),
+                          size: 30,
+                        ),
+                      );
+                    },
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -894,6 +1218,7 @@ class _SmallBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         text,
+        maxLines: 1,
         style: const TextStyle(
           color: Color(0xFFAAABAB),
           fontSize: 12,

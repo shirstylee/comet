@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../../data/mock_games.dart';
 import '../../models/game_model.dart';
+import '../../services/rawg_api_service.dart';
 import '../../widgets/game_search_card.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -15,8 +17,15 @@ class _SearchScreenState extends State<SearchScreen> {
   static const Color background = Color(0xFF0C0F0F);
 
   final TextEditingController searchController = TextEditingController();
+  final RawgApiService rawgApiService = RawgApiService();
+
+  Timer? searchDebounce;
 
   List<GameModel> results = [];
+  bool isLoading = false;
+  String? errorMessage;
+
+  int searchRequestId = 0;
 
   @override
   void initState() {
@@ -26,41 +35,57 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
+    searchDebounce?.cancel();
     searchController.removeListener(_searchGames);
     searchController.dispose();
     super.dispose();
   }
 
   void _searchGames() {
-    final query = searchController.text.trim().toLowerCase();
+    final query = searchController.text.trim();
 
-    setState(() {
-      if (query.isEmpty) {
+    searchDebounce?.cancel();
+
+    if (query.isEmpty) {
+      searchRequestId++;
+
+      setState(() {
         results = [];
-        return;
+        isLoading = false;
+        errorMessage = null;
+      });
+
+      return;
+    }
+
+    searchDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final currentRequestId = ++searchRequestId;
+
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+        results = [];
+      });
+
+      try {
+        final foundGames = await rawgApiService.searchGames(query);
+
+        if (!mounted || currentRequestId != searchRequestId) return;
+
+        setState(() {
+          results = foundGames;
+          isLoading = false;
+        });
+      } catch (_) {
+        if (!mounted || currentRequestId != searchRequestId) return;
+
+        setState(() {
+          isLoading = false;
+          errorMessage =
+          'Не удалось загрузить игры. Проверьте интернет или API ключ.';
+        });
       }
-
-      results = mockGames.where((game) {
-        return _matchesGameTitle(
-          title: game.title,
-          query: query,
-        );
-      }).toList();
     });
-  }
-
-  bool _matchesGameTitle({
-    required String title,
-    required String query,
-  }) {
-    final normalizedTitle = title.toLowerCase();
-
-    final words = normalizedTitle
-        .split(RegExp(r'[^a-zа-я0-9]+'))
-        .where((word) => word.isNotEmpty)
-        .toList();
-
-    return words.any((word) => word.startsWith(query));
   }
 
   void _clearSearch() {
@@ -70,7 +95,10 @@ class _SearchScreenState extends State<SearchScreen> {
   bool get _isInitialState => searchController.text.trim().isEmpty;
 
   bool get _isNoResultsState =>
-      searchController.text.trim().isNotEmpty && results.isEmpty;
+      searchController.text.trim().isNotEmpty &&
+          !isLoading &&
+          errorMessage == null &&
+          results.isEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +126,20 @@ class _SearchScreenState extends State<SearchScreen> {
     if (_isInitialState) {
       return const _InitialSearchState(
         key: ValueKey('initial-search-state'),
+      );
+    }
+
+    if (isLoading) {
+      return const _LoadingSearchState(
+        key: ValueKey('loading-search-state'),
+      );
+    }
+
+    if (errorMessage != null) {
+      return _SearchErrorState(
+        key: const ValueKey('error-search-state'),
+        message: errorMessage!,
+        onRetry: _searchGames,
       );
     }
 
@@ -267,6 +309,41 @@ class _InitialSearchState extends StatelessWidget {
   }
 }
 
+class _LoadingSearchState extends StatelessWidget {
+  const _LoadingSearchState({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: Color(0xFF75EEFD),
+          ),
+          SizedBox(height: 24),
+          Text(
+            'Ищем игры...',
+            style: TextStyle(
+              color: Color(0xFFF4F3F3),
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Получаем данные из RAWG API',
+            style: TextStyle(
+              color: Color(0xFFAAABAB),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NoResultsState extends StatelessWidget {
   const _NoResultsState({
     super.key,
@@ -302,14 +379,89 @@ class _NoResultsState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Попробуйте изменить запрос или\nпроверить написание названия игры.',
+          Text(
+            'По запросу "$query" ничего не найдено.\nПопробуйте изменить название игры.',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFFAAABAB),
               fontSize: 16,
               height: 1.5,
               fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchErrorState extends StatelessWidget {
+  const _SearchErrorState({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 120, 24, 0),
+      child: Column(
+        children: [
+          Icon(
+            Icons.wifi_off_rounded,
+            color: const Color(0xFFAAABAB).withOpacity(0.35),
+            size: 76,
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'Ошибка загрузки',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFFF4F3F3),
+              fontSize: 24,
+              height: 1.25,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFFAAABAB),
+              fontSize: 16,
+              height: 1.5,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: Color(0xFF75EEFD),
+              ),
+              label: const Text(
+                'Повторить',
+                style: TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(
+                  color: Color(0xFF75EEFD),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
             ),
           ),
         ],
