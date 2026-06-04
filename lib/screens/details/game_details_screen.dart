@@ -38,6 +38,8 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
       status: 'Планирую',
       addedAt: DateTime.now(),
       year: widget.game.year,
+      genre: widget.game.genre,
+      platforms: widget.game.platforms,
       apiRating: widget.game.rating,
       apiHours: widget.game.hours,
       userHours: 0,

@@ -9,6 +9,7 @@ class LibraryGameModel {
     this.imageUrl,
     this.year,
     this.genre = 'Action',
+    this.platforms = const [],
     this.apiRating,
     this.apiHours = 80,
     this.userHours = 0,
@@ -28,6 +29,7 @@ class LibraryGameModel {
   final int? year;
 
   final String genre;
+  final List<String> platforms;
 
   final double? apiRating;
   final int apiHours;
@@ -63,6 +65,7 @@ class LibraryGameModel {
     String? imageUrl,
     int? year,
     String? genre,
+    List<String>? platforms,
     double? apiRating,
     int? apiHours,
     int? userHours,
@@ -80,6 +83,7 @@ class LibraryGameModel {
       imageUrl: imageUrl ?? this.imageUrl,
       year: year ?? this.year,
       genre: genre ?? this.genre,
+      platforms: platforms ?? this.platforms,
       apiRating: apiRating ?? this.apiRating,
       apiHours: apiHours ?? this.apiHours,
       userHours: userHours ?? this.userHours,
@@ -100,6 +104,7 @@ class LibraryGameModel {
       'imageUrl': imageUrl,
       'year': year,
       'genre': genre,
+      'platforms': platforms,
       'apiRating': apiRating,
       'apiHours': apiHours,
       'userHours': userHours,
@@ -113,6 +118,7 @@ class LibraryGameModel {
 
   factory LibraryGameModel.fromMap(Map<dynamic, dynamic> map) {
     final rawStages = map['stages'];
+    final rawPlatforms = map['platforms'];
 
     return LibraryGameModel(
       id: map['id'] as int? ?? 0,
@@ -124,6 +130,9 @@ class LibraryGameModel {
       imageUrl: map['imageUrl'] as String?,
       year: map['year'] as int?,
       genre: map['genre'] as String? ?? 'Action',
+      platforms: rawPlatforms is List
+          ? rawPlatforms.map((platform) => platform.toString()).toList()
+          : const [],
       apiRating: (map['apiRating'] as num?)?.toDouble(),
       apiHours: map['apiHours'] as int? ?? 80,
       userHours: map['userHours'] as int? ?? 0,

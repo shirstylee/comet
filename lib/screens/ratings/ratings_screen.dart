@@ -131,7 +131,8 @@ class _RatingsScreenState extends State<RatingsScreen> {
     final Map<String, List<double>> grouped = {};
 
     for (final game in ratedGames) {
-      final genre = _genreForGame(game.title);
+      final genre = game.genre.trim().isEmpty ? 'Action' : game.genre.trim();
+
       grouped.putIfAbsent(genre, () => []);
       grouped[genre]!.add(_ratingOutOfTen(game.userRating));
     }
@@ -157,18 +158,6 @@ class _RatingsScreenState extends State<RatingsScreen> {
     if (rating < 1) return 1;
 
     return rating;
-  }
-
-  String _genreForGame(String title) {
-    final lowerTitle = title.toLowerCase();
-
-    if (lowerTitle.contains('witcher')) return 'RPG';
-    if (lowerTitle.contains('elden')) return 'RPG';
-    if (lowerTitle.contains('cyberpunk')) return 'RPG';
-    if (lowerTitle.contains('mario')) return 'Platformer';
-    if (lowerTitle.contains('alan')) return 'Horror';
-
-    return 'Action';
   }
 
   Color _ratingColor(double rating) {

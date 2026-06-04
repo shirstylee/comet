@@ -54,6 +54,7 @@ class GameSearchCard extends StatelessWidget {
       addedAt: DateTime.now(),
       year: game.year,
       genre: game.genre,
+      platforms: game.platforms,
       apiRating: game.rating,
       apiHours: game.hours,
       userHours: 0,

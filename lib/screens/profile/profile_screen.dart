@@ -117,7 +117,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final Map<String, int> genreCounts = {};
 
     for (final game in ratedGames) {
-      final genre = _genreForGame(game.title);
+      final genre = game.genre.trim().isEmpty ? 'Action' : game.genre.trim();
+
       genreCounts[genre] = (genreCounts[genre] ?? 0) + 1;
     }
 
@@ -137,19 +138,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (rating < 1) return 1;
 
     return rating;
-  }
-
-  String _genreForGame(String title) {
-    final lowerTitle = title.toLowerCase();
-
-    if (lowerTitle.contains('witcher')) return 'RPG';
-    if (lowerTitle.contains('elden')) return 'RPG';
-    if (lowerTitle.contains('cyberpunk')) return 'RPG';
-    if (lowerTitle.contains('mario')) return 'Platformer';
-    if (lowerTitle.contains('alan')) return 'Horror';
-    if (lowerTitle.contains('god')) return 'Action';
-
-    return 'Action';
   }
 
   Color _statusColor(String status) {
@@ -249,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _FeaturedReviewCard(
                     game: featured,
                     rating: _ratingOutOfTen(featured.userRating),
-                    genre: _genreForGame(featured.title),
+                    genre: featured.genre.trim().isEmpty ? 'Action' : featured.genre.trim(),
                     dateText: _formattedDate(featured.addedAt),
                     statusColor: _statusColor(featured.status),
                     statusText: _statusText(featured.status),
