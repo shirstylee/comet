@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/game_model.dart';
 import '../../models/game_stage_model.dart';
@@ -28,13 +28,27 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
 
   bool isDescriptionExpanded = false;
   bool isLoadingDetails = true;
+  bool isInLibrary = false;
   String? detailsError;
 
   @override
   void initState() {
     super.initState();
+
     game = widget.game;
+
     _loadGameDetails();
+    _checkLibraryStatus();
+  }
+
+  Future<void> _checkLibraryStatus() async {
+    final alreadyAdded = await LibraryStorage.containsGame(widget.game.id);
+
+    if (!mounted) return;
+
+    setState(() {
+      isInLibrary = alreadyAdded;
+    });
   }
 
   Future<void> _loadGameDetails() async {
@@ -52,6 +66,8 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
         game = detailedGame;
         isLoadingDetails = false;
       });
+
+      await _checkLibraryStatus();
     } catch (_) {
       if (!mounted) return;
 
@@ -68,6 +84,10 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
     if (!mounted) return;
 
     if (alreadyAdded) {
+      setState(() {
+        isInLibrary = true;
+      });
+
       _showMessage('${game.title} уже есть в коллекции');
       return;
     }
@@ -101,26 +121,32 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
 
     if (!mounted) return;
 
+    setState(() {
+      isInLibrary = true;
+    });
+
     _showMessage('${game.title} добавлена в коллекцию');
   }
 
   void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        backgroundColor: const Color(0xFF1A1D1D),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+      );
   }
 
   Future<void> _openTrailer() async {
@@ -131,17 +157,125 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
       return;
     }
 
-    await Clipboard.setData(
-      ClipboardData(text: trailerUrl),
+    final uri = Uri.tryParse(trailerUrl);
+
+    if (uri == null) {
+      _showMessage('Некорректная ссылка на трейлер');
+      return;
+    }
+
+    final shouldOpen = await _showTrailerWarningDialog();
+
+    if (!shouldOpen) return;
+
+    try {
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!mounted) return;
+
+      if (!opened) {
+        _showMessage('Не удалось открыть трейлер');
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      _showMessage('Не удалось открыть трейлер');
+    }
+  }
+
+  Future<bool> _showTrailerWarningDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.65),
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF111414),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: BorderSide(
+              color: Colors.white.withOpacity(0.06),
+            ),
+          ),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.open_in_browser_rounded,
+                color: Color(0xFF75EEFD),
+                size: 26,
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Открыть трейлер?',
+                  style: TextStyle(
+                    color: Color(0xFFF4F3F3),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Трейлер будет открыт во внешнем браузере или приложении YouTube.',
+            style: TextStyle(
+              color: Color(0xFFAAABAB),
+              fontSize: 14,
+              height: 1.45,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Отмена',
+                style: TextStyle(
+                  color: Color(0xFFAAABAB),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(
+                Icons.play_arrow_rounded,
+                color: Color(0xFF00575F),
+                size: 22,
+              ),
+              label: const Text(
+                'Открыть',
+                style: TextStyle(
+                  color: Color(0xFF00575F),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF75EEFD),
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
 
-    if (!mounted) return;
-
-    _showMessage('Ссылка на трейлер скопирована');
+    return result ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasTrailer =
+        game.trailerUrl != null && game.trailerUrl!.trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: background,
       body: Stack(
@@ -171,15 +305,19 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                           const SizedBox(height: 24),
                         ],
                         _PrimaryButton(
-                          text: 'Добавить в коллекцию',
-                          icon: Icons.add_rounded,
-                          onTap: _addGameToLibrary,
+                          text: isInLibrary
+                              ? 'УЖЕ В КОЛЛЕКЦИИ'
+                              : 'Добавить в коллекцию',
+                          icon: isInLibrary
+                              ? Icons.check_circle_rounded
+                              : Icons.add_rounded,
+                          isDisabled: isInLibrary,
+                          onTap: isInLibrary ? null : _addGameToLibrary,
                         ),
                         const SizedBox(height: 32),
                         _TrailerButton(
-                          hasTrailer: game.trailerUrl != null &&
-                              game.trailerUrl!.trim().isNotEmpty,
-                          onTap: _openTrailer,
+                          hasTrailer: hasTrailer,
+                          onTap: hasTrailer ? _openTrailer : null,
                         ),
                         const SizedBox(height: 32),
                         _RatingSection(game: game),
@@ -578,8 +716,8 @@ class _TopHeader extends StatelessWidget {
               child: Container(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0x80232626),
+                decoration: const BoxDecoration(
+                  color: Color(0x80232626),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -617,29 +755,50 @@ class _PrimaryButton extends StatelessWidget {
     required this.text,
     required this.icon,
     required this.onTap,
+    this.isDisabled = false,
   });
 
   final String text;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isDisabled;
 
   @override
   Widget build(BuildContext context) {
+    final Color textColor =
+    isDisabled ? const Color(0xFFAAABAB) : const Color(0xFF00575F);
+
+    final List<Color> gradientColors = isDisabled
+        ? const [
+      Color(0xFF2B2F2F),
+      Color(0xFF1D2020),
+    ]
+        : const [
+      Color(0xFF75EEFD),
+      Color(0xFF25B0BE),
+    ];
+
+    final Color shadowColor = isDisabled
+        ? Colors.black.withOpacity(0.16)
+        : const Color(0xFF75EEFD).withOpacity(0.2);
+
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF75EEFD),
-              Color(0xFF25B0BE),
-            ],
+          gradient: LinearGradient(
+            colors: gradientColors,
           ),
           borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: isDisabled
+                ? Colors.white.withOpacity(0.06)
+                : Colors.transparent,
+          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF75EEFD).withOpacity(0.2),
+              color: shadowColor,
               blurRadius: 30,
               offset: const Offset(0, 8),
             ),
@@ -649,19 +808,21 @@ class _PrimaryButton extends StatelessWidget {
           onPressed: onTap,
           icon: Icon(
             icon,
-            color: const Color(0xFF00575F),
+            color: textColor,
             size: 24,
           ),
           label: Text(
             text,
-            style: const TextStyle(
-              color: Color(0xFF00575F),
+            style: TextStyle(
+              color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.4,
             ),
           ),
           style: ElevatedButton.styleFrom(
+            disabledBackgroundColor: Colors.transparent,
+            disabledForegroundColor: textColor,
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             shape: RoundedRectangleBorder(
@@ -681,10 +842,16 @@ class _TrailerButton extends StatelessWidget {
   });
 
   final bool hasTrailer;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final Color borderColor =
+    hasTrailer ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.05);
+
+    final Color contentColor =
+    hasTrailer ? const Color(0xFFF4F3F3) : const Color(0xFF666B6B);
+
     return SizedBox(
       width: double.infinity,
       height: 58,
@@ -694,21 +861,22 @@ class _TrailerButton extends StatelessWidget {
           hasTrailer
               ? Icons.play_circle_outline_rounded
               : Icons.play_disabled_rounded,
-          color: const Color(0xFFF4F3F3),
+          color: contentColor,
           size: 25,
         ),
         label: Text(
-          hasTrailer ? 'Трейлер' : 'Трейлер не найден',
-          style: const TextStyle(
-            color: Color(0xFFF4F3F3),
+          hasTrailer ? 'Смотреть трейлер' : 'Трейлер не найден',
+          style: TextStyle(
+            color: contentColor,
             fontSize: 16,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.4,
           ),
         ),
         style: OutlinedButton.styleFrom(
+          disabledForegroundColor: contentColor,
           side: BorderSide(
-            color: Colors.white.withOpacity(0.1),
+            color: borderColor,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
@@ -1119,6 +1287,19 @@ class _ScreenshotsSection extends StatelessWidget {
 
   final GameModel game;
 
+  void _openScreenshotViewer(BuildContext context, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ScreenshotViewerScreen(
+          screenshots: game.screenshots,
+          initialIndex: initialIndex,
+          gameTitle: game.title,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenshots = game.screenshots;
@@ -1126,12 +1307,44 @@ class _ScreenshotsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            const Text(
+              'Скриншоты',
+              style: TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (screenshots.isNotEmpty)
+              Container(
+                height: 24,
+                padding: const EdgeInsets.symmetric(horizontal: 9),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF232626),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  screenshots.length.toString(),
+                  style: const TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
         const Text(
-          'Скриншоты',
+          'Нажмите на скриншот, чтобы открыть просмотр',
           style: TextStyle(
-            color: Color(0xFFF4F3F3),
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+            color: Color(0xFFAAABAB),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 16),
@@ -1158,7 +1371,7 @@ class _ScreenshotsSection extends StatelessWidget {
           )
         else
           SizedBox(
-            height: 120,
+            height: 126,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: screenshots.length,
@@ -1166,32 +1379,287 @@ class _ScreenshotsSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final screenshot = screenshots[index];
 
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    screenshot,
-                    width: 220,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 220,
-                        height: 120,
-                        color: const Color(0xFF172026),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Color(0x80AAABAB),
-                          size: 30,
+                return GestureDetector(
+                  onTap: () => _openScreenshotViewer(context, index),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          screenshot,
+                          width: 224,
+                          height: 126,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+
+                            return Container(
+                              width: 224,
+                              height: 126,
+                              color: const Color(0xFF172026),
+                              alignment: Alignment.center,
+                              child: const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF75EEFD),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 224,
+                              height: 126,
+                              color: const Color(0xFF172026),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.image_not_supported_outlined,
+                                color: Color(0x80AAABAB),
+                                size: 30,
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.08),
+                            ),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.25),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: const Color(0xCC0C0F0F),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.08),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.open_in_full_rounded,
+                            color: Color(0xFFF4F3F3),
+                            size: 15,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
             ),
           ),
       ],
+    );
+  }
+}
+
+class _ScreenshotViewerScreen extends StatefulWidget {
+  const _ScreenshotViewerScreen({
+    required this.screenshots,
+    required this.initialIndex,
+    required this.gameTitle,
+  });
+
+  final List<String> screenshots;
+  final int initialIndex;
+  final String gameTitle;
+
+  @override
+  State<_ScreenshotViewerScreen> createState() =>
+      _ScreenshotViewerScreenState();
+}
+
+class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
+  late final PageController pageController;
+  late int currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+
+    currentIndex = widget.initialIndex;
+    pageController = PageController(
+      initialPage: widget.initialIndex,
+    );
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: pageController,
+            itemCount: widget.screenshots.length,
+            onPageChanged: (index) {
+              setState(() {
+                currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final screenshot = widget.screenshots[index];
+
+              return Center(
+                child: InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: Image.network(
+                    screenshot,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF75EEFD),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Color(0xFFAAABAB),
+                          size: 46,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          SafeArea(
+            bottom: false,
+            child: Container(
+              height: 72,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.85),
+                    Colors.black.withOpacity(0),
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1D2020),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.08),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFFF4F3F3),
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.gameTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFF4F3F3),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Container(
+                    height: 34,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1D2020),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.08),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${currentIndex + 1}/${widget.screenshots.length}',
+                      style: const TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (widget.screenshots.length > 1)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 28,
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(widget.screenshots.length, (index) {
+                    final bool isActive = index == currentIndex;
+
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: isActive ? 18 : 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFF75EEFD)
+                            : Colors.white.withOpacity(0.28),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

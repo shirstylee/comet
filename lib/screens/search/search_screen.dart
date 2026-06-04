@@ -27,6 +27,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   int searchRequestId = 0;
 
+  String lastSearchedQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -41,13 +43,16 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  void _searchGames() {
+  void _searchGames({
+    bool force = false,
+  }) {
     final query = searchController.text.trim();
 
     searchDebounce?.cancel();
 
     if (query.isEmpty) {
       searchRequestId++;
+      lastSearchedQuery = '';
 
       setState(() {
         results = [];
@@ -58,7 +63,23 @@ class _SearchScreenState extends State<SearchScreen> {
       return;
     }
 
+    if (!force && query == lastSearchedQuery) {
+      return;
+    }
+
     searchDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final currentQuery = searchController.text.trim();
+
+      if (currentQuery.isEmpty) {
+        return;
+      }
+
+      if (!force && currentQuery == lastSearchedQuery) {
+        return;
+      }
+
+      lastSearchedQuery = currentQuery;
+
       final currentRequestId = ++searchRequestId;
 
       setState(() {
@@ -68,7 +89,7 @@ class _SearchScreenState extends State<SearchScreen> {
       });
 
       try {
-        final foundGames = await rawgApiService.searchGames(query);
+        final foundGames = await rawgApiService.searchGames(currentQuery);
 
         if (!mounted || currentRequestId != searchRequestId) return;
 
@@ -139,7 +160,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return _SearchErrorState(
         key: const ValueKey('error-search-state'),
         message: errorMessage!,
-        onRetry: _searchGames,
+        onRetry: () => _searchGames(force: true),
       );
     }
 
@@ -226,6 +247,7 @@ class _SearchHeader extends StatelessWidget {
                         controller: controller,
                         autofocus: true,
                         cursorColor: const Color(0xFF75EEFD),
+                        textInputAction: TextInputAction.search,
                         style: const TextStyle(
                           color: textPrimary,
                           fontSize: 16,
