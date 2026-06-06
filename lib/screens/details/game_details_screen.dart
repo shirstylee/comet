@@ -4,8 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/game_model.dart';
 import '../../models/game_stage_model.dart';
 import '../../models/library_game_model.dart';
+import '../../services/cover_cache_service.dart';
 import '../../services/rawg_api_service.dart';
 import '../../storage/library_storage.dart';
+import '../game_progress/game_progress_screen.dart';
 
 class GameDetailsScreen extends StatefulWidget {
   const GameDetailsScreen({
@@ -42,7 +44,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
   }
 
   Future<void> _checkLibraryStatus() async {
-    final alreadyAdded = await LibraryStorage.containsGame(widget.game.id);
+    final alreadyAdded = await LibraryStorage.containsGame(game.id);
 
     if (!mounted) return;
 
@@ -88,9 +90,16 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
         isInLibrary = true;
       });
 
-      _showMessage('${game.title} уже есть в коллекции');
+      await _openGameProgressScreen();
       return;
     }
+
+    _showMessage('Сохраняю ${game.title} в коллекцию...');
+
+    final localImagePath = await CoverCacheService.saveCompressedCover(
+      gameId: game.id,
+      imageUrl: game.imageUrl,
+    );
 
     final libraryGame = LibraryGameModel(
       id: game.id,
@@ -98,6 +107,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
       status: 'Планирую',
       addedAt: DateTime.now(),
       imageUrl: game.imageUrl,
+      localImagePath: localImagePath,
       year: game.year,
       genre: game.genre,
       platforms: game.platforms,
@@ -125,7 +135,43 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
       isInLibrary = true;
     });
 
-    _showMessage('${game.title} добавлена в коллекцию');
+    _showMessage(
+      localImagePath == null
+          ? 'Игра добавлена, но обложка не сохранилась'
+          : '${game.title} добавлена в коллекцию',
+    );
+  }
+
+  Future<void> _openGameProgressScreen() async {
+    final savedGame = await LibraryStorage.getGameById(game.id);
+
+    if (!mounted) return;
+
+    if (savedGame == null) {
+      setState(() {
+        isInLibrary = false;
+      });
+
+      _showMessage('Игра не найдена в коллекции');
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GameProgressScreen(
+          gameId: savedGame.id,
+          title: savedGame.title,
+          status: savedGame.status,
+          userHours: savedGame.userHours,
+          userMinutes: savedGame.userMinutes,
+          apiHours: savedGame.apiHours,
+          rating: savedGame.userRating ?? savedGame.apiRating ?? 0,
+        ),
+      ),
+    );
+
+    await _checkLibraryStatus();
   }
 
   void _showMessage(String text) {
@@ -306,13 +352,15 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                         ],
                         _PrimaryButton(
                           text: isInLibrary
-                              ? 'УЖЕ В КОЛЛЕКЦИИ'
+                              ? 'Уже в коллекции'
                               : 'Добавить в коллекцию',
                           icon: isInLibrary
                               ? Icons.check_circle_rounded
                               : Icons.add_rounded,
                           isDisabled: isInLibrary,
-                          onTap: isInLibrary ? null : _addGameToLibrary,
+                          onTap: isInLibrary
+                              ? _openGameProgressScreen
+                              : _addGameToLibrary,
                         ),
                         const SizedBox(height: 32),
                         _TrailerButton(
@@ -792,9 +840,8 @@ class _PrimaryButton extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isDisabled
-                ? Colors.white.withOpacity(0.06)
-                : Colors.transparent,
+            color:
+            isDisabled ? Colors.white.withOpacity(0.06) : Colors.transparent,
           ),
           boxShadow: [
             BoxShadow(
