@@ -118,7 +118,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     for (final game in ratedGames) {
       final genre = game.genre.trim().isEmpty ? 'Action' : game.genre.trim();
-
       genreCounts[genre] = (genreCounts[genre] ?? 0) + 1;
     }
 
@@ -133,7 +132,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   double _ratingOutOfTen(double? rating) {
     if (rating == null || rating <= 0) return 0;
-
     if (rating > 10) return 10;
     if (rating < 1) return 1;
 
@@ -193,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           userHours: game.userHours,
           userMinutes: game.userMinutes,
           apiHours: game.apiHours,
-          rating: game.apiRating ?? 0,
+          rating: game.userRating ?? game.apiRating ?? 0,
         ),
       ),
     );
@@ -237,7 +235,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _FeaturedReviewCard(
                     game: featured,
                     rating: _ratingOutOfTen(featured.userRating),
-                    genre: featured.genre.trim().isEmpty ? 'Action' : featured.genre.trim(),
+                    genre: featured.genre.trim().isEmpty
+                        ? 'Action'
+                        : featured.genre.trim(),
                     dateText: _formattedDate(featured.addedAt),
                     statusColor: _statusColor(featured.status),
                     statusText: _statusText(featured.status),
@@ -589,7 +589,8 @@ class _FeaturedReviewCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _FeaturedCover(
-                title: game.title,
+                localImagePath: game.localImagePath,
+                imageUrl: game.imageUrl,
                 statusText: statusText,
                 statusColor: statusColor,
               ),
@@ -610,7 +611,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$genre • ${_developerForGame(game.title)}',
+                      '$genre • $dateText',
                       style: const TextStyle(
                         color: Color(0xFF78716C),
                         fontSize: 14,
@@ -743,12 +744,14 @@ class _FeaturedReviewCard extends StatelessWidget {
 
 class _FeaturedCover extends StatelessWidget {
   const _FeaturedCover({
-    required this.title,
+    required this.localImagePath,
+    required this.imageUrl,
     required this.statusText,
     required this.statusColor,
   });
 
-  final String title;
+  final String? localImagePath;
+  final String? imageUrl;
   final String statusText;
   final Color statusColor;
 
@@ -767,24 +770,9 @@ class _FeaturedCover extends StatelessWidget {
         children: [
           Positioned.fill(
             child: _GameCoverArt(
-              title: title,
+              localImagePath: localImagePath,
+              imageUrl: imageUrl,
               iconSize: 82,
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    const Color(0xFF111414),
-                    const Color(0xFF111414).withOpacity(0.18),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
             ),
           ),
           Positioned(
@@ -861,7 +849,8 @@ class _SmallReviewCard extends StatelessWidget {
                   width: 80,
                   height: 80,
                   child: _GameCoverArt(
-                    title: game.title,
+                    localImagePath: game.localImagePath,
+                    imageUrl: game.imageUrl,
                     iconSize: 34,
                   ),
                 ),
@@ -943,53 +932,143 @@ class _SmallReviewCard extends StatelessWidget {
 
 class _GameCoverArt extends StatelessWidget {
   const _GameCoverArt({
-    required this.title,
+    required this.localImagePath,
+    required this.imageUrl,
     required this.iconSize,
   });
 
-  final String title;
+  final String? localImagePath;
+  final String? imageUrl;
   final double iconSize;
+
+  bool get _hasLocalImage {
+    final path = localImagePath;
+
+    if (path == null || path.trim().isEmpty) {
+      return false;
+    }
+
+    return File(path).existsSync();
+  }
+
+  bool get _hasNetworkImage {
+    final url = imageUrl;
+
+    return url != null && url.trim().isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lowerTitle = title.toLowerCase();
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildCover(),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  const Color(0xFF111414).withOpacity(0.92),
+                  const Color(0xFF111414).withOpacity(0.18),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.52, 1.0],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-    final colors = lowerTitle.contains('witcher')
-        ? const [
-      Color(0xFF0B1C1E),
-      Color(0xFF314845),
-      Color(0xFF111414),
-    ]
-        : lowerTitle.contains('cyberpunk')
-        ? const [
-      Color(0xFF07343D),
-      Color(0xFF2E6B6F),
-      Color(0xFF111414),
-    ]
-        : lowerTitle.contains('god')
-        ? const [
-      Color(0xFF5A2713),
-      Color(0xFFE9B256),
-      Color(0xFF111414),
-    ]
-        : const [
-      Color(0xFF172026),
-      Color(0xFF263A3A),
-      Color(0xFF111414),
-    ];
+  Widget _buildCover() {
+    if (_hasLocalImage) {
+      return Image.file(
+        File(localImagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildNetworkOrFallback();
+        },
+      );
+    }
+
+    return _buildNetworkOrFallback();
+  }
+
+  Widget _buildNetworkOrFallback() {
+    if (!_hasNetworkImage) {
+      return _GameCoverFallback(
+        iconSize: iconSize,
+      );
+    }
+
+    return Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return _GameCoverFallback(
+          iconSize: iconSize,
+          showLoader: true,
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return _GameCoverFallback(
+          iconSize: iconSize,
+        );
+      },
+    );
+  }
+}
+
+class _GameCoverFallback extends StatelessWidget {
+  const _GameCoverFallback({
+    required this.iconSize,
+    this.showLoader = false,
+  });
+
+  final double iconSize;
+  final bool showLoader;
+
+  @override
+  Widget build(BuildContext context) {
+    if (showLoader) {
+      return const ColoredBox(
+        color: Color(0xFF172026),
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF22D3EE),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: colors,
+          colors: [
+            Color(0xFF172026),
+            Color(0xFF263A3A),
+            Color(0xFF111414),
+          ],
         ),
       ),
       child: Center(
         child: Icon(
           Icons.sports_esports_rounded,
-          color: Colors.white.withOpacity(0.28),
+          color: Colors.white54,
           size: iconSize,
         ),
       ),
@@ -1042,15 +1121,4 @@ class _EmptyProfileRatings extends StatelessWidget {
       ),
     );
   }
-}
-
-String _developerForGame(String title) {
-  final lowerTitle = title.toLowerCase();
-
-  if (lowerTitle.contains('witcher')) return 'CD Projekt RED';
-  if (lowerTitle.contains('cyberpunk')) return 'CD Projekt RED';
-  if (lowerTitle.contains('god')) return 'Santa Monica Studio';
-  if (lowerTitle.contains('mario')) return 'Nintendo';
-
-  return 'Game Studio';
 }

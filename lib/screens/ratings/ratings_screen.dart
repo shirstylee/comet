@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
@@ -56,22 +58,24 @@ class _RatingsScreenState extends State<RatingsScreen> {
   }
 
   void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        backgroundColor: const Color(0xFF1A1D1D),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+      );
   }
 
   List<LibraryGameModel> get ratedGames {
@@ -221,7 +225,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
           userHours: game.userHours,
           userMinutes: game.userMinutes,
           apiHours: game.apiHours,
-          rating: game.apiRating ?? 0,
+          rating: game.userRating ?? game.apiRating ?? 0,
         ),
       ),
     );
@@ -903,8 +907,9 @@ class _RecentlyRatedCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _GameCoverPlaceholder(
-                title: game.title,
+              _GameCover(
+                localImagePath: game.localImagePath,
+                imageUrl: game.imageUrl,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -995,46 +1000,134 @@ class _RecentlyRatedCard extends StatelessWidget {
   }
 }
 
-class _GameCoverPlaceholder extends StatelessWidget {
-  const _GameCoverPlaceholder({
-    required this.title,
+class _GameCover extends StatelessWidget {
+  const _GameCover({
+    required this.localImagePath,
+    required this.imageUrl,
   });
 
-  final String title;
+  final String? localImagePath;
+  final String? imageUrl;
+
+  bool get _hasLocalImage {
+    final path = localImagePath;
+
+    if (path == null || path.trim().isEmpty) {
+      return false;
+    }
+
+    return File(path).existsSync();
+  }
+
+  bool get _hasNetworkImage {
+    final url = imageUrl;
+
+    return url != null && url.trim().isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lowerTitle = title.toLowerCase();
-
-    final colors = lowerTitle.contains('alan')
-        ? const [
-      Color(0xFF2A0505),
-      Color(0xFFC70B0B),
-    ]
-        : lowerTitle.contains('mario')
-        ? const [
-      Color(0xFF0A6FA8),
-      Color(0xFFEE3D3D),
-    ]
-        : lowerTitle.contains('cyberpunk')
-        ? const [
-      Color(0xFF263A3A),
-      Color(0xFFE6D845),
-    ]
-        : const [
-      Color(0xFF172026),
-      Color(0xFF4D5D60),
-    ];
-
     return Container(
       width: 64,
       height: 80,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
+        color: const Color(0xFF172026),
         borderRadius: BorderRadius.circular(8),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildCover(),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.transparent,
+                    const Color(0xFF111414).withOpacity(0.18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCover() {
+    if (_hasLocalImage) {
+      return Image.file(
+        File(localImagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildNetworkOrFallback();
+        },
+      );
+    }
+
+    return _buildNetworkOrFallback();
+  }
+
+  Widget _buildNetworkOrFallback() {
+    if (!_hasNetworkImage) {
+      return const _GameCoverFallback();
+    }
+
+    return Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return const _GameCoverFallback(showLoader: true);
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return const _GameCoverFallback();
+      },
+    );
+  }
+}
+
+class _GameCoverFallback extends StatelessWidget {
+  const _GameCoverFallback({
+    this.showLoader = false,
+  });
+
+  final bool showLoader;
+
+  @override
+  Widget build(BuildContext context) {
+    if (showLoader) {
+      return const ColoredBox(
+        color: Color(0xFF172026),
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF75EEFD),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: colors,
+          colors: [
+            Color(0xFF172026),
+            Color(0xFF4D5D60),
+          ],
         ),
       ),
       child: Center(
@@ -1238,7 +1331,10 @@ class _GamePickerItem extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              _GameCoverPlaceholder(title: game.title),
+              _GameCover(
+                localImagePath: game.localImagePath,
+                imageUrl: game.imageUrl,
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(

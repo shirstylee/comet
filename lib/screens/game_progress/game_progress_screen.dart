@@ -296,6 +296,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           title: widget.title,
           rating: currentRating,
           review: currentReview,
+          localImagePath: currentLocalImagePath,
+          imageUrl: currentImageUrl,
         ),
       ),
     );
@@ -1148,11 +1150,15 @@ class _ReviewScreen extends StatefulWidget {
     required this.title,
     required this.rating,
     required this.review,
+    required this.localImagePath,
+    required this.imageUrl,
   });
 
   final String title;
   final int rating;
   final String review;
+  final String? localImagePath;
+  final String? imageUrl;
 
   @override
   State<_ReviewScreen> createState() => _ReviewScreenState();
@@ -1238,7 +1244,10 @@ class _ReviewScreenState extends State<_ReviewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _ReviewHeroImage(),
+                _ReviewHeroImage(
+                  localImagePath: widget.localImagePath,
+                  imageUrl: widget.imageUrl,
+                ),
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
@@ -1416,7 +1425,29 @@ class _ReviewTopBar extends StatelessWidget {
 }
 
 class _ReviewHeroImage extends StatelessWidget {
-  const _ReviewHeroImage();
+  const _ReviewHeroImage({
+    required this.localImagePath,
+    required this.imageUrl,
+  });
+
+  final String? localImagePath;
+  final String? imageUrl;
+
+  bool get _hasLocalImage {
+    final path = localImagePath;
+
+    if (path == null || path.trim().isEmpty) {
+      return false;
+    }
+
+    return File(path).existsSync();
+  }
+
+  bool get _hasNetworkImage {
+    final url = imageUrl;
+
+    return url != null && url.trim().isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1433,7 +1464,76 @@ class _ReviewHeroImage extends StatelessWidget {
             offset: const Offset(0, 25),
           ),
         ],
-        gradient: const LinearGradient(
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildCover(),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    const Color(0xFF0C0F0F),
+                    const Color(0xFF0C0F0F).withOpacity(0.20),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCover() {
+    if (_hasLocalImage) {
+      return Image.file(
+        File(localImagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildNetworkOrFallback();
+        },
+      );
+    }
+
+    return _buildNetworkOrFallback();
+  }
+
+  Widget _buildNetworkOrFallback() {
+    if (!_hasNetworkImage) {
+      return const _ReviewHeroFallback();
+    }
+
+    return Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return const _ReviewHeroFallback();
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return const _ReviewHeroFallback();
+      },
+    );
+  }
+}
+
+class _ReviewHeroFallback extends StatelessWidget {
+  const _ReviewHeroFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
@@ -1443,32 +1543,12 @@ class _ReviewHeroImage extends StatelessWidget {
           ],
         ),
       ),
-      child: Stack(
-        children: [
-          Center(
-            child: Icon(
-              Icons.sports_esports_rounded,
-              color: Colors.white.withOpacity(0.12),
-              size: 120,
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    const Color(0xFF0C0F0F),
-                    const Color(0xFF0C0F0F).withOpacity(0.2),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: Center(
+        child: Icon(
+          Icons.sports_esports_rounded,
+          color: Colors.white.withOpacity(0.12),
+          size: 120,
+        ),
       ),
     );
   }
