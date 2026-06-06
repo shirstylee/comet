@@ -4,6 +4,7 @@ import '../models/game_model.dart';
 import '../models/game_stage_model.dart';
 import '../models/library_game_model.dart';
 import '../screens/details/game_details_screen.dart';
+import '../services/cover_cache_service.dart';
 import '../storage/library_storage.dart';
 
 class GameSearchCard extends StatelessWidget {
@@ -47,12 +48,25 @@ class GameSearchCard extends StatelessWidget {
       return;
     }
 
+    _showSnackBar(
+      context,
+      'Сохраняю ${game.title} в коллекцию...',
+    );
+
+    final localImagePath = await CoverCacheService.saveCompressedCover(
+      gameId: game.id,
+      imageUrl: game.imageUrl,
+    );
+
+    if (!context.mounted) return;
+
     final libraryGame = LibraryGameModel(
       id: game.id,
       title: game.title,
       status: 'Планирую',
       addedAt: DateTime.now(),
       imageUrl: game.imageUrl,
+      localImagePath: localImagePath,
       year: game.year,
       genre: game.genre,
       platforms: game.platforms,
@@ -80,7 +94,9 @@ class GameSearchCard extends StatelessWidget {
 
     _showSnackBar(
       context,
-      '${game.title} добавлена в коллекцию',
+      localImagePath == null
+          ? 'Игра добавлена, но обложка не сохранилась'
+          : '${game.title} добавлена в коллекцию',
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/library_game_model.dart';
+import '../services/cover_cache_service.dart';
 
 class LibraryStorage {
   static const String _boxName = 'library_games';
@@ -42,6 +43,13 @@ class LibraryStorage {
 
   static Future<void> deleteGame(int gameId) async {
     final box = await _openBox();
+    final value = box.get(gameId);
+
+    if (value is Map) {
+      final game = LibraryGameModel.fromMap(value);
+
+      await CoverCacheService.deleteCover(game.localImagePath);
+    }
 
     await box.delete(gameId);
   }
@@ -54,7 +62,6 @@ class LibraryStorage {
 
   static Future<LibraryGameModel?> getGameById(int gameId) async {
     final box = await _openBox();
-
     final value = box.get(gameId);
 
     if (value is Map) {
@@ -66,6 +73,14 @@ class LibraryStorage {
 
   static Future<void> clearLibrary() async {
     final box = await _openBox();
+
+    for (final value in box.values) {
+      if (value is Map) {
+        final game = LibraryGameModel.fromMap(value);
+
+        await CoverCacheService.deleteCover(game.localImagePath);
+      }
+    }
 
     await box.clear();
   }

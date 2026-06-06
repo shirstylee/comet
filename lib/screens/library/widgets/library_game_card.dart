@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../models/library_game_model.dart';
@@ -95,7 +97,10 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: _CoverGradient(index: widget.imageIndex),
+                    child: _LibraryCover(
+                      game: currentGame,
+                      imageIndex: widget.imageIndex,
+                    ),
                   ),
                   Positioned.fill(
                     child: DecoratedBox(
@@ -359,6 +364,85 @@ class _CardMenuButton extends StatelessWidget {
           size: 22,
         ),
       ),
+    );
+  }
+}
+
+class _LibraryCover extends StatelessWidget {
+  const _LibraryCover({
+    required this.game,
+    required this.imageIndex,
+  });
+
+  final LibraryGameModel game;
+  final int imageIndex;
+
+  bool get _hasLocalImage {
+    final path = game.localImagePath;
+
+    if (path == null || path.trim().isEmpty) {
+      return false;
+    }
+
+    return File(path).existsSync();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasLocalImage) {
+      return Image.file(
+        File(game.localImagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _NetworkOrGradientCover(
+            game: game,
+            imageIndex: imageIndex,
+          );
+        },
+      );
+    }
+
+    return _NetworkOrGradientCover(
+      game: game,
+      imageIndex: imageIndex,
+    );
+  }
+}
+
+class _NetworkOrGradientCover extends StatelessWidget {
+  const _NetworkOrGradientCover({
+    required this.game,
+    required this.imageIndex,
+  });
+
+  final LibraryGameModel game;
+  final int imageIndex;
+
+  bool get _hasNetworkImage {
+    final url = game.imageUrl;
+
+    return url != null && url.trim().isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasNetworkImage) {
+      return _CoverGradient(index: imageIndex);
+    }
+
+    return Image.network(
+      game.imageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return _CoverGradient(index: imageIndex);
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return _CoverGradient(index: imageIndex);
+      },
     );
   }
 }

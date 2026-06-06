@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/game_stage_model.dart';
@@ -56,6 +58,9 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   static const Color textSecondary = Color(0xFFAAABAB);
 
   bool isFavorite = false;
+
+  String? currentImageUrl;
+  String? currentLocalImagePath;
 
   late String currentStatus = widget.status;
   int currentRating = 0;
@@ -145,6 +150,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       userHours = game.userHours;
       userMinutes = game.userMinutes;
       isFavorite = game.isFavorite;
+      currentImageUrl = game.imageUrl;
+      currentLocalImagePath = game.localImagePath;
       currentRating = game.userRating == null
           ? 0
           : game.userRating!.round().clamp(1, 10).toInt();
@@ -1037,7 +1044,10 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _GameHeroImage(),
+                _GameHeroImage(
+                  localImagePath: currentLocalImagePath,
+                  imageUrl: currentImageUrl,
+                ),
                 const SizedBox(height: 24),
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -2126,7 +2136,29 @@ class _TopBar extends StatelessWidget {
 }
 
 class _GameHeroImage extends StatelessWidget {
-  const _GameHeroImage();
+  const _GameHeroImage({
+    required this.localImagePath,
+    required this.imageUrl,
+  });
+
+  final String? localImagePath;
+  final String? imageUrl;
+
+  bool get _hasLocalImage {
+    final path = localImagePath;
+
+    if (path == null || path.trim().isEmpty) {
+      return false;
+    }
+
+    return File(path).existsSync();
+  }
+
+  bool get _hasNetworkImage {
+    final url = imageUrl;
+
+    return url != null && url.trim().isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2136,7 +2168,83 @@ class _GameHeroImage extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        gradient: const LinearGradient(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.8),
+            blurRadius: 50,
+            offset: const Offset(0, 25),
+          ),
+        ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildCover(),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    const Color(0xFF0C0F0F),
+                    const Color(0xFF0C0F0F).withOpacity(0.20),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCover() {
+    if (_hasLocalImage) {
+      return Image.file(
+        File(localImagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildNetworkOrFallback();
+        },
+      );
+    }
+
+    return _buildNetworkOrFallback();
+  }
+
+  Widget _buildNetworkOrFallback() {
+    if (!_hasNetworkImage) {
+      return const _GameHeroFallback();
+    }
+
+    return Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return const _GameHeroFallback();
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return const _GameHeroFallback();
+      },
+    );
+  }
+}
+
+class _GameHeroFallback extends StatelessWidget {
+  const _GameHeroFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
@@ -2156,7 +2264,6 @@ class _GameHeroImage extends StatelessWidget {
     );
   }
 }
-
 class _GenreBadge extends StatelessWidget {
   const _GenreBadge({
     required this.text,

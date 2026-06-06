@@ -7,6 +7,7 @@ class LibraryGameModel {
     required this.status,
     required this.addedAt,
     this.imageUrl,
+    this.localImagePath,
     this.year,
     this.genre = 'Action',
     this.platforms = const [],
@@ -25,7 +26,13 @@ class LibraryGameModel {
   final String status;
   final DateTime addedAt;
 
+  // Ссылка на оригинальную обложку из RAWG.
   final String? imageUrl;
+
+  // Путь к сжатой обложке, которая хранится на устройстве.
+  // В Hive сохраняем только путь, а не саму картинку.
+  final String? localImagePath;
+
   final int? year;
 
   final String genre;
@@ -63,6 +70,7 @@ class LibraryGameModel {
     String? status,
     DateTime? addedAt,
     String? imageUrl,
+    String? localImagePath,
     int? year,
     String? genre,
     List<String>? platforms,
@@ -81,6 +89,7 @@ class LibraryGameModel {
       status: status ?? this.status,
       addedAt: addedAt ?? this.addedAt,
       imageUrl: imageUrl ?? this.imageUrl,
+      localImagePath: localImagePath ?? this.localImagePath,
       year: year ?? this.year,
       genre: genre ?? this.genre,
       platforms: platforms ?? this.platforms,
@@ -102,6 +111,7 @@ class LibraryGameModel {
       'status': status,
       'addedAt': addedAt.toIso8601String(),
       'imageUrl': imageUrl,
+      'localImagePath': localImagePath,
       'year': year,
       'genre': genre,
       'platforms': platforms,
@@ -128,6 +138,7 @@ class LibraryGameModel {
           ? DateTime.now()
           : DateTime.tryParse(map['addedAt'].toString()) ?? DateTime.now(),
       imageUrl: map['imageUrl'] as String?,
+      localImagePath: map['localImagePath'] as String?,
       year: map['year'] as int?,
       genre: map['genre'] as String? ?? 'Action',
       platforms: rawPlatforms is List
@@ -141,9 +152,7 @@ class LibraryGameModel {
       comment: map['comment'] as String?,
       isFavorite: map['isFavorite'] as bool? ?? false,
       stages: rawStages is List
-          ? rawStages
-          .map((stage) => GameStageModel.fromMap(stage))
-          .toList()
+          ? rawStages.map((stage) => GameStageModel.fromMap(stage)).toList()
           : const [],
     );
   }

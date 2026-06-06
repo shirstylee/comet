@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
@@ -707,24 +709,9 @@ class _GameActivityCard extends StatelessWidget {
             children: [
               Opacity(
                 opacity: isCompleted ? 0.58 : 1,
-                child: Container(
-                  width: 64,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: imageGradient,
-                    ),
-                  ),
-                  child: Icon(
-                    game.isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.sports_esports_rounded,
-                    color: Colors.white.withOpacity(0.18),
-                    size: 30,
-                  ),
+                child: _HomeGameCover(
+                  game: game,
+                  gradientColors: imageGradient,
                 ),
               ),
               const SizedBox(width: 16),
@@ -830,6 +817,98 @@ class _GameActivityCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HomeGameCover extends StatelessWidget {
+  const _HomeGameCover({
+    required this.game,
+    required this.gradientColors,
+  });
+
+  final LibraryGameModel game;
+  final List<Color> gradientColors;
+
+  bool get _hasLocalImage {
+    final path = game.localImagePath;
+
+    if (path == null || path.trim().isEmpty) {
+      return false;
+    }
+
+    return File(path).existsSync();
+  }
+
+  bool get _hasNetworkImage {
+    final url = game.imageUrl;
+
+    return url != null && url.trim().isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 64,
+        height: 80,
+        child: _buildCover(),
+      ),
+    );
+  }
+
+  Widget _buildCover() {
+    if (_hasLocalImage) {
+      return Image.file(
+        File(game.localImagePath!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildNetworkOrFallback();
+        },
+      );
+    }
+
+    return _buildNetworkOrFallback();
+  }
+
+  Widget _buildNetworkOrFallback() {
+    if (!_hasNetworkImage) {
+      return _buildFallback();
+    }
+
+    return Image.network(
+      game.imageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return _buildFallback();
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return _buildFallback();
+      },
+    );
+  }
+
+  Widget _buildFallback() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+      ),
+      child: Icon(
+        game.isFavorite
+            ? Icons.favorite_rounded
+            : Icons.sports_esports_rounded,
+        color: Colors.white.withOpacity(0.18),
+        size: 30,
       ),
     );
   }
