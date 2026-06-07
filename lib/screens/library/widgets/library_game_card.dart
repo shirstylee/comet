@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../models/library_game_model.dart';
 import '../../../storage/library_storage.dart';
+import '../../../widgets/game_cover.dart';
 import '../../game_progress/game_progress_screen.dart';
 
 class LibraryGameCard extends StatefulWidget {
@@ -97,9 +96,14 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: _LibraryCover(
-                      game: currentGame,
-                      imageIndex: widget.imageIndex,
+                    child: GameCover(
+                      width: double.infinity,
+                      height: double.infinity,
+                      localImagePath: currentGame.localImagePath,
+                      imageUrl: currentGame.imageUrl,
+                      borderRadius: 0,
+                      iconSize: 96,
+                      gradientOpacity: 0.0,
                     ),
                   ),
                   Positioned.fill(
@@ -362,138 +366,6 @@ class _CardMenuButton extends StatelessWidget {
           Icons.more_horiz_rounded,
           color: Color(0xFFF4F3F3),
           size: 22,
-        ),
-      ),
-    );
-  }
-}
-
-class _LibraryCover extends StatelessWidget {
-  const _LibraryCover({
-    required this.game,
-    required this.imageIndex,
-  });
-
-  final LibraryGameModel game;
-  final int imageIndex;
-
-  bool get _hasLocalImage {
-    final path = game.localImagePath;
-
-    if (path == null || path.trim().isEmpty) {
-      return false;
-    }
-
-    return File(path).existsSync();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_hasLocalImage) {
-      return Image.file(
-        File(game.localImagePath!),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _NetworkOrGradientCover(
-            game: game,
-            imageIndex: imageIndex,
-          );
-        },
-      );
-    }
-
-    return _NetworkOrGradientCover(
-      game: game,
-      imageIndex: imageIndex,
-    );
-  }
-}
-
-class _NetworkOrGradientCover extends StatelessWidget {
-  const _NetworkOrGradientCover({
-    required this.game,
-    required this.imageIndex,
-  });
-
-  final LibraryGameModel game;
-  final int imageIndex;
-
-  bool get _hasNetworkImage {
-    final url = game.imageUrl;
-
-    return url != null && url.trim().isNotEmpty;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_hasNetworkImage) {
-      return _CoverGradient(index: imageIndex);
-    }
-
-    return Image.network(
-      game.imageUrl!,
-      fit: BoxFit.cover,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
-        }
-
-        return _CoverGradient(index: imageIndex);
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return _CoverGradient(index: imageIndex);
-      },
-    );
-  }
-}
-
-class _CoverGradient extends StatelessWidget {
-  const _CoverGradient({
-    required this.index,
-  });
-
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final gradients = [
-      [
-        const Color(0xFF0E1C1D),
-        const Color(0xFF304A4D),
-        const Color(0xFF111414),
-      ],
-      [
-        const Color(0xFF131F22),
-        const Color(0xFF143C45),
-        const Color(0xFF1D2020),
-      ],
-      [
-        const Color(0xFFE7E7E7),
-        const Color(0xFF7F8585),
-        const Color(0xFF1D2020),
-      ],
-      [
-        const Color(0xFF1C160E),
-        const Color(0xFF7B5131),
-        const Color(0xFF111414),
-      ],
-    ];
-
-    final colors = gradients[index % gradients.length];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: colors,
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.sports_esports_rounded,
-          color: Colors.white.withOpacity(0.12),
-          size: 96,
         ),
       ),
     );

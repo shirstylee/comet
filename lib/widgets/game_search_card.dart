@@ -7,6 +7,7 @@ import '../screens/details/game_details_screen.dart';
 import '../screens/game_progress/game_progress_screen.dart';
 import '../services/cover_cache_service.dart';
 import '../storage/library_storage.dart';
+import '../widgets/game_cover.dart';
 
 class GameSearchCard extends StatelessWidget {
   const GameSearchCard({
@@ -481,68 +482,15 @@ class _GameCover extends StatelessWidget {
 
   final String? imageUrl;
 
-  bool get hasImage {
-    return imageUrl != null && imageUrl!.trim().isNotEmpty;
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!hasImage) {
-      return const _CoverPlaceholder(
-        width: 112,
-        height: 160,
-        iconSize: 34,
-        borderRadius: 0,
-      );
-    }
-
-    return SizedBox(
+    return GameCover(
       width: 112,
       height: 160,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(
-            imageUrl!,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) {
-                return child;
-              }
-
-              return const _CoverPlaceholder(
-                width: 112,
-                height: 160,
-                iconSize: 28,
-                borderRadius: 0,
-                showLoader: true,
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return const _CoverPlaceholder(
-                width: 112,
-                height: 160,
-                iconSize: 34,
-                borderRadius: 0,
-              );
-            },
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.transparent,
-                    const Color(0xFF111414).withOpacity(0.42),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      imageUrl: imageUrl,
+      borderRadius: 0,
+      iconSize: 34,
+      gradientOpacity: 0.42,
     );
   }
 }
@@ -554,96 +502,15 @@ class _SmallCover extends StatelessWidget {
 
   final String? imageUrl;
 
-  bool get hasImage {
-    return imageUrl != null && imageUrl!.trim().isNotEmpty;
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!hasImage) {
-      return const _CoverPlaceholder(
-        width: 54,
-        height: 70,
-        iconSize: 24,
-        borderRadius: 10,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: SizedBox(
-        width: 54,
-        height: 70,
-        child: Image.network(
-          imageUrl!,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) {
-              return child;
-            }
-
-            return const _CoverPlaceholder(
-              width: 54,
-              height: 70,
-              iconSize: 18,
-              borderRadius: 10,
-              showLoader: true,
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return const _CoverPlaceholder(
-              width: 54,
-              height: 70,
-              iconSize: 24,
-              borderRadius: 10,
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CoverPlaceholder extends StatelessWidget {
-  const _CoverPlaceholder({
-    required this.width,
-    required this.height,
-    required this.iconSize,
-    required this.borderRadius,
-    this.showLoader = false,
-  });
-
-  final double width;
-  final double height;
-  final double iconSize;
-  final double borderRadius;
-  final bool showLoader;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
-        borderRadius: BorderRadius.circular(borderRadius),
-      ),
-      child: Center(
-        child: showLoader
-            ? SizedBox(
-          width: iconSize,
-          height: iconSize,
-          child: const CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Color(0xFF75EEFD),
-          ),
-        )
-            : Icon(
-          Icons.image_outlined,
-          color: const Color(0x80AAABAB),
-          size: iconSize,
-        ),
-      ),
+    return GameCover(
+      width: 54,
+      height: 70,
+      imageUrl: imageUrl,
+      borderRadius: 10,
+      iconSize: 24,
+      gradientOpacity: 0.14,
     );
   }
 }

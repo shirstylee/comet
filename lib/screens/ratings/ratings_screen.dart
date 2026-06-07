@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
 import '../../storage/library_storage.dart';
+import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
 import '../search/search_screen.dart';
 
@@ -907,9 +906,14 @@ class _RecentlyRatedCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _GameCover(
+              GameCover(
+                width: 64,
+                height: 80,
                 localImagePath: game.localImagePath,
                 imageUrl: game.imageUrl,
+                borderRadius: 8,
+                iconSize: 30,
+                gradientOpacity: 0.18,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -994,147 +998,6 @@ class _RecentlyRatedCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GameCover extends StatelessWidget {
-  const _GameCover({
-    required this.localImagePath,
-    required this.imageUrl,
-  });
-
-  final String? localImagePath;
-  final String? imageUrl;
-
-  bool get _hasLocalImage {
-    final path = localImagePath;
-
-    if (path == null || path.trim().isEmpty) {
-      return false;
-    }
-
-    return File(path).existsSync();
-  }
-
-  bool get _hasNetworkImage {
-    final url = imageUrl;
-
-    return url != null && url.trim().isNotEmpty;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 80,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: const Color(0xFF172026),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildCover(),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.transparent,
-                    const Color(0xFF111414).withOpacity(0.18),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCover() {
-    if (_hasLocalImage) {
-      return Image.file(
-        File(localImagePath!),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildNetworkOrFallback();
-        },
-      );
-    }
-
-    return _buildNetworkOrFallback();
-  }
-
-  Widget _buildNetworkOrFallback() {
-    if (!_hasNetworkImage) {
-      return const _GameCoverFallback();
-    }
-
-    return Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
-        }
-
-        return const _GameCoverFallback(showLoader: true);
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return const _GameCoverFallback();
-      },
-    );
-  }
-}
-
-class _GameCoverFallback extends StatelessWidget {
-  const _GameCoverFallback({
-    this.showLoader = false,
-  });
-
-  final bool showLoader;
-
-  @override
-  Widget build(BuildContext context) {
-    if (showLoader) {
-      return const ColoredBox(
-        color: Color(0xFF172026),
-        child: Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Color(0xFF75EEFD),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF172026),
-            Color(0xFF4D5D60),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.sports_esports_rounded,
-          color: Colors.white.withOpacity(0.32),
-          size: 30,
         ),
       ),
     );
@@ -1331,9 +1194,14 @@ class _GamePickerItem extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              _GameCover(
+              GameCover(
+                width: 64,
+                height: 80,
                 localImagePath: game.localImagePath,
                 imageUrl: game.imageUrl,
+                borderRadius: 8,
+                iconSize: 30,
+                gradientOpacity: 0.18,
               ),
               const SizedBox(width: 14),
               Expanded(

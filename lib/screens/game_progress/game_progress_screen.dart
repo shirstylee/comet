@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../models/game_stage_model.dart';
 import '../../storage/library_storage.dart';
+import '../../widgets/game_cover.dart';
 import 'widgets/progress_card.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/timeline_item.dart';
@@ -1433,28 +1432,11 @@ class _ReviewHeroImage extends StatelessWidget {
   final String? localImagePath;
   final String? imageUrl;
 
-  bool get _hasLocalImage {
-    final path = localImagePath;
-
-    if (path == null || path.trim().isEmpty) {
-      return false;
-    }
-
-    return File(path).existsSync();
-  }
-
-  bool get _hasNetworkImage {
-    final url = imageUrl;
-
-    return url != null && url.trim().isNotEmpty;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 358,
       width: double.infinity,
-      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -1465,90 +1447,14 @@ class _ReviewHeroImage extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildCover(),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    const Color(0xFF0C0F0F),
-                    const Color(0xFF0C0F0F).withOpacity(0.20),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCover() {
-    if (_hasLocalImage) {
-      return Image.file(
-        File(localImagePath!),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildNetworkOrFallback();
-        },
-      );
-    }
-
-    return _buildNetworkOrFallback();
-  }
-
-  Widget _buildNetworkOrFallback() {
-    if (!_hasNetworkImage) {
-      return const _ReviewHeroFallback();
-    }
-
-    return Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
-        }
-
-        return const _ReviewHeroFallback();
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return const _ReviewHeroFallback();
-      },
-    );
-  }
-}
-
-class _ReviewHeroFallback extends StatelessWidget {
-  const _ReviewHeroFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF162323),
-            Color(0xFF39432C),
-            Color(0xFF0C0F0F),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.sports_esports_rounded,
-          color: Colors.white.withOpacity(0.12),
-          size: 120,
-        ),
+      child: GameCover(
+        width: double.infinity,
+        height: 358,
+        localImagePath: localImagePath,
+        imageUrl: imageUrl,
+        borderRadius: 12,
+        iconSize: 120,
+        gradientOpacity: 0.20,
       ),
     );
   }
@@ -2224,28 +2130,11 @@ class _GameHeroImage extends StatelessWidget {
   final String? localImagePath;
   final String? imageUrl;
 
-  bool get _hasLocalImage {
-    final path = localImagePath;
-
-    if (path == null || path.trim().isEmpty) {
-      return false;
-    }
-
-    return File(path).existsSync();
-  }
-
-  bool get _hasNetworkImage {
-    final url = imageUrl;
-
-    return url != null && url.trim().isNotEmpty;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 358,
       width: double.infinity,
-      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -2256,94 +2145,19 @@ class _GameHeroImage extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildCover(),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    const Color(0xFF0C0F0F),
-                    const Color(0xFF0C0F0F).withOpacity(0.20),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCover() {
-    if (_hasLocalImage) {
-      return Image.file(
-        File(localImagePath!),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildNetworkOrFallback();
-        },
-      );
-    }
-
-    return _buildNetworkOrFallback();
-  }
-
-  Widget _buildNetworkOrFallback() {
-    if (!_hasNetworkImage) {
-      return const _GameHeroFallback();
-    }
-
-    return Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
-        }
-
-        return const _GameHeroFallback();
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return const _GameHeroFallback();
-      },
-    );
-  }
-}
-
-class _GameHeroFallback extends StatelessWidget {
-  const _GameHeroFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF162323),
-            Color(0xFF39432C),
-            Color(0xFF0C0F0F),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.auto_awesome_rounded,
-          color: Colors.white.withOpacity(0.18),
-          size: 120,
-        ),
+      child: GameCover(
+        width: double.infinity,
+        height: 358,
+        localImagePath: localImagePath,
+        imageUrl: imageUrl,
+        borderRadius: 12,
+        iconSize: 120,
+        gradientOpacity: 0.20,
       ),
     );
   }
 }
+
 class _GenreBadge extends StatelessWidget {
   const _GenreBadge({
     required this.text,

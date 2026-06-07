@@ -7,6 +7,7 @@ import '../../models/library_game_model.dart';
 import '../../services/cover_cache_service.dart';
 import '../../services/rawg_api_service.dart';
 import '../../storage/library_storage.dart';
+import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
 
 class GameDetailsScreen extends StatefulWidget {
@@ -554,141 +555,15 @@ class _HeroBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = game.imageUrl;
-
-    if (imageUrl != null && imageUrl.trim().isNotEmpty) {
-      return Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _FallbackHeroBackground(title: game.title);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-
-          return _FallbackHeroBackground(title: game.title);
-        },
-      );
-    }
-
-    return _FallbackHeroBackground(title: game.title);
-  }
-}
-
-class _FallbackHeroBackground extends StatelessWidget {
-  const _FallbackHeroBackground({
-    required this.title,
-  });
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool witcher = title.toLowerCase().contains('witcher');
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: witcher
-              ? const [
-            Color(0xFF122026),
-            Color(0xFF1B2B2E),
-            Color(0xFF071010),
-          ]
-              : const [
-            Color(0xFF172026),
-            Color(0xFF263A3A),
-            Color(0xFF071010),
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: -40,
-            right: -40,
-            top: 70,
-            child: Container(
-              height: 140,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 30,
-            child: CustomPaint(
-              size: const Size(double.infinity, 140),
-              painter: _ForestPainter(),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 150,
-            child: Container(
-              width: 90,
-              height: 190,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0.22),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return GameCover(
+      width: double.infinity,
+      height: 320,
+      imageUrl: game.imageUrl,
+      borderRadius: 0,
+      iconSize: 110,
+      showGradient: false,
     );
   }
-}
-
-class _ForestPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final mountainPaint = Paint()
-      ..color = const Color(0xFF152225).withOpacity(0.9)
-      ..style = PaintingStyle.fill;
-
-    final treePaint = Paint()
-      ..color = const Color(0xFF071010).withOpacity(0.95)
-      ..style = PaintingStyle.fill;
-
-    final mountainPath = Path()
-      ..moveTo(0, size.height * 0.65)
-      ..lineTo(size.width * 0.18, size.height * 0.35)
-      ..lineTo(size.width * 0.34, size.height * 0.58)
-      ..lineTo(size.width * 0.52, size.height * 0.28)
-      ..lineTo(size.width * 0.76, size.height * 0.58)
-      ..lineTo(size.width, size.height * 0.38)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(mountainPath, mountainPaint);
-
-    for (double x = 0; x < size.width; x += 14) {
-      final treeHeight = 40 + (x % 42);
-      final path = Path()
-        ..moveTo(x, size.height)
-        ..lineTo(x + 7, size.height - treeHeight)
-        ..lineTo(x + 14, size.height)
-        ..close();
-
-      canvas.drawPath(path, treePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _GenreBadges extends StatelessWidget {
