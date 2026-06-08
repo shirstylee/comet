@@ -26,16 +26,15 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
   File? avatarFile;
 
-  final List<String> genres = [
-    'Action',
-    'RPG',
-    'Strategy',
-    'Indie',
-    'Horror',
-    'FPS',
+  final List<String> platforms = [
+    'PC',
+    'PlayStation',
+    'Xbox',
+    'Nintendo',
+    'Mobile',
   ];
 
-  final Set<String> selectedGenres = {};
+  final Set<String> selectedPlatforms = {};
 
   @override
   void dispose() {
@@ -57,12 +56,12 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     });
   }
 
-  void toggleGenre(String genre) {
+  void togglePlatform(String platform) {
     setState(() {
-      if (selectedGenres.contains(genre)) {
-        selectedGenres.remove(genre);
+      if (selectedPlatforms.contains(platform)) {
+        selectedPlatforms.remove(platform);
       } else {
-        selectedGenres.add(genre);
+        selectedPlatforms.add(platform);
       }
     });
   }
@@ -102,8 +101,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       return;
     }
 
-    if (selectedGenres.length < 3) {
-      showError('Выберите минимум 3 жанра');
+    if (selectedPlatforms.isEmpty) {
+      showError('Выберите хотя бы одну платформу');
       return;
     }
 
@@ -111,7 +110,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       UserProfileModel(
         name: nicknameController.text.trim(),
         status: statusController.text.trim(),
-        favoriteGenres: selectedGenres.toList(),
+        favoriteGenres: selectedPlatforms.toList(),
         avatarPath: avatarFile?.path,
       ),
     );
@@ -213,7 +212,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'ЛЮБИМЫЕ ЖАНРЫ',
+                    'ВЫБОР ПЛАТФОРМЫ',
                     style: TextStyle(
                       color: Color(0xFFAAABAB),
                       fontSize: 12,
@@ -222,7 +221,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                     ),
                   ),
                   Text(
-                    'Выберите минимум 3',
+                    'Выберите основные',
                     style: TextStyle(
                       color: Color(0xB3AAABAB),
                       fontSize: 10,
@@ -237,11 +236,11 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 child: Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: genres.map((genre) {
-                    final bool isSelected = selectedGenres.contains(genre);
+                  children: platforms.map((platform) {
+                    final bool isSelected = selectedPlatforms.contains(platform);
 
                     return GestureDetector(
-                      onTap: () => toggleGenre(genre),
+                      onTap: () => togglePlatform(platform),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.symmetric(
@@ -269,7 +268,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                               : [],
                         ),
                         child: Text(
-                          genre,
+                          platform,
                           style: TextStyle(
                             color: isSelected
                                 ? const Color(0xFF22D3EE)

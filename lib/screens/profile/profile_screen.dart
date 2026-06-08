@@ -225,6 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 gamesCount: games.length,
                 completedCount: completedGames.length,
                 favoriteGenre: favoriteGenre,
+                platforms: profile.favoriteGenres,
               ),
               const SizedBox(height: 48),
               const _SectionHeader(title: 'Оценки'),
@@ -285,29 +286,10 @@ class _ProfileTopHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFF111414),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0x3375EEFD),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withOpacity(0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.auto_awesome_rounded,
-                color: accent,
-                size: 24,
-              ),
+            const Icon(
+              Icons.person_rounded,
+              color: accent,
+              size: 30,
             ),
             const SizedBox(width: 12),
             const Text(
@@ -380,12 +362,14 @@ class _ProfileHero extends StatelessWidget {
     required this.gamesCount,
     required this.completedCount,
     required this.favoriteGenre,
+    required this.platforms,
   });
 
   final UserProfileModel profile;
   final int gamesCount;
   final int completedCount;
   final String favoriteGenre;
+  final List<String> platforms;
 
   @override
   Widget build(BuildContext context) {
@@ -458,7 +442,11 @@ class _ProfileHero extends StatelessWidget {
             letterSpacing: -0.9,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
+        if (platforms.isNotEmpty) ...[
+          _ProfilePlatformsRow(platforms: platforms),
+          const SizedBox(height: 14),
+        ],
         Text(
           '$statusText • $gamesCount ИГР ОТСЛЕЖИВАЕТСЯ',
           textAlign: TextAlign.center,
@@ -489,6 +477,86 @@ class _ProfileHero extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ProfilePlatformsRow extends StatelessWidget {
+  const _ProfilePlatformsRow({
+    required this.platforms,
+  });
+
+  final List<String> platforms;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 30,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < platforms.length; i++) ...[
+                    _ProfilePlatformBadge(text: platforms[i]),
+                    if (i != platforms.length - 1) const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProfilePlatformBadge extends StatelessWidget {
+  const _ProfilePlatformBadge({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF22D3EE).withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        style: const TextStyle(
+          color: Color(0xFF75EEFD),
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+        ),
+      ),
     );
   }
 }
@@ -620,36 +688,14 @@ class _FeaturedReviewCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Container(
+                    _ReviewRatingBadge(
+                      rating: rating,
                       height: 54,
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0C0A09),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0x3322D3EE),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            _formatRating(rating),
-                            style: const TextStyle(
-                              color: Color(0xFF22D3EE),
-                              fontSize: 30,
-                              height: 1.1,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Color(0xFF22D3EE),
-                            size: 26,
-                          ),
-                        ],
-                      ),
+                      horizontalPadding: 18,
+                      borderRadius: 10,
+                      fontSize: 30,
+                      starSize: 25,
                     ),
                     const SizedBox(height: 28),
                     const Text(
@@ -927,6 +973,72 @@ class _SmallReviewCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewRatingBadge extends StatelessWidget {
+  const _ReviewRatingBadge({
+    required this.rating,
+    required this.height,
+    required this.horizontalPadding,
+    required this.borderRadius,
+    required this.fontSize,
+    required this.starSize,
+    this.width,
+  });
+
+  final double rating;
+  final double height;
+  final double horizontalPadding;
+  final double borderRadius;
+  final double fontSize;
+  final double starSize;
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      decoration: BoxDecoration(
+        color: const Color(0xFF082326),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF22D3EE).withOpacity(0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: width == null ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          Text(
+            _formatRating(rating),
+            style: TextStyle(
+              color: const Color(0xFF22D3EE),
+              fontSize: fontSize,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.star_rounded,
+            color: const Color(0xFF22D3EE),
+            size: starSize,
+          ),
+        ],
       ),
     );
   }
