@@ -536,13 +536,6 @@ class _ProfilePlatformBadge extends StatelessWidget {
         border: Border.all(
           color: const Color(0x6632B8C6),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF22D3EE).withOpacity(0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       alignment: Alignment.center,
       child: Text(

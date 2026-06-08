@@ -23,9 +23,15 @@ class _MainScreenState extends State<MainScreen> {
   late final List<Widget> screens = [
     HomeScreen(
       onAllGamesTap: _openLibraryTab,
+      onProfileTap: _openProfileTab,
     ),
-    _LibraryTabHolder(key: libraryTabKey),
-    const RatingsScreen(),
+    _LibraryTabHolder(
+      key: libraryTabKey,
+      onProfileTap: _openProfileTab,
+    ),
+    RatingsScreen(
+      onProfileTap: _openProfileTab,
+    ),
     const ProfileScreen(),
   ];
 
@@ -34,6 +40,12 @@ class _MainScreenState extends State<MainScreen> {
 
     setState(() {
       currentIndex = 1;
+    });
+  }
+
+  void _openProfileTab() {
+    setState(() {
+      currentIndex = 3;
     });
   }
 
@@ -186,7 +198,12 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class _LibraryTabHolder extends StatefulWidget {
-  const _LibraryTabHolder({super.key});
+  const _LibraryTabHolder({
+    super.key,
+    this.onProfileTap,
+  });
+
+  final VoidCallback? onProfileTap;
 
   @override
   State<_LibraryTabHolder> createState() => _LibraryTabHolderState();
@@ -205,6 +222,7 @@ class _LibraryTabHolderState extends State<_LibraryTabHolder> {
   Widget build(BuildContext context) {
     return LibraryScreen(
       key: ValueKey(refreshKey),
+      onProfileTap: widget.onProfileTap,
     );
   }
 }

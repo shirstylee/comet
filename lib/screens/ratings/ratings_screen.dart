@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
+import '../../models/user_profile_model.dart';
 import '../../storage/library_storage.dart';
+import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
 import '../search/search_screen.dart';
@@ -17,7 +21,12 @@ String _formatRating(double rating) {
 }
 
 class RatingsScreen extends StatefulWidget {
-  const RatingsScreen({super.key});
+  const RatingsScreen({
+    super.key,
+    this.onProfileTap,
+  });
+
+  final VoidCallback? onProfileTap;
 
   @override
   State<RatingsScreen> createState() => _RatingsScreenState();
@@ -381,7 +390,9 @@ class _RatingsScreenState extends State<RatingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _RatingsHeader(),
+              _RatingsHeader(
+                onProfileTap: widget.onProfileTap,
+              ),
               const SizedBox(height: 32),
               _TitleAndAction(
                 onTap: _openGamePicker,
@@ -442,7 +453,11 @@ class _RatingsScreenState extends State<RatingsScreen> {
 }
 
 class _RatingsHeader extends StatelessWidget {
-  const _RatingsHeader();
+  const _RatingsHeader({
+    this.onProfileTap,
+  });
+
+  final VoidCallback? onProfileTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -453,27 +468,8 @@ class _RatingsHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0x3375EEFD),
-                  width: 2,
-                ),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF10333A),
-                    Color(0xFF091111),
-                  ],
-                ),
-              ),
-              child: const Icon(
-                Icons.person_rounded,
-                color: accent,
-                size: 24,
-              ),
+            _ProfileAvatarButton(
+              onTap: onProfileTap,
             ),
             const SizedBox(width: 12),
             const Text(
@@ -497,6 +493,68 @@ class _RatingsHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ProfileAvatarButton extends StatelessWidget {
+  const _ProfileAvatarButton({
+    this.onTap,
+  });
+
+  final VoidCallback? onTap;
+
+  static const Color accent = Color(0xFF22D3EE);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<UserProfileModel>(
+      future: ProfileStorage.getProfile(),
+      builder: (context, snapshot) {
+        final avatarPath = snapshot.data?.avatarPath;
+        final hasAvatar =
+            avatarPath != null &&
+                avatarPath.trim().isNotEmpty &&
+                File(avatarPath).existsSync();
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 42,
+            height: 42,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0x3375EEFD),
+                width: 2,
+              ),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF10333A),
+                  Color(0xFF091111),
+                ],
+              ),
+            ),
+            child: ClipOval(
+              child: hasAvatar
+                  ? Image.file(
+                File(avatarPath),
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              )
+                  : const Center(
+                child: Icon(
+                  Icons.person_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

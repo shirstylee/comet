@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
+import '../../models/user_profile_model.dart';
 import '../../storage/library_storage.dart';
+import '../../storage/profile_storage.dart';
 import 'widgets/empty_library_state.dart';
 import 'widgets/library_filter_chip.dart';
 import 'widgets/library_game_card.dart';
@@ -16,7 +20,12 @@ enum LibrarySortType {
 }
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  const LibraryScreen({
+    super.key,
+    this.onProfileTap,
+  });
+
+  final VoidCallback? onProfileTap;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -468,7 +477,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _LibraryHeader(),
+              _LibraryHeader(
+                onProfileTap: widget.onProfileTap,
+              ),
 
               const SizedBox(height: 34),
 
@@ -565,7 +576,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
 }
 
 class _LibraryHeader extends StatelessWidget {
-  const _LibraryHeader();
+  const _LibraryHeader({
+    this.onProfileTap,
+  });
+
+  final VoidCallback? onProfileTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -576,27 +591,8 @@ class _LibraryHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0x3375EEFD),
-                  width: 2,
-                ),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF10333A),
-                    Color(0xFF091111),
-                  ],
-                ),
-              ),
-              child: const Icon(
-                Icons.person_rounded,
-                color: accent,
-                size: 24,
-              ),
+            _ProfileAvatarButton(
+              onTap: onProfileTap,
             ),
             const SizedBox(width: 12),
             const Text(
@@ -620,6 +616,68 @@ class _LibraryHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ProfileAvatarButton extends StatelessWidget {
+  const _ProfileAvatarButton({
+    this.onTap,
+  });
+
+  final VoidCallback? onTap;
+
+  static const Color accent = Color(0xFF22D3EE);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<UserProfileModel>(
+      future: ProfileStorage.getProfile(),
+      builder: (context, snapshot) {
+        final avatarPath = snapshot.data?.avatarPath;
+        final hasAvatar =
+            avatarPath != null &&
+                avatarPath.trim().isNotEmpty &&
+                File(avatarPath).existsSync();
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 42,
+            height: 42,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0x3375EEFD),
+                width: 2,
+              ),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF10333A),
+                  Color(0xFF091111),
+                ],
+              ),
+            ),
+            child: ClipOval(
+              child: hasAvatar
+                  ? Image.file(
+                File(avatarPath),
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              )
+                  : const Center(
+                child: Icon(
+                  Icons.person_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
