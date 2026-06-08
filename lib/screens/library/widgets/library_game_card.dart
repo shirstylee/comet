@@ -78,8 +78,9 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
   @override
   Widget build(BuildContext context) {
     final statusColors = _statusColors(currentGame.status);
-    final rating =
-    (currentGame.userRating ?? currentGame.apiRating ?? 0).round();
+    final String ratingText = currentGame.userRating == null
+        ? '-'
+        : currentGame.userRating!.round().toString();
 
     return GestureDetector(
       onTap: () => _openProgressScreen(context),
@@ -220,7 +221,7 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '$rating',
+                              ratingText,
                               style: const TextStyle(
                                 color: Color(0xFFF4F3F3),
                                 fontSize: 12,

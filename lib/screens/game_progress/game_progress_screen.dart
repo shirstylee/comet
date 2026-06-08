@@ -114,6 +114,40 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
   int get lastStageIndex => stages.length - 1;
 
+  _GameStage get currentStage {
+    if (stages.isEmpty) {
+      return const _GameStage(
+        title: 'Начало игры',
+        subtitle: 'В процессе',
+        type: TimelineItemType.current,
+      );
+    }
+
+    for (final stage in stages) {
+      if (stage.type != TimelineItemType.done) {
+        return stage;
+      }
+    }
+
+    return stages.last;
+  }
+
+  String get currentStageStatusText {
+    if (currentStage.type == TimelineItemType.done) {
+      return 'Завершено';
+    }
+
+    return 'В процессе';
+  }
+
+  Color get currentStageStatusColor {
+    if (currentStage.type == TimelineItemType.done) {
+      return const Color(0xFFBBFFB3);
+    }
+
+    return const Color(0xFF61ACFE);
+  }
+
   String get todayText {
     return _formatStageDate(DateTime.now());
   }
@@ -342,6 +376,31 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     _showTemporaryMessage('Этап завершён');
   }
 
+  Future<void> _resumeStage(int index) async {
+    if (index < 0 || index >= stages.length) return;
+
+    if (index != stages.length - 1) {
+      _showTemporaryMessage('Можно возобновить только последний этап');
+      return;
+    }
+
+    final stage = stages[index];
+
+    setState(() {
+      stages[index] = stage.copyWith(
+        type: TimelineItemType.current,
+        subtitle: 'В процессе',
+        clearCompletedAt: true,
+      );
+    });
+
+    await _saveStages();
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Этап возобновлён');
+  }
+
   Future<void> _deleteStage(int index) async {
     if (index == 0) {
       _showTemporaryMessage('Начальный этап нельзя удалить');
@@ -364,7 +423,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
         stages[newLastIndex] = stages[newLastIndex].copyWith(
           type: TimelineItemType.current,
           subtitle: 'В процессе',
-          completedAt: null,
+          clearCompletedAt: true,
         );
       }
     });
@@ -950,6 +1009,10 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     }
 
     final stage = stages[index];
+    final isStageDone = stage.type == TimelineItemType.done;
+    final isLastStage = index == stages.length - 1;
+    final canResumeStage = isStageDone && isLastStage;
+    final canCompleteStage = !isStageDone;
 
     showModalBottomSheet(
       context: context,
@@ -1004,16 +1067,28 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 12),
-                  _StageMenuItem(
-                    icon: Icons.check_circle_outline_rounded,
-                    title: 'Завершить',
-                    subtitle: 'Отметить этап как пройденный',
-                    onTap: () async {
-                      Navigator.pop(bottomSheetContext);
-                      await _completeStage(index);
-                    },
-                  ),
+                  if (canCompleteStage || canResumeStage) ...[
+                    const SizedBox(height: 12),
+                    _StageMenuItem(
+                      icon: canResumeStage
+                          ? Icons.restart_alt_rounded
+                          : Icons.check_circle_outline_rounded,
+                      title: canResumeStage ? 'Возобновить' : 'Завершить',
+                      subtitle: canResumeStage
+                          ? 'Вернуть последний этап в процесс'
+                          : 'Отметить этап как пройденный',
+                      onTap: () async {
+                        Navigator.pop(bottomSheetContext);
+
+                        if (canResumeStage) {
+                          await _resumeStage(index);
+                          return;
+                        }
+
+                        await _completeStage(index);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _StageMenuItem(
                     icon: Icons.delete_outline_rounded,
@@ -1093,8 +1168,9 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                 ),
                 const SizedBox(height: 32),
                 GameProgressCard(
-                  progress: progressValue,
-                  percent: progressPercent,
+                  title: currentStage.title,
+                  statusText: currentStageStatusText,
+                  statusColor: currentStageStatusColor,
                 ),
                 const SizedBox(height: 48),
                 const Text(
@@ -1991,12 +2067,13 @@ class _GameStage {
     String? subtitle,
     TimelineItemType? type,
     DateTime? completedAt,
+    bool clearCompletedAt = false,
   }) {
     return _GameStage(
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
       type: type ?? this.type,
-      completedAt: completedAt ?? this.completedAt,
+      completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
     );
   }
 }
