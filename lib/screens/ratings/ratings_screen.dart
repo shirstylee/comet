@@ -297,7 +297,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: surface,
               borderRadius: BorderRadius.circular(26),
@@ -325,47 +325,43 @@ class _RatingsScreenState extends State<RatingsScreen> {
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   const Text(
                     'Выберите игру',
                     style: TextStyle(
                       color: textPrimary,
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   const Text(
                     'Показаны 3 последние игры без оценки',
                     style: TextStyle(
                       color: textSecondary,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Flexible(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: recentGamesWithoutRating.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final game = recentGamesWithoutRating[index];
-
-                        return _GamePickerItem(
+                  const SizedBox(height: 14),
+                  Column(
+                    children: recentGamesWithoutRating.map((game) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _GamePickerItem(
                           game: game,
                           rating: 0,
                           onTap: () {
                             Navigator.pop(bottomSheetContext);
                             _openGameProgress(game);
                           },
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 48,
                     child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.pop(bottomSheetContext);
@@ -2068,54 +2064,96 @@ class _GamePickerItem extends StatelessWidget {
 
     return Material(
       color: const Color(0xFF1D2020),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 68,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
           child: Row(
             children: [
               GameCover(
-                width: 64,
-                height: 80,
+                width: 42,
+                height: 52,
                 localImagePath: game.localImagePath,
                 imageUrl: game.imageUrl,
                 borderRadius: 8,
-                iconSize: 30,
+                iconSize: 22,
                 gradientOpacity: 0.18,
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  game.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF4F3F3),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      game.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFF4F3F3),
+                        fontSize: 15,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      game.status.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 9,
+                        height: 1.2,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                height: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF081F23),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0x6632B8C6),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                hasRating ? _formatRating(rating) : '—',
-                style: TextStyle(
-                  color: hasRating
-                      ? const Color(0xFF75EEFD)
-                      : const Color(0xFFAAABAB),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      hasRating ? _formatRating(rating) : 'Оценить',
+                      style: TextStyle(
+                        color: hasRating
+                            ? const Color(0xFF75EEFD)
+                            : const Color(0xFF75EEFD),
+                        fontSize: hasRating ? 14 : 11,
+                        height: 1.2,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (hasRating) ...[
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFF75EEFD),
+                        size: 14,
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.star_border_rounded,
-                color: hasRating
-                    ? const Color(0xFF75EEFD)
-                    : const Color(0xFFAAABAB),
-                size: 16,
               ),
             ],
           ),

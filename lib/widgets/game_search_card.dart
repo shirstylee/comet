@@ -64,63 +64,70 @@ class GameSearchCard extends StatelessWidget {
   }
 
   Future<void> _addGameToLibrary(BuildContext context) async {
-    final alreadyAdded = await LibraryStorage.containsGame(game.id);
+    try {
+      final alreadyAdded = await LibraryStorage.containsGame(game.id);
 
-    if (!context.mounted) return;
+      if (!context.mounted) return;
 
-    if (alreadyAdded) {
-      await _openGameProgressScreen(context);
-      return;
+      if (alreadyAdded) {
+        await _openGameProgressScreen(context);
+        return;
+      }
+
+      _showSnackBar(
+        context,
+        'Сохраняю ${game.title} в коллекцию...',
+      );
+
+      final localImagePath = await CoverCacheService.saveCompressedCover(
+        gameId: game.id,
+        imageUrl: game.imageUrl,
+      );
+
+      final libraryGame = LibraryGameModel(
+        id: game.id,
+        title: game.title,
+        status: 'Планирую',
+        addedAt: DateTime.now(),
+        imageUrl: game.imageUrl,
+        localImagePath: localImagePath,
+        year: game.year,
+        genre: game.genre,
+        platforms: game.platforms,
+        apiRating: game.rating,
+        apiHours: game.hours,
+        userHours: 0,
+        userMinutes: 0,
+        userRating: null,
+        comment: null,
+        isFavorite: false,
+        stages: const [
+          GameStageModel(
+            title: 'Начало игры',
+            subtitle: 'В процессе',
+            isDone: false,
+          ),
+        ],
+      );
+
+      await LibraryStorage.addGame(libraryGame);
+
+      if (!context.mounted) return;
+
+      _showSnackBar(
+        context,
+        localImagePath == null
+            ? 'Игра добавлена, но обложка не сохранилась'
+            : '${game.title} добавлена в коллекцию',
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      _showSnackBar(
+        context,
+        'Не удалось добавить игру в коллекцию',
+      );
     }
-
-    _showSnackBar(
-      context,
-      'Сохраняю ${game.title} в коллекцию...',
-    );
-
-    final localImagePath = await CoverCacheService.saveCompressedCover(
-      gameId: game.id,
-      imageUrl: game.imageUrl,
-    );
-
-    if (!context.mounted) return;
-
-    final libraryGame = LibraryGameModel(
-      id: game.id,
-      title: game.title,
-      status: 'Планирую',
-      addedAt: DateTime.now(),
-      imageUrl: game.imageUrl,
-      localImagePath: localImagePath,
-      year: game.year,
-      genre: game.genre,
-      platforms: game.platforms,
-      apiRating: game.rating,
-      apiHours: game.hours,
-      userHours: 0,
-      userMinutes: 0,
-      userRating: null,
-      comment: null,
-      isFavorite: false,
-      stages: const [
-        GameStageModel(
-          title: 'Начало игры',
-          subtitle: 'В процессе',
-          isDone: false,
-        ),
-      ],
-    );
-
-    await LibraryStorage.addGame(libraryGame);
-
-    if (!context.mounted) return;
-
-    _showSnackBar(
-      context,
-      localImagePath == null
-          ? 'Игра добавлена, но обложка не сохранилась'
-          : '${game.title} добавлена в коллекцию',
-    );
   }
 
   void _showSnackBar(BuildContext context, String text) {
@@ -145,17 +152,19 @@ class GameSearchCard extends StatelessWidget {
   }
 
   void _showGameActions(BuildContext context) {
+    final pageContext = context;
+
     showModalBottomSheet(
-      context: context,
+      context: pageContext,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.55),
       builder: (bottomSheetContext) {
         return FutureBuilder<bool>(
           future: LibraryStorage.containsGame(game.id),
-          builder: (context, snapshot) {
+          builder: (sheetContext, snapshot) {
             final bool isInLibrary = snapshot.data ?? false;
-            final bool isLoading = snapshot.connectionState ==
-                ConnectionState.waiting;
+            final bool isLoading =
+                snapshot.connectionState == ConnectionState.waiting;
 
             return Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -241,14 +250,14 @@ class GameSearchCard extends StatelessWidget {
                             : () async {
                           Navigator.pop(bottomSheetContext);
 
-                          if (!context.mounted) return;
+                          if (!pageContext.mounted) return;
 
                           if (isInLibrary) {
-                            await _openGameProgressScreen(context);
+                            await _openGameProgressScreen(pageContext);
                             return;
                           }
 
-                          await _addGameToLibrary(context);
+                          await _addGameToLibrary(pageContext);
                         },
                       ),
                     ],

@@ -8,6 +8,7 @@ import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
+import 'edit_profile_screen.dart';
 
 String _formatRating(double rating) {
   final roundedRating = double.parse(rating.toStringAsFixed(1));
@@ -200,6 +201,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _loadProfileData();
   }
 
+  Future<void> _openEditProfileScreen() async {
+    final isUpdated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditProfileScreen(
+          profile: profile,
+        ),
+      ),
+    );
+
+    if (isUpdated == true) {
+      await _loadProfileData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final featured = featuredGame;
@@ -218,7 +234,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _ProfileTopHeader(),
+              _ProfileTopHeader(
+                onEditTap: _openEditProfileScreen,
+              ),
               const SizedBox(height: 36),
               _ProfileHero(
                 profile: profile,
@@ -274,7 +292,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _ProfileTopHeader extends StatelessWidget {
-  const _ProfileTopHeader();
+  const _ProfileTopHeader({
+    required this.onEditTap,
+  });
+
+  final VoidCallback onEditTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -307,7 +329,7 @@ class _ProfileTopHeader extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: onEditTap,
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(
