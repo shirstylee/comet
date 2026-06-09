@@ -277,22 +277,21 @@ class _ProfileTopHeader extends StatelessWidget {
   const _ProfileTopHeader();
 
   static const Color accent = Color(0xFF22D3EE);
-  static const Color muted = Color(0xFFA8A29E);
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(
+            Icon(
               Icons.person_rounded,
               color: accent,
               size: 30,
             ),
-            const SizedBox(width: 12),
-            const Text(
+            SizedBox(width: 12),
+            Text(
               'Профиль',
               style: TextStyle(
                 color: accent,
@@ -317,7 +316,7 @@ class _ProfileTopHeader extends StatelessWidget {
               ),
               icon: const Icon(
                 Icons.edit_rounded,
-                color: muted,
+                color: accent,
                 size: 22,
               ),
             ),
@@ -331,7 +330,7 @@ class _ProfileTopHeader extends StatelessWidget {
               ),
               icon: const Icon(
                 Icons.notifications_none_rounded,
-                color: muted,
+                color: accent,
                 size: 24,
               ),
             ),
@@ -345,7 +344,7 @@ class _ProfileTopHeader extends StatelessWidget {
               ),
               icon: const Icon(
                 Icons.settings_rounded,
-                color: muted,
+                color: accent,
                 size: 24,
               ),
             ),
@@ -447,18 +446,8 @@ class _ProfileHero extends StatelessWidget {
           _ProfilePlatformsRow(platforms: platforms),
           const SizedBox(height: 14),
         ],
-        Text(
-          '$statusText • $gamesCount ИГР ОТСЛЕЖИВАЕТСЯ',
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFF22D3EE),
-            fontSize: 12,
-            height: 1.3,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.4,
-          ),
+        _ScrollableProfileStatusText(
+          text: '$statusText • $gamesCount ИГР ОТСЛЕЖИВАЕТСЯ',
         ),
         const SizedBox(height: 20),
         Row(
@@ -477,6 +466,126 @@ class _ProfileHero extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ScrollableProfileStatusText extends StatefulWidget {
+  const _ScrollableProfileStatusText({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  State<_ScrollableProfileStatusText> createState() =>
+      _ScrollableProfileStatusTextState();
+}
+
+class _ScrollableProfileStatusTextState
+    extends State<_ScrollableProfileStatusText> {
+  final ScrollController _scrollController = ScrollController();
+
+  bool _shouldAnimate = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoScroll();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _ScrollableProfileStatusText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.text != widget.text) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startAutoScroll();
+      });
+    }
+  }
+
+  Future<void> _startAutoScroll() async {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+
+    if (maxScroll <= 0) {
+      _shouldAnimate = false;
+      return;
+    }
+
+    _shouldAnimate = true;
+
+    while (mounted && _shouldAnimate && _scrollController.hasClients) {
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      if (!mounted || !_scrollController.hasClients) return;
+
+      await _scrollController.animateTo(
+        maxScroll,
+        duration: const Duration(seconds: 2),
+        curve: Curves.easeInOut,
+      );
+
+      if (!mounted || !_scrollController.hasClients) return;
+
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      if (!mounted || !_scrollController.hasClients) return;
+
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(seconds: 2),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _shouldAnimate = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 20,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+              ),
+              child: Center(
+                child: Text(
+                  widget.text,
+                  maxLines: 1,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF22D3EE),
+                    fontSize: 12,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

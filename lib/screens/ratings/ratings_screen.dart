@@ -8,7 +8,6 @@ import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
-import '../search/search_screen.dart';
 
 String _formatRating(double rating) {
   final roundedRating = double.parse(rating.toStringAsFixed(1));
@@ -209,17 +208,6 @@ class _RatingsScreenState extends State<RatingsScreen> {
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 
-  Future<void> _openSearchScreen() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const SearchScreen(),
-      ),
-    );
-
-    await _loadGames();
-  }
-
   Future<void> _openGameProgress(LibraryGameModel game) async {
     lastOpenedGameId = game.id;
 
@@ -241,16 +229,63 @@ class _RatingsScreenState extends State<RatingsScreen> {
     await _loadGames();
   }
 
+  Future<void> _openAllGamesScreen() async {
+    if (games.isEmpty) {
+      _showMessage('В библиотеке пока нет игр');
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _AllGamesForRatingScreen(
+          games: games,
+          onOpenGame: _openGameProgress,
+          ratingOutOfTen: _ratingOutOfTen,
+          ratingColor: _ratingColor,
+          ratingQuality: _ratingQuality,
+          formattedDate: _formattedDate,
+        ),
+      ),
+    );
+
+    await _loadGames();
+  }
+
+  Future<void> _openAllRatingsScreen() async {
+    if (ratedGames.isEmpty) {
+      _showMessage('Оценок пока нет');
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _AllRatingsScreen(
+          games: ratedGames,
+          onOpenGame: _openGameProgress,
+          ratingOutOfTen: _ratingOutOfTen,
+          ratingColor: _ratingColor,
+          ratingQuality: _ratingQuality,
+          formattedDate: _formattedDate,
+        ),
+      ),
+    );
+
+    await _loadGames();
+  }
+
   void _openGamePicker() {
     if (games.isEmpty) {
-      _openSearchScreen();
+      _showMessage('В библиотеке пока нет игр');
       return;
     }
 
     final gamesWithoutRating = unratedGames;
+    final recentGamesWithoutRating = gamesWithoutRating.take(3).toList();
 
     if (gamesWithoutRating.isEmpty) {
-      _showMessage('Все игры уже оценены');
+      _openAllGamesScreen();
       return;
     }
 
@@ -301,7 +336,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Показываются только игры без оценки',
+                    'Показаны 3 последние игры без оценки',
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,
@@ -311,10 +346,10 @@ class _RatingsScreenState extends State<RatingsScreen> {
                   Flexible(
                     child: ListView.separated(
                       shrinkWrap: true,
-                      itemCount: gamesWithoutRating.length,
+                      itemCount: recentGamesWithoutRating.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
-                        final game = gamesWithoutRating[index];
+                        final game = recentGamesWithoutRating[index];
 
                         return _GamePickerItem(
                           game: game,
@@ -334,14 +369,14 @@ class _RatingsScreenState extends State<RatingsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.pop(bottomSheetContext);
-                        _openSearchScreen();
+                        _openAllGamesScreen();
                       },
                       icon: const Icon(
-                        Icons.add_rounded,
+                        Icons.grid_view_rounded,
                         color: accent,
                       ),
                       label: const Text(
-                        'Добавить новую игру',
+                        'Все игры',
                         style: TextStyle(
                           color: accent,
                           fontSize: 15,
@@ -410,7 +445,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
               const SizedBox(height: 32),
               const _SectionTitle('Недавно оценённые'),
               const SizedBox(height: 24),
-              if (hasRatings)
+              if (hasRatings) ...[
                 Column(
                   children: recentGames.map((game) {
                     final rating = _ratingOutOfTen(game.userRating);
@@ -427,8 +462,12 @@ class _RatingsScreenState extends State<RatingsScreen> {
                       ),
                     );
                   }).toList(),
-                )
-              else
+                ),
+                const SizedBox(height: 4),
+                _AllRatingsButton(
+                  onTap: _openAllRatingsScreen,
+                ),
+              ] else
                 const _EmptyRatingsState(),
               const SizedBox(height: 32),
               const _SectionTitle('Распределение по жанрам'),
@@ -1055,6 +1094,791 @@ class _RecentlyRatedCard extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AllRatingsButton extends StatelessWidget {
+  const _AllRatingsButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(
+          Icons.star_rounded,
+          color: Color(0xFF75EEFD),
+          size: 19,
+        ),
+        label: const Text(
+          'Все оценки',
+          style: TextStyle(
+            color: Color(0xFF75EEFD),
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: const Color(0xFF081F23),
+          side: const BorderSide(
+            color: Color(0x6632B8C6),
+            width: 1.2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AllRatingsScreen extends StatelessWidget {
+  const _AllRatingsScreen({
+    required this.games,
+    required this.onOpenGame,
+    required this.ratingOutOfTen,
+    required this.ratingColor,
+    required this.ratingQuality,
+    required this.formattedDate,
+  });
+
+  final List<LibraryGameModel> games;
+  final Future<void> Function(LibraryGameModel game) onOpenGame;
+  final double Function(double? rating) ratingOutOfTen;
+  final Color Function(double rating) ratingColor;
+  final String Function(double rating) ratingQuality;
+  final String Function(DateTime date) formattedDate;
+
+  double get averageRating {
+    if (games.isEmpty) return 0;
+
+    final sum = games.fold<double>(0, (value, game) {
+      return value + ratingOutOfTen(game.userRating);
+    });
+
+    return sum / games.length;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0C0F0F),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: _AllRatingsHero(
+                  count: games.length,
+                  averageRating: averageRating,
+                  onBack: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+              sliver: SliverList.separated(
+                itemCount: games.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                itemBuilder: (context, index) {
+                  final game = games[index];
+                  final rating = ratingOutOfTen(game.userRating);
+
+                  return _AllRatingCard(
+                    game: game,
+                    rating: rating,
+                    dateText: formattedDate(game.addedAt),
+                    color: ratingColor(rating),
+                    quality: ratingQuality(rating),
+                    onTap: () => onOpenGame(game),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AllRatingsHero extends StatelessWidget {
+  const _AllRatingsHero({
+    required this.count,
+    required this.averageRating,
+    required this.onBack,
+  });
+
+  final int count;
+  final double averageRating;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _CircleIconButton(
+              icon: Icons.arrow_back_rounded,
+              onTap: onBack,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Все оценки',
+              style: TextStyle(
+                color: Color(0xFF75EEFD),
+                fontSize: 24,
+                height: 1.33,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 28),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF12343A),
+                Color(0xFF111414),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: const Color(0x6632B8C6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF22D3EE).withOpacity(0.08),
+                blurRadius: 32,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF081F23),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: const Color(0x6632B8C6),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.star_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 38,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatRating(averageRating),
+                      style: const TextStyle(
+                        color: Color(0xFFF4F3F3),
+                        fontSize: 42,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.8,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$count оценок сохранено',
+                      style: const TextStyle(
+                        color: Color(0xFFD6D3D1),
+                        fontSize: 15,
+                        height: 1.35,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Полный список ваших игровых оценок',
+                      style: TextStyle(
+                        color: Color(0xFFAAABAB),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AllRatingCard extends StatelessWidget {
+  const _AllRatingCard({
+    required this.game,
+    required this.rating,
+    required this.dateText,
+    required this.color,
+    required this.quality,
+    required this.onTap,
+  });
+
+  final LibraryGameModel game;
+  final double rating;
+  final String dateText;
+  final Color color;
+  final String quality;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final comment = game.comment?.trim();
+    final hasComment = comment != null && comment.isNotEmpty;
+
+    return Material(
+      color: const Color(0xFF111414),
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.05),
+            ),
+          ),
+          child: Row(
+            children: [
+              GameCover(
+                width: 78,
+                height: 104,
+                localImagePath: game.localImagePath,
+                imageUrl: game.imageUrl,
+                borderRadius: 14,
+                iconSize: 34,
+                gradientOpacity: 0.16,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 104,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        game.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 18,
+                          height: 1.2,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        dateText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF78716C),
+                          fontSize: 11,
+                          height: 1.3,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (hasComment)
+                        Expanded(
+                          child: Text(
+                            '«$comment»',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFFAAABAB),
+                              fontSize: 12,
+                              height: 1.35,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        )
+                      else
+                        const Expanded(
+                          child: Text(
+                            'Комментарий не добавлен',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Color(0xFF57534E),
+                              fontSize: 12,
+                              height: 1.35,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: color.withOpacity(0.35),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _formatRating(rating),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 22,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    quality,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 9,
+                      height: 1.2,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.7,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AllGamesForRatingScreen extends StatelessWidget {
+  const _AllGamesForRatingScreen({
+    required this.games,
+    required this.onOpenGame,
+    required this.ratingOutOfTen,
+    required this.ratingColor,
+    required this.ratingQuality,
+    required this.formattedDate,
+  });
+
+  final List<LibraryGameModel> games;
+  final Future<void> Function(LibraryGameModel game) onOpenGame;
+  final double Function(double? rating) ratingOutOfTen;
+  final Color Function(double rating) ratingColor;
+  final String Function(double rating) ratingQuality;
+  final String Function(DateTime date) formattedDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final sortedGames = [...games];
+
+    sortedGames.sort((a, b) {
+      final aHasRating = a.userRating != null && a.userRating! > 0;
+      final bHasRating = b.userRating != null && b.userRating! > 0;
+
+      if (aHasRating != bHasRating) {
+        return aHasRating ? 1 : -1;
+      }
+
+      return b.addedAt.compareTo(a.addedAt);
+    });
+
+    final unratedCount = sortedGames.where((game) {
+      return game.userRating == null || game.userRating! <= 0;
+    }).length;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0C0F0F),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: _AllGamesHero(
+                  totalCount: sortedGames.length,
+                  unratedCount: unratedCount,
+                  onBack: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+              sliver: SliverList.separated(
+                itemCount: sortedGames.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                itemBuilder: (context, index) {
+                  final game = sortedGames[index];
+                  final rating = ratingOutOfTen(game.userRating);
+                  final hasRating = rating > 0;
+
+                  return _AllGameForRatingCard(
+                    game: game,
+                    rating: rating,
+                    hasRating: hasRating,
+                    dateText: formattedDate(game.addedAt),
+                    color: hasRating
+                        ? ratingColor(rating)
+                        : const Color(0xFF75EEFD),
+                    quality: hasRating ? ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
+                    onTap: () => onOpenGame(game),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AllGamesHero extends StatelessWidget {
+  const _AllGamesHero({
+    required this.totalCount,
+    required this.unratedCount,
+    required this.onBack,
+  });
+
+  final int totalCount;
+  final int unratedCount;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _CircleIconButton(
+              icon: Icons.arrow_back_rounded,
+              onTap: onBack,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Все игры',
+              style: TextStyle(
+                color: Color(0xFF75EEFD),
+                fontSize: 24,
+                height: 1.33,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 28),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111414),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: const Color(0x6632B8C6),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF75EEFD),
+                      Color(0xFF25B0BE),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Icon(
+                  Icons.sports_esports_rounded,
+                  color: Color(0xFF00575F),
+                  size: 38,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$unratedCount без оценки',
+                      style: const TextStyle(
+                        color: Color(0xFFF4F3F3),
+                        fontSize: 25,
+                        height: 1.1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.7,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Всего в библиотеке: $totalCount',
+                      style: const TextStyle(
+                        color: Color(0xFFAAABAB),
+                        fontSize: 14,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Нажмите на игру, чтобы открыть оценку и прогресс',
+                      style: TextStyle(
+                        color: Color(0xFF78716C),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AllGameForRatingCard extends StatelessWidget {
+  const _AllGameForRatingCard({
+    required this.game,
+    required this.rating,
+    required this.hasRating,
+    required this.dateText,
+    required this.color,
+    required this.quality,
+    required this.onTap,
+  });
+
+  final LibraryGameModel game;
+  final double rating;
+  final bool hasRating;
+  final String dateText;
+  final Color color;
+  final String quality;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF111414),
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: hasRating
+                  ? color.withOpacity(0.18)
+                  : const Color(0x6632B8C6),
+            ),
+          ),
+          child: Row(
+            children: [
+              GameCover(
+                width: 70,
+                height: 92,
+                localImagePath: game.localImagePath,
+                imageUrl: game.imageUrl,
+                borderRadius: 13,
+                iconSize: 32,
+                gradientOpacity: 0.16,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 92,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        game.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 17,
+                          height: 1.2,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        game.status.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF75EEFD),
+                          fontSize: 10,
+                          height: 1.2,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Добавлено: $dateText',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF78716C),
+                          fontSize: 11,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              hasRating
+                  ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _formatRating(rating),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 24,
+                          height: 1,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.star_rounded,
+                        color: color,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    quality,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 9,
+                      height: 1.2,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.7,
+                    ),
+                  ),
+                ],
+              )
+                  : Container(
+                height: 34,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF081F23),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0x6632B8C6),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'ОЦЕНИТЬ',
+                  style: TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 10,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  const _CircleIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF111414),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0x6632B8C6),
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: const Color(0xFF75EEFD),
+            size: 22,
           ),
         ),
       ),
