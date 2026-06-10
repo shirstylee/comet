@@ -182,6 +182,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
+  String _releaseYearText(int? year) {
+    if (year == null || year <= 0) {
+      return 'ГОД НЕИЗВЕСТЕН';
+    }
+
+    return '$year';
+  }
+
   Future<void> _openGame(LibraryGameModel game) async {
     await Navigator.push(
       context,
@@ -258,7 +266,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     genre: featured.genre.trim().isEmpty
                         ? 'Action'
                         : featured.genre.trim(),
-                    dateText: _formattedDate(featured.addedAt),
+                    releaseText: _releaseYearText(featured.year),
+                    reviewDateText: _formattedDate(featured.addedAt),
                     statusColor: _statusColor(featured.status),
                     statusText: _statusText(featured.status),
                     comment: _commentPreview(featured.comment),
@@ -612,12 +621,101 @@ class _ScrollableProfileStatusTextState
   }
 }
 
-class _ProfilePlatformsRow extends StatelessWidget {
+class _ProfilePlatformsRow extends StatefulWidget {
   const _ProfilePlatformsRow({
     required this.platforms,
   });
 
   final List<String> platforms;
+
+  @override
+  State<_ProfilePlatformsRow> createState() => _ProfilePlatformsRowState();
+}
+
+class _ProfilePlatformsRowState extends State<_ProfilePlatformsRow> {
+  final ScrollController _scrollController = ScrollController();
+
+  int _animationRunId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoScroll();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProfilePlatformsRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.platforms.join('|') != widget.platforms.join('|')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startAutoScroll();
+      });
+    }
+  }
+
+  Future<void> _startAutoScroll() async {
+    final int runId = ++_animationRunId;
+
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+
+    if (maxScroll <= 0) {
+      _scrollController.jumpTo(0);
+      return;
+    }
+
+    _scrollController.jumpTo(0);
+
+    while (mounted &&
+        runId == _animationRunId &&
+        _scrollController.hasClients) {
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      if (!mounted ||
+          runId != _animationRunId ||
+          !_scrollController.hasClients) {
+        return;
+      }
+
+      await _scrollController.animateTo(
+        maxScroll,
+        duration: const Duration(seconds: 2),
+        curve: Curves.easeInOut,
+      );
+
+      if (!mounted ||
+          runId != _animationRunId ||
+          !_scrollController.hasClients) {
+        return;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      if (!mounted ||
+          runId != _animationRunId ||
+          !_scrollController.hasClients) {
+        return;
+      }
+
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(seconds: 2),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationRunId++;
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -627,7 +725,9 @@ class _ProfilePlatformsRow extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
+            controller: _scrollController,
             scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minWidth: constraints.maxWidth,
@@ -635,9 +735,10 @@ class _ProfilePlatformsRow extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (int i = 0; i < platforms.length; i++) ...[
-                    _ProfilePlatformBadge(text: platforms[i]),
-                    if (i != platforms.length - 1) const SizedBox(width: 8),
+                  for (int i = 0; i < widget.platforms.length; i++) ...[
+                    _ProfilePlatformBadge(text: widget.platforms[i]),
+                    if (i != widget.platforms.length - 1)
+                      const SizedBox(width: 8),
                   ],
                 ],
               ),
@@ -748,7 +849,8 @@ class _FeaturedReviewCard extends StatelessWidget {
     required this.game,
     required this.rating,
     required this.genre,
-    required this.dateText,
+    required this.releaseText,
+    required this.reviewDateText,
     required this.statusColor,
     required this.statusText,
     required this.comment,
@@ -758,7 +860,8 @@ class _FeaturedReviewCard extends StatelessWidget {
   final LibraryGameModel game;
   final double rating;
   final String genre;
-  final String dateText;
+  final String releaseText;
+  final String reviewDateText;
   final Color statusColor;
   final String statusText;
   final String comment;
@@ -804,7 +907,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$genre • $dateText',
+                      '$genre • $releaseText',
                       style: const TextStyle(
                         color: Color(0xFF78716C),
                         fontSize: 14,
@@ -890,7 +993,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          'ОЦЕНЕНО:\n$dateText',
+                          'ОЦЕНЕНО:\n$reviewDateText',
                           textAlign: TextAlign.left,
                           style: const TextStyle(
                             color: Color(0xFF57534E),

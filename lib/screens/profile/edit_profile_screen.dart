@@ -137,6 +137,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Navigator.pop(context, true);
   }
 
+  void closeKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final int statusLength = statusController.text.length;
@@ -155,187 +159,191 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       backgroundColor: background,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Column(
-          children: [
-            _EditProfileHeader(
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: pickAvatar,
-                      child: CircleAvatar(
-                        radius: 64,
-                        backgroundColor: fieldColor,
-                        backgroundImage: avatarImage,
-                        child: avatarImage == null
-                            ? Icon(
-                          Icons.add_photo_alternate_rounded,
-                          color: accent.withOpacity(0.7),
-                          size: 34,
-                        )
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: pickAvatar,
-                      child: const Text(
-                        'ИЗМЕНИТЬ АВАТАР',
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 14,
-                          height: 1.43,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.4,
+        child: GestureDetector(
+          onTap: closeKeyboard,
+          child: Column(
+            children: [
+              _EditProfileHeader(
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: pickAvatar,
+                        child: CircleAvatar(
+                          radius: 64,
+                          backgroundColor: fieldColor,
+                          backgroundImage: avatarImage,
+                          child: avatarImage == null
+                              ? Icon(
+                            Icons.add_photo_alternate_rounded,
+                            color: accent.withOpacity(0.7),
+                            size: 34,
+                          )
+                              : null,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    _LabeledInput(
-                      label: 'НИКНЕЙМ',
-                      controller: nicknameController,
-                      hint: 'Введите ваш никнейм',
-                      maxLength: 20,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    const SizedBox(height: 18),
-                    _LabeledInput(
-                      label: 'СТАТУС',
-                      controller: statusController,
-                      hint: 'Коротко о себе',
-                      maxLength: 20,
-                      showCounter: true,
-                      counterText: '$statusLength/20',
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    const SizedBox(height: 28),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'ВЫБОР ПЛАТФОРМЫ',
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: pickAvatar,
+                        child: const Text(
+                          'ИЗМЕНИТЬ АВАТАР',
                           style: TextStyle(
-                            color: Color(0xFFAAABAB),
-                            fontSize: 12,
+                            color: accent,
+                            fontSize: 14,
+                            height: 1.43,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 1.2,
+                            letterSpacing: 1.4,
                           ),
                         ),
-                        Text(
-                          'Выберите основные',
-                          style: TextStyle(
-                            color: Color(0xB3AAABAB),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: platforms.map((platform) {
-                          final bool isSelected =
-                          selectedPlatforms.contains(platform);
-
-                          return GestureDetector(
-                            onTap: () => togglePlatform(platform),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0x0D22D3EE)
-                                    : const Color(0xFF1E1E1E),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? const Color(0x8022D3EE)
-                                      : Colors.white.withOpacity(0.05),
-                                ),
-                                boxShadow: isSelected
-                                    ? [
-                                  BoxShadow(
-                                    color: const Color(0xFF22D3EE)
-                                        .withOpacity(0.1),
-                                    blurRadius: 10,
-                                  ),
-                                ]
-                                    : [],
-                              ),
-                              child: Text(
-                                platform,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? const Color(0xFF22D3EE)
-                                      : const Color(0xCCAAABAB),
-                                  fontSize: 14,
-                                  height: 1.43,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
                       ),
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 60,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF75EEFD),
-                              Color(0xFF25B0BE),
+                      const SizedBox(height: 28),
+                      _LabeledInput(
+                        label: 'НИКНЕЙМ',
+                        controller: nicknameController,
+                        hint: 'Введите ваш никнейм',
+                        maxLength: 20,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 18),
+                      _LabeledInput(
+                        label: 'СТАТУС',
+                        controller: statusController,
+                        hint: 'Коротко о себе',
+                        maxLength: 20,
+                        showCounter: true,
+                        counterText: '$statusLength/20',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 28),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'ВЫБОР ПЛАТФОРМЫ',
+                            style: TextStyle(
+                              color: Color(0xFFAAABAB),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            'Выберите основные',
+                            style: TextStyle(
+                              color: Color(0xB3AAABAB),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: platforms.map((platform) {
+                            final bool isSelected =
+                            selectedPlatforms.contains(platform);
+
+                            return GestureDetector(
+                              onTap: () => togglePlatform(platform),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0x0D22D3EE)
+                                      : const Color(0xFF1E1E1E),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0x8022D3EE)
+                                        : Colors.white.withOpacity(0.05),
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF22D3EE)
+                                          .withOpacity(0.1),
+                                      blurRadius: 10,
+                                    ),
+                                  ]
+                                      : [],
+                                ),
+                                child: Text(
+                                  platform,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? const Color(0xFF22D3EE)
+                                        : const Color(0xCCAAABAB),
+                                    fontSize: 14,
+                                    height: 1.43,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF75EEFD),
+                                Color(0xFF25B0BE),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: accent.withOpacity(0.2),
+                                blurRadius: 15,
+                                offset: const Offset(0, 4),
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: accent.withOpacity(0.2),
-                              blurRadius: 15,
-                              offset: const Offset(0, 4),
+                          child: ElevatedButton(
+                            onPressed: saveProfile,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: saveProfile,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Сохранить',
-                            style: TextStyle(
-                              color: accentDark,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                            child: const Text(
+                              'Сохранить',
+                              style: TextStyle(
+                                color: accentDark,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -439,7 +447,11 @@ class _LabeledInput extends StatelessWidget {
                   controller: controller,
                   maxLength: maxLength,
                   onChanged: onChanged,
+                  onTapOutside: (_) {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
                   cursorColor: const Color(0xFF75EEFD),
+                  scrollPadding: EdgeInsets.zero,
                   style: const TextStyle(
                     color: Color(0xFFF4F3F3),
                     fontSize: 16,

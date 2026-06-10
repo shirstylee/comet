@@ -61,6 +61,9 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   String? currentImageUrl;
   String? currentLocalImagePath;
 
+  String currentGenre = '';
+  List<String> currentPlatforms = const [];
+
   late String currentStatus = widget.status;
   int currentRating = 0;
   String currentReview = '';
@@ -104,6 +107,40 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     if (currentRating <= 0) return '— ★';
 
     return '$currentRating ★';
+  }
+
+  String _cleanBadgeText(String value) {
+    return value.trim().toUpperCase();
+  }
+
+  List<String> get gameInfoBadges {
+    final result = <String>[];
+
+    final genre = _cleanBadgeText(currentGenre);
+
+    if (genre.isNotEmpty) {
+      result.add(genre);
+    }
+
+    for (final platform in currentPlatforms) {
+      final cleanPlatform = _cleanBadgeText(platform);
+
+      if (cleanPlatform.isEmpty) {
+        continue;
+      }
+
+      if (result.contains(cleanPlatform)) {
+        continue;
+      }
+
+      result.add(cleanPlatform);
+    }
+
+    if (result.isEmpty) {
+      return const ['ДАННЫЕ НЕ УКАЗАНЫ'];
+    }
+
+    return result;
   }
 
   Color get statusColor {
@@ -185,6 +222,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       isFavorite = game.isFavorite;
       currentImageUrl = game.imageUrl;
       currentLocalImagePath = game.localImagePath;
+      currentGenre = game.genre;
+      currentPlatforms = game.platforms;
       currentRating = game.userRating == null
           ? 0
           : game.userRating!.round().clamp(1, 10).toInt();
@@ -1125,13 +1164,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                   imageUrl: currentImageUrl,
                 ),
                 const SizedBox(height: 24),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _GenreBadge(text: 'ACTION RPG'),
-                    SizedBox(width: 12),
-                    _GenreBadge(text: 'OPEN WORLD'),
-                  ],
+                _GameInfoBadges(
+                  badges: gameInfoBadges,
                 ),
                 const SizedBox(height: 48),
                 Row(
@@ -2230,6 +2264,43 @@ class _GameHeroImage extends StatelessWidget {
         borderRadius: 12,
         iconSize: 120,
         gradientOpacity: 0.20,
+      ),
+    );
+  }
+}
+
+class _GameInfoBadges extends StatelessWidget {
+  const _GameInfoBadges({
+    required this.badges,
+  });
+
+  final List<String> badges;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 38,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < badges.length; i++) ...[
+                    _GenreBadge(text: badges[i]),
+                    if (i != badges.length - 1) const SizedBox(width: 12),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
