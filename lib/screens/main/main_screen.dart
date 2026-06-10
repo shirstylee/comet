@@ -20,6 +20,9 @@ class _MainScreenState extends State<MainScreen> {
   final GlobalKey<_LibraryTabHolderState> libraryTabKey =
   GlobalKey<_LibraryTabHolderState>();
 
+  final GlobalKey<_RatingsTabHolderState> ratingsTabKey =
+  GlobalKey<_RatingsTabHolderState>();
+
   late final List<Widget> screens = [
     HomeScreen(
       onAllGamesTap: _openLibraryTab,
@@ -29,7 +32,8 @@ class _MainScreenState extends State<MainScreen> {
       key: libraryTabKey,
       onProfileTap: _openProfileTab,
     ),
-    RatingsScreen(
+    _RatingsTabHolder(
+      key: ratingsTabKey,
       onProfileTap: _openProfileTab,
     ),
     const ProfileScreen(),
@@ -63,6 +67,16 @@ class _MainScreenState extends State<MainScreen> {
 
     setState(() {
       currentIndex = 1;
+    });
+  }
+
+  void _openAllGamesForRating() {
+    setState(() {
+      currentIndex = 2;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ratingsTabKey.currentState?.openAllGamesForRating();
     });
   }
 
@@ -134,13 +148,10 @@ class _MainScreenState extends State<MainScreen> {
                   _AddMenuItem(
                     icon: Icons.star_border_rounded,
                     title: 'Оставить оценку',
-                    subtitle: 'Открыть экран оценок',
+                    subtitle: 'Открыть список игр для оценки',
                     onTap: () {
                       Navigator.pop(bottomSheetContext);
-
-                      setState(() {
-                        currentIndex = 2;
-                      });
+                      _openAllGamesForRating();
                     },
                   ),
                 ],
@@ -223,6 +234,39 @@ class _LibraryTabHolderState extends State<_LibraryTabHolder> {
     return LibraryScreen(
       key: ValueKey(refreshKey),
       onProfileTap: widget.onProfileTap,
+    );
+  }
+}
+
+class _RatingsTabHolder extends StatefulWidget {
+  const _RatingsTabHolder({
+    super.key,
+    this.onProfileTap,
+  });
+
+  final VoidCallback? onProfileTap;
+
+  @override
+  State<_RatingsTabHolder> createState() => _RatingsTabHolderState();
+}
+
+class _RatingsTabHolderState extends State<_RatingsTabHolder> {
+  int refreshKey = 0;
+  bool openAllGamesOnStart = false;
+
+  void openAllGamesForRating() {
+    setState(() {
+      refreshKey++;
+      openAllGamesOnStart = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RatingsScreen(
+      key: ValueKey(refreshKey),
+      onProfileTap: widget.onProfileTap,
+      openAllGamesOnStart: openAllGamesOnStart,
     );
   }
 }

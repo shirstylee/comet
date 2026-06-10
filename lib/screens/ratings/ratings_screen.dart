@@ -23,9 +23,13 @@ class RatingsScreen extends StatefulWidget {
   const RatingsScreen({
     super.key,
     this.onProfileTap,
+    this.openAllGamesOnStart = false,
+    this.onAutoOpenHandled,
   });
 
   final VoidCallback? onProfileTap;
+  final bool openAllGamesOnStart;
+  final VoidCallback? onAutoOpenHandled;
 
   @override
   State<RatingsScreen> createState() => _RatingsScreenState();
@@ -40,6 +44,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
 
   List<LibraryGameModel> games = [];
   bool isLoading = true;
+  bool didOpenAllGamesOnStart = false;
 
   int? lastOpenedGameId;
 
@@ -47,6 +52,31 @@ class _RatingsScreenState extends State<RatingsScreen> {
   void initState() {
     super.initState();
     _loadGames();
+  }
+
+  @override
+  void didUpdateWidget(covariant RatingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!oldWidget.openAllGamesOnStart && widget.openAllGamesOnStart) {
+      didOpenAllGamesOnStart = false;
+      _tryOpenAllGamesOnStart();
+    }
+  }
+
+  void _tryOpenAllGamesOnStart() {
+    if (!widget.openAllGamesOnStart) return;
+    if (didOpenAllGamesOnStart) return;
+    if (isLoading) return;
+
+    didOpenAllGamesOnStart = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      widget.onAutoOpenHandled?.call();
+      _openAllGamesScreen();
+    });
   }
 
   Future<void> _loadGames() async {
@@ -62,6 +92,8 @@ class _RatingsScreenState extends State<RatingsScreen> {
       games = loadedGames;
       isLoading = false;
     });
+
+    _tryOpenAllGamesOnStart();
   }
 
   void _showMessage(String text) {
@@ -208,10 +240,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 
-  Future<void> _openGameProgress(
-      LibraryGameModel game, {
-        bool openReview = false,
-      }) async {
+  Future<void> _openGameProgress(LibraryGameModel game) async {
     lastOpenedGameId = game.id;
 
     await Navigator.push(
@@ -225,7 +254,6 @@ class _RatingsScreenState extends State<RatingsScreen> {
           userMinutes: game.userMinutes,
           apiHours: game.apiHours,
           rating: game.userRating ?? game.apiRating ?? 0,
-          openReviewOnStart: openReview,
         ),
       ),
     );
@@ -356,10 +384,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
                           rating: 0,
                           onTap: () {
                             Navigator.pop(bottomSheetContext);
-                            _openGameProgress(
-                              game,
-                              openReview: true,
-                            );
+                            _openGameProgress(game);
                           },
                         ),
                       );
@@ -1157,10 +1182,7 @@ class _AllRatingsScreen extends StatelessWidget {
   });
 
   final List<LibraryGameModel> games;
-  final Future<void> Function(
-      LibraryGameModel game, {
-      bool openReview,
-      }) onOpenGame;
+  final Future<void> Function(LibraryGameModel game) onOpenGame;
   final double Function(double? rating) ratingOutOfTen;
   final Color Function(double rating) ratingColor;
   final String Function(double rating) ratingQuality;
@@ -1512,10 +1534,7 @@ class _AllGamesForRatingScreen extends StatelessWidget {
   });
 
   final List<LibraryGameModel> games;
-  final Future<void> Function(
-      LibraryGameModel game, {
-      bool openReview,
-      }) onOpenGame;
+  final Future<void> Function(LibraryGameModel game) onOpenGame;
   final double Function(double? rating) ratingOutOfTen;
   final Color Function(double rating) ratingColor;
   final String Function(double rating) ratingQuality;
@@ -1574,10 +1593,7 @@ class _AllGamesForRatingScreen extends StatelessWidget {
                         ? ratingColor(rating)
                         : const Color(0xFF75EEFD),
                     quality: hasRating ? ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
-                    onTap: () => onOpenGame(
-                      game,
-                      openReview: !hasRating,
-                    ),
+                    onTap: () => onOpenGame(game),
                   );
                 },
               ),
