@@ -36,6 +36,7 @@ class GameProgressScreen extends StatefulWidget {
     this.userMinutes = 30,
     this.apiHours = 80,
     this.rating = 4.8,
+    this.openReviewOnStart = false,
   });
 
   final int gameId;
@@ -45,6 +46,7 @@ class GameProgressScreen extends StatefulWidget {
   final int userMinutes;
   final int apiHours;
   final double rating;
+  final bool openReviewOnStart;
 
   @override
   State<GameProgressScreen> createState() => _GameProgressScreenState();
@@ -82,7 +84,18 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSavedGameData();
+    _loadSavedGameDataAndMaybeOpenReview();
+  }
+
+  Future<void> _loadSavedGameDataAndMaybeOpenReview() async {
+    await _loadSavedGameData();
+
+    if (!mounted || !widget.openReviewOnStart) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _openReviewScreen();
+    });
   }
 
   double get progressValue {

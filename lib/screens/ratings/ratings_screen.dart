@@ -208,7 +208,10 @@ class _RatingsScreenState extends State<RatingsScreen> {
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 
-  Future<void> _openGameProgress(LibraryGameModel game) async {
+  Future<void> _openGameProgress(
+      LibraryGameModel game, {
+        bool openReview = false,
+      }) async {
     lastOpenedGameId = game.id;
 
     await Navigator.push(
@@ -222,6 +225,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
           userMinutes: game.userMinutes,
           apiHours: game.apiHours,
           rating: game.userRating ?? game.apiRating ?? 0,
+          openReviewOnStart: openReview,
         ),
       ),
     );
@@ -352,7 +356,10 @@ class _RatingsScreenState extends State<RatingsScreen> {
                           rating: 0,
                           onTap: () {
                             Navigator.pop(bottomSheetContext);
-                            _openGameProgress(game);
+                            _openGameProgress(
+                              game,
+                              openReview: true,
+                            );
                           },
                         ),
                       );
@@ -1150,7 +1157,10 @@ class _AllRatingsScreen extends StatelessWidget {
   });
 
   final List<LibraryGameModel> games;
-  final Future<void> Function(LibraryGameModel game) onOpenGame;
+  final Future<void> Function(
+      LibraryGameModel game, {
+      bool openReview,
+      }) onOpenGame;
   final double Function(double? rating) ratingOutOfTen;
   final Color Function(double rating) ratingColor;
   final String Function(double rating) ratingQuality;
@@ -1502,7 +1512,10 @@ class _AllGamesForRatingScreen extends StatelessWidget {
   });
 
   final List<LibraryGameModel> games;
-  final Future<void> Function(LibraryGameModel game) onOpenGame;
+  final Future<void> Function(
+      LibraryGameModel game, {
+      bool openReview,
+      }) onOpenGame;
   final double Function(double? rating) ratingOutOfTen;
   final Color Function(double rating) ratingColor;
   final String Function(double rating) ratingQuality;
@@ -1561,7 +1574,10 @@ class _AllGamesForRatingScreen extends StatelessWidget {
                         ? ratingColor(rating)
                         : const Color(0xFF75EEFD),
                     quality: hasRating ? ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
-                    onTap: () => onOpenGame(game),
+                    onTap: () => onOpenGame(
+                      game,
+                      openReview: !hasRating,
+                    ),
                   );
                 },
               ),
