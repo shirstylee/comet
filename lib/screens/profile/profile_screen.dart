@@ -473,12 +473,9 @@ class _ProfileHero extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        if (platforms.isNotEmpty) ...[
-          _ProfilePlatformsRow(platforms: platforms),
-          const SizedBox(height: 14),
-        ],
-        _ScrollableProfileStatusText(
-          text: '$statusText • $gamesCount ИГР ОТСЛЕЖИВАЕТСЯ',
+        _ProfileScrollingInfoBlock(
+          platforms: platforms,
+          statusText: '$statusText • $gamesCount ИГР ОТСЛЕЖИВАЕТСЯ',
         ),
         const SizedBox(height: 20),
         Row(
@@ -501,87 +498,214 @@ class _ProfileHero extends StatelessWidget {
   }
 }
 
-class _ScrollableProfileStatusText extends StatefulWidget {
-  const _ScrollableProfileStatusText({
-    required this.text,
+class _ProfileScrollingInfoBlock extends StatefulWidget {
+  const _ProfileScrollingInfoBlock({
+    required this.platforms,
+    required this.statusText,
   });
 
-  final String text;
+  final List<String> platforms;
+  final String statusText;
 
   @override
-  State<_ScrollableProfileStatusText> createState() =>
-      _ScrollableProfileStatusTextState();
+  State<_ProfileScrollingInfoBlock> createState() =>
+      _ProfileScrollingInfoBlockState();
 }
 
-class _ScrollableProfileStatusTextState
-    extends State<_ScrollableProfileStatusText> {
-  final ScrollController _scrollController = ScrollController();
+class _ProfileScrollingInfoBlockState extends State<_ProfileScrollingInfoBlock> {
+  final ScrollController _platformsController = ScrollController();
+  final ScrollController _statusController = ScrollController();
 
-  bool _shouldAnimate = false;
+  int _animationRunId = 0;
 
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAutoScroll();
+      _startSynchronizedAutoScroll();
     });
   }
 
   @override
-  void didUpdateWidget(covariant _ScrollableProfileStatusText oldWidget) {
+  void didUpdateWidget(covariant _ProfileScrollingInfoBlock oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.text != widget.text) {
+    final oldPlatforms = oldWidget.platforms.join('|');
+    final newPlatforms = widget.platforms.join('|');
+
+    if (oldPlatforms != newPlatforms || oldWidget.statusText != widget.statusText) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _startAutoScroll();
+        _startSynchronizedAutoScroll();
       });
     }
   }
 
-  Future<void> _startAutoScroll() async {
-    if (!_scrollController.hasClients) return;
+  Future<void> _startSynchronizedAutoScroll() async {
+    final int runId = ++_animationRunId;
 
-    final maxScroll = _scrollController.position.maxScrollExtent;
-
-    if (maxScroll <= 0) {
-      _shouldAnimate = false;
+    if (!_platformsController.hasClients || !_statusController.hasClients) {
       return;
     }
 
-    _shouldAnimate = true;
+    final double platformsMaxScroll =
+        _platformsController.position.maxScrollExtent;
+    final double statusMaxScroll = _statusController.position.maxScrollExtent;
 
-    while (mounted && _shouldAnimate && _scrollController.hasClients) {
-      await Future.delayed(const Duration(milliseconds: 700));
-
-      if (!mounted || !_scrollController.hasClients) return;
-
-      await _scrollController.animateTo(
-        maxScroll,
-        duration: const Duration(seconds: 2),
-        curve: Curves.easeInOut,
-      );
-
-      if (!mounted || !_scrollController.hasClients) return;
-
-      await Future.delayed(const Duration(milliseconds: 700));
-
-      if (!mounted || !_scrollController.hasClients) return;
-
-      await _scrollController.animateTo(
-        0,
-        duration: const Duration(seconds: 2),
-        curve: Curves.easeInOut,
-      );
+    if (platformsMaxScroll <= 0 && statusMaxScroll <= 0) {
+      _jumpToStart();
+      return;
     }
+
+    _jumpToStart();
+
+    while (mounted && runId == _animationRunId) {
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      if (!_canContinue(runId)) return;
+
+      await Future.wait([
+        _animateControllerTo(
+          controller: _platformsController,
+          offset: platformsMaxScroll,
+        ),
+        _animateControllerTo(
+          controller: _statusController,
+          offset: statusMaxScroll,
+        ),
+      ]);
+
+      if (!_canContinue(runId)) return;
+
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      if (!_canContinue(runId)) return;
+
+      await Future.wait([
+        _animateControllerTo(
+          controller: _platformsController,
+          offset: 0,
+        ),
+        _animateControllerTo(
+          controller: _statusController,
+          offset: 0,
+        ),
+      ]);
+    }
+  }
+
+  bool _canContinue(int runId) {
+    return mounted &&
+        runId == _animationRunId &&
+        _platformsController.hasClients &&
+        _statusController.hasClients;
+  }
+
+  void _jumpToStart() {
+    if (_platformsController.hasClients) {
+      _platformsController.jumpTo(0);
+    }
+
+    if (_statusController.hasClients) {
+      _statusController.jumpTo(0);
+    }
+  }
+
+  Future<void> _animateControllerTo({
+    required ScrollController controller,
+    required double offset,
+  }) async {
+    if (!controller.hasClients) {
+      return;
+    }
+
+    final double maxScroll = controller.position.maxScrollExtent;
+    final double safeOffset = offset.clamp(0.0, maxScroll).toDouble();
+
+    await controller.animateTo(
+      safeOffset,
+      duration: const Duration(seconds: 2),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
-    _shouldAnimate = false;
-    _scrollController.dispose();
+    _animationRunId++;
+    _platformsController.dispose();
+    _statusController.dispose();
     super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (widget.platforms.isNotEmpty) ...[
+          _SynchronizedPlatformsRow(
+            platforms: widget.platforms,
+            controller: _platformsController,
+          ),
+          const SizedBox(height: 14),
+        ],
+        _SynchronizedStatusText(
+          text: widget.statusText,
+          controller: _statusController,
+        ),
+      ],
+    );
+  }
+}
+
+class _SynchronizedPlatformsRow extends StatelessWidget {
+  const _SynchronizedPlatformsRow({
+    required this.platforms,
+    required this.controller,
+  });
+
+  final List<String> platforms;
+  final ScrollController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 30,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < platforms.length; i++) ...[
+                    _ProfilePlatformBadge(text: platforms[i]),
+                    if (i != platforms.length - 1) const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SynchronizedStatusText extends StatelessWidget {
+  const _SynchronizedStatusText({
+    required this.text,
+    required this.controller,
+  });
+
+  final String text;
+  final ScrollController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -591,7 +715,7 @@ class _ScrollableProfileStatusTextState
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            controller: _scrollController,
+            controller: controller,
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
             child: ConstrainedBox(
@@ -600,7 +724,7 @@ class _ScrollableProfileStatusTextState
               ),
               child: Center(
                 child: Text(
-                  widget.text,
+                  text,
                   maxLines: 1,
                   softWrap: false,
                   textAlign: TextAlign.center,
@@ -612,135 +736,6 @@ class _ScrollableProfileStatusTextState
                     letterSpacing: 0.4,
                   ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ProfilePlatformsRow extends StatefulWidget {
-  const _ProfilePlatformsRow({
-    required this.platforms,
-  });
-
-  final List<String> platforms;
-
-  @override
-  State<_ProfilePlatformsRow> createState() => _ProfilePlatformsRowState();
-}
-
-class _ProfilePlatformsRowState extends State<_ProfilePlatformsRow> {
-  final ScrollController _scrollController = ScrollController();
-
-  int _animationRunId = 0;
-
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAutoScroll();
-    });
-  }
-
-  @override
-  void didUpdateWidget(covariant _ProfilePlatformsRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.platforms.join('|') != widget.platforms.join('|')) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _startAutoScroll();
-      });
-    }
-  }
-
-  Future<void> _startAutoScroll() async {
-    final int runId = ++_animationRunId;
-
-    if (!_scrollController.hasClients) return;
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-
-    if (maxScroll <= 0) {
-      _scrollController.jumpTo(0);
-      return;
-    }
-
-    _scrollController.jumpTo(0);
-
-    while (mounted &&
-        runId == _animationRunId &&
-        _scrollController.hasClients) {
-      await Future.delayed(const Duration(milliseconds: 700));
-
-      if (!mounted ||
-          runId != _animationRunId ||
-          !_scrollController.hasClients) {
-        return;
-      }
-
-      await _scrollController.animateTo(
-        maxScroll,
-        duration: const Duration(seconds: 2),
-        curve: Curves.easeInOut,
-      );
-
-      if (!mounted ||
-          runId != _animationRunId ||
-          !_scrollController.hasClients) {
-        return;
-      }
-
-      await Future.delayed(const Duration(milliseconds: 700));
-
-      if (!mounted ||
-          runId != _animationRunId ||
-          !_scrollController.hasClients) {
-        return;
-      }
-
-      await _scrollController.animateTo(
-        0,
-        duration: const Duration(seconds: 2),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationRunId++;
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 30,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: constraints.maxWidth,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (int i = 0; i < widget.platforms.length; i++) ...[
-                    _ProfilePlatformBadge(text: widget.platforms[i]),
-                    if (i != widget.platforms.length - 1)
-                      const SizedBox(width: 8),
-                  ],
-                ],
               ),
             ),
           );
