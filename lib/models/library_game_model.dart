@@ -9,10 +9,10 @@ class LibraryGameModel {
     this.imageUrl,
     this.localImagePath,
     this.year,
-    this.genre = 'Action',
+    this.genre = '',
     this.platforms = const [],
     this.apiRating,
-    this.apiHours = 80,
+    this.apiHours = 0,
     this.userHours = 0,
     this.userMinutes = 0,
     this.userRating,
@@ -26,11 +26,7 @@ class LibraryGameModel {
   final String status;
   final DateTime addedAt;
 
-  // Ссылка на оригинальную обложку из RAWG.
   final String? imageUrl;
-
-  // Путь к сжатой обложке, которая хранится на устройстве.
-  // В Hive сохраняем только путь, а не саму картинку.
   final String? localImagePath;
 
   final int? year;
@@ -130,6 +126,12 @@ class LibraryGameModel {
     final rawStages = map['stages'];
     final rawPlatforms = map['platforms'];
 
+    final rawGenre = map['genre'];
+    final cleanGenre = rawGenre == null ? '' : rawGenre.toString().trim();
+
+    final rawApiHours = map['apiHours'];
+    final parsedApiHours = rawApiHours is num ? rawApiHours.toInt() : 0;
+
     return LibraryGameModel(
       id: map['id'] as int? ?? 0,
       title: map['title'] as String? ?? 'Без названия',
@@ -140,12 +142,12 @@ class LibraryGameModel {
       imageUrl: map['imageUrl'] as String?,
       localImagePath: map['localImagePath'] as String?,
       year: map['year'] as int?,
-      genre: map['genre'] as String? ?? 'Action',
+      genre: cleanGenre,
       platforms: rawPlatforms is List
           ? rawPlatforms.map((platform) => platform.toString()).toList()
           : const [],
       apiRating: (map['apiRating'] as num?)?.toDouble(),
-      apiHours: map['apiHours'] as int? ?? 80,
+      apiHours: parsedApiHours,
       userHours: map['userHours'] as int? ?? 0,
       userMinutes: map['userMinutes'] as int? ?? 0,
       userRating: (map['userRating'] as num?)?.toDouble(),
