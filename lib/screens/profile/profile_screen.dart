@@ -190,6 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '$year';
   }
 
+  String _timeText(LibraryGameModel game) {
+    if (game.userHours <= 0 && game.userMinutes <= 0) return '0ч';
+    if (game.userMinutes <= 0) return '${game.userHours}ч';
+
+    return '${game.userHours}ч ${game.userMinutes}м';
+  }
+
   Future<void> _openGame(LibraryGameModel game) async {
     await Navigator.push(
       context,
@@ -271,20 +278,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     statusColor: _statusColor(featured.status),
                     statusText: _statusText(featured.status),
                     comment: _commentPreview(featured.comment),
+                    timeText: _timeText(featured),
                     onTap: () => _openGame(featured),
                   ),
                 if (otherRatedGames.isNotEmpty) ...[
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 22),
                   Column(
                     children: otherRatedGames.map((game) {
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.only(bottom: 14),
                         child: _SmallReviewCard(
                           game: game,
                           rating: _ratingOutOfTen(game.userRating),
-                          statusColor: _statusColor(game.status),
                           statusText: _statusText(game.status),
                           comment: _commentPreview(game.comment),
+                          genre: game.genre.trim().isEmpty
+                              ? 'Action'
+                              : game.genre.trim(),
+                          timeText: _timeText(game),
                           onTap: () => _openGame(game),
                         ),
                       );
@@ -849,6 +860,7 @@ class _FeaturedReviewCard extends StatelessWidget {
     required this.statusColor,
     required this.statusText,
     required this.comment,
+    required this.timeText,
     required this.onTap,
   });
 
@@ -860,6 +872,7 @@ class _FeaturedReviewCard extends StatelessWidget {
   final Color statusColor;
   final String statusText;
   final String comment;
+  final String timeText;
   final VoidCallback onTap;
 
   @override
@@ -875,6 +888,16 @@ class _FeaturedReviewCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF111414),
             borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFF232626),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.22),
+                blurRadius: 24,
+                offset: const Offset(0, 14),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -886,7 +909,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                 statusColor: statusColor,
               ),
               Padding(
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.all(28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -915,7 +938,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                       height: 54,
                       width: double.infinity,
                       horizontalPadding: 18,
-                      borderRadius: 10,
+                      borderRadius: 12,
                       fontSize: 30,
                       starSize: 25,
                     ),
@@ -978,7 +1001,7 @@ class _FeaturedReviewCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          '${game.userHours}ч',
+                          timeText,
                           style: const TextStyle(
                             color: Color(0xFF22D3EE),
                             fontSize: 12,
@@ -1048,36 +1071,27 @@ class _FeaturedCover extends StatelessWidget {
               gradientOpacity: 0.18,
             ),
           ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.05),
+                    Colors.black.withOpacity(0.32),
+                  ],
+                ),
+              ),
+            ),
+          ),
           Positioned(
             left: 16,
             top: 16,
-            child: Container(
-              height: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                statusText,
-                style: TextStyle(
-                  color: statusColor == const Color(0xFFBBFFB3)
-                      ? const Color(0xFF00671A)
-                      : const Color(0xFF00272B),
-                  fontSize: 10,
-                  height: 1.2,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
-              ),
+            child: _StatusPill(
+              text: statusText,
+              color: statusColor,
+              filled: true,
             ),
           ),
         ],
@@ -1090,48 +1104,74 @@ class _SmallReviewCard extends StatelessWidget {
   const _SmallReviewCard({
     required this.game,
     required this.rating,
-    required this.statusColor,
     required this.statusText,
     required this.comment,
+    required this.genre,
+    required this.timeText,
     required this.onTap,
   });
 
   final LibraryGameModel game;
   final double rating;
-  final Color statusColor;
   final String statusText;
   final String comment;
+  final String genre;
+  final String timeText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF1D2020),
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 128,
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            children: [
-              GameCover(
-                width: 80,
-                height: 80,
-                localImagePath: game.localImagePath,
-                imageUrl: game.imageUrl,
-                borderRadius: 12,
-                iconSize: 34,
-                gradientOpacity: 0.14,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          height: 122,
+          decoration: BoxDecoration(
+            color: const Color(0xFF141818),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFF262A2A),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
               ),
-              const SizedBox(width: 24),
-              Expanded(
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 14,
+                top: 14,
+                bottom: 14,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    width: 94,
+                    child: GameCover(
+                      width: 94,
+                      height: 94,
+                      localImagePath: game.localImagePath,
+                      imageUrl: game.imageUrl,
+                      borderRadius: 0,
+                      iconSize: 34,
+                      gradientOpacity: 0.12,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(124, 15, 14, 14),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Text(
@@ -1140,53 +1180,58 @@ class _SmallReviewCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Color(0xFFFFFFFF),
-                              fontSize: 16,
-                              height: 1.4,
+                              fontSize: 18,
+                              height: 1.15,
                               fontWeight: FontWeight.w900,
+                              letterSpacing: -0.35,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          _formatRating(rating),
-                          style: const TextStyle(
-                            color: Color(0xFF22D3EE),
-                            fontSize: 18,
-                            height: 1.2,
-                            fontWeight: FontWeight.w900,
+                        _CompactRatingBadge(rating: rating),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 11,
+                          child: _SmallMetaPill(
+                            text: statusText,
+                            color: const Color(0xFF22D3EE),
+                            maxWidth: 64,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          flex: 10,
+                          child: _SmallMetaPill(
+                            text: genre.toUpperCase(),
+                            color: const Color(0xFF22D3EE),
+                            maxWidth: 64,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          flex: 8,
+                          child: _SmallMetaPill(
+                            text: timeText.toUpperCase(),
+                            color: const Color(0xFF22D3EE),
+                            maxWidth: 56,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 18,
-                      padding: const EdgeInsets.symmetric(horizontal: 9),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 9,
-                          height: 1.2,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.9,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const Spacer(),
                     Text(
                       comment,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFF78716C),
-                        fontSize: 12,
-                        height: 1.3,
+                        color: Color(0xFF8C8985),
+                        fontSize: 13,
+                        height: 1.25,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ],
@@ -1194,6 +1239,112 @@ class _SmallReviewCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallMetaPill extends StatelessWidget {
+  const _SmallMetaPill({
+    required this.text,
+    required this.color,
+    required this.maxWidth,
+  });
+
+  final String text;
+  final Color color;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: maxWidth,
+      ),
+      child: Container(
+        height: 19,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10262B),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: const Color(0x5532B8C6),
+            width: 0.8,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            text,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(
+              color: color,
+              fontSize: 8.5,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.45,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.text,
+    required this.color,
+    this.filled = false,
+  });
+
+  final String text;
+  final Color color;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = filled
+        ? color == const Color(0xFFBBFFB3)
+        ? const Color(0xFF00671A)
+        : const Color(0xFF00272B)
+        : color;
+
+    return Container(
+      height: filled ? 24 : 22,
+      padding: EdgeInsets.symmetric(horizontal: filled ? 14 : 10),
+      decoration: BoxDecoration(
+        color: filled ? color : color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: filled
+            ? null
+            : Border.all(
+          color: color.withOpacity(0.24),
+        ),
+        boxShadow: filled
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ]
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: textColor,
+          fontSize: filled ? 10 : 9,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: filled ? 1 : 0.8,
         ),
       ),
     );
@@ -1259,6 +1410,49 @@ class _ReviewRatingBadge extends StatelessWidget {
             Icons.star_rounded,
             color: const Color(0xFF22D3EE),
             size: starSize,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactRatingBadge extends StatelessWidget {
+  const _CompactRatingBadge({
+    required this.rating,
+  });
+
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFF082326),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _formatRating(rating),
+            style: const TextStyle(
+              color: Color(0xFF22D3EE),
+              fontSize: 15,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.star_rounded,
+            color: Color(0xFF22D3EE),
+            size: 15,
           ),
         ],
       ),
