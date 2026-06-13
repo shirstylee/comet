@@ -983,31 +983,8 @@ class _FeaturedReviewCard extends StatelessWidget {
                     const SizedBox(height: 22),
                     Row(
                       children: [
-                        const Icon(
-                          Icons.access_time_rounded,
-                          color: Color(0xFF22D3EE),
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'ВРЕМЯ\nВ ИГРЕ:',
-                          style: TextStyle(
-                            color: Color(0xFFA8A29E),
-                            fontSize: 11,
-                            height: 1.25,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          timeText,
-                          style: const TextStyle(
-                            color: Color(0xFF22D3EE),
-                            fontSize: 12,
-                            height: 1.25,
-                            fontWeight: FontWeight.w900,
-                          ),
+                        _FeaturedTimePill(
+                          timeText: timeText,
                         ),
                         const Spacer(),
                         Text(
@@ -1029,6 +1006,71 @@ class _FeaturedReviewCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+class _FeaturedTimePill extends StatelessWidget {
+  const _FeaturedTimePill({
+    required this.timeText,
+  });
+
+  final String timeText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF082326),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.schedule_rounded,
+            color: Color(0xFF22D3EE),
+            size: 15,
+          ),
+          const SizedBox(width: 9),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'ВРЕМЯ В ИГРЕ:',
+                maxLines: 1,
+                style: TextStyle(
+                  color: Color(0xFFA8A29E),
+                  fontSize: 10,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.45,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                timeText,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Color(0xFF22D3EE),
+                  fontSize: 12,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
