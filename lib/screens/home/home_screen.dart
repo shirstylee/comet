@@ -705,16 +705,21 @@ class _GameActivityCard extends StatelessWidget {
       return 'ПРОЙДЕНО';
     }
 
-    final hasPlayedTime = game.userHours > 0 || game.userMinutes > 0;
-
-    if (!hasPlayedTime) {
-      return 'нет сессий';
+    if (game.userHours <= 0 && game.userMinutes <= 0) {
+      return '0ч';
     }
 
-    final hoursText = game.userHours > 0 ? '${game.userHours}ч' : '';
-    final minutesText = game.userMinutes > 0 ? ' ${game.userMinutes}м' : '';
+    final parts = <String>[];
 
-    return '${hoursText}${minutesText.trimRight()} сессия';
+    if (game.userHours > 0) {
+      parts.add('${game.userHours}ч');
+    }
+
+    if (game.userMinutes > 0) {
+      parts.add('${game.userMinutes}м');
+    }
+
+    return parts.join(' ');
   }
 
   List<Color> get imageGradient {
