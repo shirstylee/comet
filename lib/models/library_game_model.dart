@@ -6,6 +6,7 @@ class LibraryGameModel {
     required this.title,
     required this.status,
     required this.addedAt,
+    this.ratedAt,
     this.imageUrl,
     this.localImagePath,
     this.year,
@@ -24,7 +25,13 @@ class LibraryGameModel {
   final int id;
   final String title;
   final String status;
+
+  /// Дата добавления игры в библиотеку.
   final DateTime addedAt;
+
+  /// Реальная дата выставления/изменения пользовательской оценки.
+  /// Берётся с телефона пользователя через DateTime.now().
+  final DateTime? ratedAt;
 
   final String? imageUrl;
   final String? localImagePath;
@@ -65,6 +72,8 @@ class LibraryGameModel {
     String? title,
     String? status,
     DateTime? addedAt,
+    DateTime? ratedAt,
+    bool clearRatedAt = false,
     String? imageUrl,
     String? localImagePath,
     int? year,
@@ -75,7 +84,9 @@ class LibraryGameModel {
     int? userHours,
     int? userMinutes,
     double? userRating,
+    bool clearUserRating = false,
     String? comment,
+    bool clearComment = false,
     bool? isFavorite,
     List<GameStageModel>? stages,
   }) {
@@ -84,6 +95,7 @@ class LibraryGameModel {
       title: title ?? this.title,
       status: status ?? this.status,
       addedAt: addedAt ?? this.addedAt,
+      ratedAt: clearRatedAt ? null : ratedAt ?? this.ratedAt,
       imageUrl: imageUrl ?? this.imageUrl,
       localImagePath: localImagePath ?? this.localImagePath,
       year: year ?? this.year,
@@ -93,8 +105,8 @@ class LibraryGameModel {
       apiHours: apiHours ?? this.apiHours,
       userHours: userHours ?? this.userHours,
       userMinutes: userMinutes ?? this.userMinutes,
-      userRating: userRating ?? this.userRating,
-      comment: comment ?? this.comment,
+      userRating: clearUserRating ? null : userRating ?? this.userRating,
+      comment: clearComment ? null : comment ?? this.comment,
       isFavorite: isFavorite ?? this.isFavorite,
       stages: stages ?? this.stages,
     );
@@ -106,6 +118,7 @@ class LibraryGameModel {
       'title': title,
       'status': status,
       'addedAt': addedAt.toIso8601String(),
+      'ratedAt': ratedAt?.toIso8601String(),
       'imageUrl': imageUrl,
       'localImagePath': localImagePath,
       'year': year,
@@ -132,13 +145,20 @@ class LibraryGameModel {
     final rawApiHours = map['apiHours'];
     final parsedApiHours = rawApiHours is num ? rawApiHours.toInt() : 0;
 
+    final parsedAddedAt = map['addedAt'] == null
+        ? DateTime.now()
+        : DateTime.tryParse(map['addedAt'].toString()) ?? DateTime.now();
+
+    final parsedRatedAt = map['ratedAt'] == null
+        ? null
+        : DateTime.tryParse(map['ratedAt'].toString());
+
     return LibraryGameModel(
       id: map['id'] as int? ?? 0,
       title: map['title'] as String? ?? 'Без названия',
       status: map['status'] as String? ?? 'Играю',
-      addedAt: map['addedAt'] == null
-          ? DateTime.now()
-          : DateTime.tryParse(map['addedAt'].toString()) ?? DateTime.now(),
+      addedAt: parsedAddedAt,
+      ratedAt: parsedRatedAt,
       imageUrl: map['imageUrl'] as String?,
       localImagePath: map['localImagePath'] as String?,
       year: map['year'] as int?,

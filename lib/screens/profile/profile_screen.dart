@@ -70,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }).toList();
 
     result.sort((a, b) {
-      return b.addedAt.compareTo(a.addedAt);
+      return _ratingDate(b).compareTo(_ratingDate(a));
     });
 
     return result;
@@ -97,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return ratingCompare;
       }
 
-      return b.addedAt.compareTo(a.addedAt);
+      return _ratingDate(b).compareTo(_ratingDate(a));
     });
 
     return sorted.first;
@@ -138,6 +138,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (rating < 1) return 1;
 
     return rating;
+  }
+
+  DateTime _ratingDate(LibraryGameModel game) {
+    return game.ratedAt ?? game.addedAt;
   }
 
   Color _statusColor(String status) {
@@ -274,7 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? 'Action'
                         : featured.genre.trim(),
                     releaseText: _releaseYearText(featured.year),
-                    reviewDateText: _formattedDate(featured.addedAt),
+                    reviewDateText: _formattedDate(_ratingDate(featured)),
                     statusColor: _statusColor(featured.status),
                     statusText: _statusText(featured.status),
                     comment: _commentPreview(featured.comment),

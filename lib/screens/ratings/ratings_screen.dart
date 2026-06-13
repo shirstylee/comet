@@ -131,7 +131,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
         return 1;
       }
 
-      return b.addedAt.compareTo(a.addedAt);
+      return _ratingDate(b).compareTo(_ratingDate(a));
     });
 
     return result;
@@ -201,6 +201,10 @@ class _RatingsScreenState extends State<RatingsScreen> {
     if (rating < 1) return 1;
 
     return rating;
+  }
+
+  DateTime _ratingDate(LibraryGameModel game) {
+    return game.ratedAt ?? game.addedAt;
   }
 
   Color _ratingColor(double rating) {
@@ -281,6 +285,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
           ratingColor: _ratingColor,
           ratingQuality: _ratingQuality,
           formattedDate: _formattedDate,
+          ratingDate: _ratingDate,
         ),
       ),
     );
@@ -304,6 +309,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
           ratingColor: _ratingColor,
           ratingQuality: _ratingQuality,
           formattedDate: _formattedDate,
+          ratingDate: _ratingDate,
         ),
       ),
     );
@@ -490,7 +496,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
                       child: _RecentlyRatedCard(
                         game: game,
                         rating: rating,
-                        dateText: _formattedDate(game.addedAt),
+                        dateText: _formattedDate(_ratingDate(game)),
                         color: _ratingColor(rating),
                         quality: _ratingQuality(rating),
                         onTap: () => _openGameProgress(game),
@@ -1186,6 +1192,7 @@ class _AllRatingsScreen extends StatelessWidget {
     required this.ratingColor,
     required this.ratingQuality,
     required this.formattedDate,
+    required this.ratingDate,
   });
 
   final List<LibraryGameModel> games;
@@ -1197,6 +1204,7 @@ class _AllRatingsScreen extends StatelessWidget {
   final Color Function(double rating) ratingColor;
   final String Function(double rating) ratingQuality;
   final String Function(DateTime date) formattedDate;
+  final DateTime Function(LibraryGameModel game) ratingDate;
 
   double get averageRating {
     if (games.isEmpty) return 0;
@@ -1237,7 +1245,7 @@ class _AllRatingsScreen extends StatelessWidget {
                   return _AllRatingCard(
                     game: game,
                     rating: rating,
-                    dateText: formattedDate(game.addedAt),
+                    dateText: formattedDate(ratingDate(game)),
                     color: ratingColor(rating),
                     quality: ratingQuality(rating),
                     onTap: () => onOpenGame(game),
@@ -1541,6 +1549,7 @@ class _AllGamesForRatingScreen extends StatelessWidget {
     required this.ratingColor,
     required this.ratingQuality,
     required this.formattedDate,
+    required this.ratingDate,
   });
 
   final List<LibraryGameModel> games;
@@ -1552,6 +1561,7 @@ class _AllGamesForRatingScreen extends StatelessWidget {
   final Color Function(double rating) ratingColor;
   final String Function(double rating) ratingQuality;
   final String Function(DateTime date) formattedDate;
+  final DateTime Function(LibraryGameModel game) ratingDate;
 
   @override
   Widget build(BuildContext context) {
@@ -1563,6 +1573,10 @@ class _AllGamesForRatingScreen extends StatelessWidget {
 
       if (aHasRating != bHasRating) {
         return aHasRating ? 1 : -1;
+      }
+
+      if (aHasRating && bHasRating) {
+        return ratingDate(b).compareTo(ratingDate(a));
       }
 
       return b.addedAt.compareTo(a.addedAt);
@@ -1601,7 +1615,9 @@ class _AllGamesForRatingScreen extends StatelessWidget {
                     game: game,
                     rating: rating,
                     hasRating: hasRating,
-                    dateText: formattedDate(game.addedAt),
+                    dateText: hasRating
+                        ? formattedDate(ratingDate(game))
+                        : formattedDate(game.addedAt),
                     color: hasRating
                         ? ratingColor(rating)
                         : const Color(0xFF75EEFD),
@@ -1816,11 +1832,11 @@ class _AllGameForRatingCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            'Добавлено:',
+                          Text(
+                            hasRating ? 'Оценено:' : 'Добавлено:',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Color(0xFF78716C),
                               fontSize: 11,
                               height: 1.2,
