@@ -88,14 +88,22 @@ class _StageStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 38,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.16),
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: color.withOpacity(0.42),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.14),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -113,10 +121,10 @@ class _StageStatusBadge extends StatelessWidget {
             text,
             style: TextStyle(
               color: color,
-              fontSize: 16,
+              fontSize: 14,
               height: 1.2,
               fontWeight: FontWeight.w900,
-              letterSpacing: -0.2,
+              letterSpacing: 0.1,
             ),
           ),
         ],

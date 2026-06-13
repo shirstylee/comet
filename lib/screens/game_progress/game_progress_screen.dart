@@ -123,7 +123,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   }
 
   String _cleanBadgeText(String value) {
-    return value.trim().toUpperCase();
+    return value.trim();
   }
 
   List<String> get gameInfoBadges {
@@ -150,7 +150,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     }
 
     if (result.isEmpty) {
-      return const ['ДАННЫЕ НЕ УКАЗАНЫ'];
+      return const ['Данные не указаны'];
     }
 
     return result;
@@ -301,6 +301,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   Future<void> _saveReview({
     required int rating,
     required String review,
+    bool deleteReview = false,
   }) async {
     final game = await LibraryStorage.getGameById(widget.gameId);
 
@@ -308,9 +309,16 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       return;
     }
 
-    final updatedGame = game.copyWith(
+    final updatedGame = deleteReview
+        ? game.copyWith(
+      clearUserRating: true,
+      clearComment: true,
+      clearRatedAt: true,
+    )
+        : game.copyWith(
       userRating: rating.toDouble(),
       comment: review.trim().isEmpty ? null : review.trim(),
+      ratedAt: DateTime.now(),
     );
 
     await LibraryStorage.updateGame(updatedGame);
@@ -340,6 +348,108 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     _showTemporaryMessage(
       newFavoriteValue ? 'Добавлено в избранное' : 'Удалено из избранного',
     );
+  }
+
+
+  Future<void> _deleteGame() async {
+    final shouldDelete = await _showDeleteGameDialog();
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    await LibraryStorage.deleteGame(widget.gameId);
+
+    if (!mounted) return;
+
+    _showTemporaryMessage('Игра удалена из библиотеки');
+
+    Navigator.pop(context, true);
+  }
+
+  Future<bool> _showDeleteGameDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.65),
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF111414),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: BorderSide(
+              color: Colors.white.withOpacity(0.06),
+            ),
+          ),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.delete_outline_rounded,
+                color: Color(0xFFFF716C),
+                size: 28,
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Удалить игру?',
+                  style: TextStyle(
+                    color: Color(0xFFF4F3F3),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Игра будет удалена из библиотеки вместе с прогрессом, оценкой и этапами прохождения.',
+            style: TextStyle(
+              color: Color(0xFFAAABAB),
+              fontSize: 14,
+              height: 1.45,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(
+                'Отмена',
+                style: TextStyle(
+                  color: Color(0xFFAAABAB),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              label: const Text(
+                'Удалить',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE5484D),
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   Future<void> _changeStatus(String newStatus) async {
@@ -388,6 +498,24 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     );
 
     if (result == null) return;
+
+    if (result.deleteReview) {
+      setState(() {
+        currentRating = 0;
+        currentReview = '';
+      });
+
+      await _saveReview(
+        rating: 0,
+        review: '',
+        deleteReview: true,
+      );
+
+      if (!mounted) return;
+
+      _showTemporaryMessage('Отзыв удалён');
+      return;
+    }
 
     setState(() {
       currentRating = result.rating;
@@ -1180,7 +1308,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                 _GameInfoBadges(
                   badges: gameInfoBadges,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1249,6 +1377,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           _TopBar(
             title: widget.title,
             isFavorite: isFavorite,
+            onDeleteTap: _deleteGame,
             onFavoriteTap: _toggleFavorite,
           ),
         ],
@@ -1261,10 +1390,12 @@ class _ReviewResult {
   const _ReviewResult({
     required this.rating,
     required this.review,
+    this.deleteReview = false,
   });
 
   final int rating;
   final String review;
+  final bool deleteReview;
 }
 
 class _ReviewScreen extends StatefulWidget {
@@ -1349,6 +1480,42 @@ class _ReviewScreenState extends State<_ReviewScreen> {
       _ReviewResult(
         rating: selectedRating,
         review: reviewController.text,
+      ),
+    );
+  }
+
+  bool get hasSavedReview {
+    return widget.rating > 0 || widget.review.trim().isNotEmpty;
+  }
+
+  void _deleteReview() {
+    if (!hasSavedReview) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Отзыв ещё не добавлен',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    Navigator.pop(
+      context,
+      const _ReviewResult(
+        rating: 0,
+        review: '',
+        deleteReview: true,
       ),
     );
   }
@@ -1493,6 +1660,10 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                 _SaveReviewButton(
                   onTap: _saveReview,
                 ),
+                const SizedBox(height: 14),
+                _DeleteReviewButton(
+                  onTap: _deleteReview,
+                ),
               ],
             ),
           ),
@@ -1518,10 +1689,21 @@ class _ReviewTopBar extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Color(0xFF75EEFD),
-                size: 28,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
+                ),
               ),
             ),
             const Expanded(
@@ -1538,7 +1720,7 @@ class _ReviewTopBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 28),
+            const SizedBox(width: 38),
           ],
         ),
       ),
@@ -1724,13 +1906,12 @@ class _SaveReviewButton extends StatelessWidget {
             size: 22,
           ),
           label: const Text(
-            'СОХРАНИТЬ ОТЗЫВ',
+            'Сохранить отзыв',
             style: TextStyle(
               color: Color(0xFF00575F),
               fontSize: 18,
               height: 1.4,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
             ),
           ),
           style: ElevatedButton.styleFrom(
@@ -1740,6 +1921,49 @@ class _SaveReviewButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteReviewButton extends StatelessWidget {
+  const _DeleteReviewButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 58,
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(
+          Icons.delete_outline_rounded,
+          color: Color(0xFFFF716C),
+          size: 22,
+        ),
+        label: const Text(
+          'Удалить отзыв',
+          style: TextStyle(
+            color: Color(0xFFFF716C),
+            fontSize: 17,
+            height: 1.4,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(
+            color: Color(0x99FF716C),
+            width: 1.2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+          backgroundColor: const Color(0x1AFF716C),
         ),
       ),
     );
@@ -2189,11 +2413,13 @@ class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.title,
     required this.isFavorite,
+    required this.onDeleteTap,
     required this.onFavoriteTap,
   });
 
   final String title;
   final bool isFavorite;
+  final VoidCallback onDeleteTap;
   final VoidCallback onFavoriteTap;
 
   @override
@@ -2208,10 +2434,21 @@ class _TopBar extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Color(0xFF75EEFD),
-                size: 28,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
+                ),
               ),
             ),
             Expanded(
@@ -2229,13 +2466,44 @@ class _TopBar extends StatelessWidget {
               ),
             ),
             GestureDetector(
+              onTap: onDeleteTap,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFF716C),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x99FF716C),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFFF716C),
+                  size: 23,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
               onTap: onFavoriteTap,
-              child: Icon(
-                isFavorite
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: const Color(0xFF75EEFD),
-                size: 28,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: Icon(
+                  isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: const Color(0xFF75EEFD),
+                  size: 23,
+                ),
               ),
             ),
           ],
@@ -2329,20 +2597,33 @@ class _GenreBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
+        color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       alignment: Alignment.center,
       child: Text(
         text,
+        maxLines: 1,
+        softWrap: false,
         style: const TextStyle(
-          color: Color(0xFFF4F3F3),
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.8,
+          color: Color(0xFF75EEFD),
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
         ),
       ),
     );

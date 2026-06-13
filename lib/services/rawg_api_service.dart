@@ -169,7 +169,14 @@ class RawgApiService {
       id: json['id'] as int? ?? fallbackGame.id,
       title: json['name']?.toString() ?? fallbackGame.title,
       year: year,
-      genre: _firstGenreFromJson(json, fallback: fallbackGame.genre),
+
+      // ВАЖНО:
+      // Жанр берём из карточки поиска и больше не перезаписываем его
+      // данными detail-запроса RAWG. У RAWG порядок жанров в search и details
+      // может отличаться, из-за этого в поиске могло быть Adventure,
+      // а на экране игры — Action.
+      genre: _preserveSearchGenre(fallbackGame.genre, json),
+
       platforms: _platformsFromJson(json, fallback: fallbackGame.platforms),
       rating: (json['rating'] as num?)?.toDouble() ?? fallbackGame.rating,
       hours: json['playtime'] as int? ?? fallbackGame.hours,
@@ -185,6 +192,19 @@ class RawgApiService {
       trailerUrl: trailerUrl ?? fallbackGame.trailerUrl,
       screenshots: screenshots.isEmpty ? fallbackGame.screenshots : screenshots,
     );
+  }
+
+  String _preserveSearchGenre(
+      String searchGenre,
+      Map<String, dynamic> detailsJson,
+      ) {
+    final cleanSearchGenre = searchGenre.trim();
+
+    if (cleanSearchGenre.isNotEmpty) {
+      return cleanSearchGenre;
+    }
+
+    return _firstGenreFromJson(detailsJson);
   }
 
   String _firstGenreFromJson(
