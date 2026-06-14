@@ -510,6 +510,18 @@ class _FilterChips extends StatelessWidget {
         itemBuilder: (context, index) {
           final bool isSelected = selectedIndex == index;
 
+          final Color backgroundColor = isSelected
+              ? const Color(0xFF081F23)
+              : const Color(0xFF1D2020);
+
+          final Color borderColor = isSelected
+              ? const Color(0x6632B8C6)
+              : const Color(0x1AFFFFFF);
+
+          final Color textColor = isSelected
+              ? const Color(0xFF75EEFD)
+              : const Color(0xFFAAABAB);
+
           return GestureDetector(
             onTap: () => onSelected(index),
             child: AnimatedContainer(
@@ -517,18 +529,17 @@ class _FilterChips extends StatelessWidget {
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF25B0BE)
-                    : const Color(0xFF232626),
+                color: backgroundColor,
                 borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: borderColor,
+                ),
               ),
               alignment: Alignment.center,
               child: Text(
                 filters[index],
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF00272B)
-                      : const Color(0xFFAAABAB),
+                  color: textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
