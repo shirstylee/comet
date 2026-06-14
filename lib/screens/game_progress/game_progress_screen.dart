@@ -162,8 +162,6 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     return accent;
   }
 
-  bool get isGameCompleted => currentStatus == 'Пройдено';
-
   int get lastStageIndex => stages.length - 1;
 
   _GameStage get currentStage {
@@ -536,10 +534,6 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
   Future<void> _completeGame() async {
     await _changeStatus('Пройдено');
-  }
-
-  Future<void> _resumeGame() async {
-    await _changeStatus('Играю');
   }
 
   Future<void> _completeStage(int index) async {
@@ -1314,7 +1308,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                 _GameInfoBadges(
                   badges: gameInfoBadges,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1374,16 +1368,9 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                 const SizedBox(height: 4),
                 _AddStageButton(onTap: _addStage),
                 const SizedBox(height: 28),
-                if (isGameCompleted) ...[
-                  const _CompletedGameButton(),
-                  const SizedBox(height: 14),
-                  _ResumeGameButton(
-                    onTap: _resumeGame,
-                  ),
-                ] else
-                  _FinishGameButton(
-                    onTap: _completeGame,
-                  ),
+                _FinishGameButton(
+                  onTap: _completeGame,
+                ),
               ],
             ),
           ),
@@ -1497,7 +1484,32 @@ class _ReviewScreenState extends State<_ReviewScreen> {
     );
   }
 
+  bool get hasSavedReview {
+    return widget.rating > 0 || widget.review.trim().isNotEmpty;
+  }
+
   void _deleteReview() {
+    if (!hasSavedReview) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Отзыв ещё не добавлен',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+      return;
+    }
+
     Navigator.pop(
       context,
       const _ReviewResult(
@@ -1539,7 +1551,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -1648,10 +1660,12 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                 _SaveReviewButton(
                   onTap: _saveReview,
                 ),
-                const SizedBox(height: 14),
-                _DeleteReviewButton(
-                  onTap: _deleteReview,
-                ),
+                if (hasSavedReview) ...[
+                  const SizedBox(height: 14),
+                  _DeleteReviewButton(
+                    onTap: _deleteReview,
+                  ),
+                ],
               ],
             ),
           ),
@@ -1677,10 +1691,21 @@ class _ReviewTopBar extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Color(0xFF75EEFD),
-                size: 28,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
+                ),
               ),
             ),
             const Expanded(
@@ -1697,7 +1722,7 @@ class _ReviewTopBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 28),
+            const SizedBox(width: 38),
           ],
         ),
       ),
@@ -2010,125 +2035,6 @@ class _FinishGameButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompletedGameButton extends StatelessWidget {
-  const _CompletedGameButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 58,
-      width: double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2B2F2F),
-              Color(0xFF1D2020),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: Color(0x1AFFFFFF),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.16),
-              blurRadius: 22,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: null,
-          icon: const Icon(
-            Icons.check_circle_rounded,
-            color: Color(0xFFAAABAB),
-            size: 24,
-          ),
-          label: const Text(
-            'Прохождение завершено',
-            style: TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            disabledBackgroundColor: Colors.transparent,
-            disabledForegroundColor: const Color(0xFFAAABAB),
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResumeGameButton extends StatelessWidget {
-  const _ResumeGameButton({
-    required this.onTap,
-  });
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 58,
-      width: double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF081F23),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0x6632B8C6),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF75EEFD).withOpacity(0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.16),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: OutlinedButton.icon(
-          onPressed: onTap,
-          icon: const Icon(
-            Icons.restart_alt_rounded,
-            color: Color(0xFF75EEFD),
-            size: 24,
-          ),
-          label: const Text(
-            'Возобновить прохождение',
-            style: TextStyle(
-              color: Color(0xFF75EEFD),
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            side: BorderSide.none,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
@@ -2530,10 +2436,21 @@ class _TopBar extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Color(0xFF75EEFD),
-                size: 28,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
+                ),
               ),
             ),
             Expanded(
