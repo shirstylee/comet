@@ -412,13 +412,26 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text(
-                'Отмена',
-                style: TextStyle(
-                  color: Color(0xFFAAABAB),
-                  fontWeight: FontWeight.w800,
+            SizedBox(
+              height: 40,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFF081F23),
+                  side: const BorderSide(
+                    color: Color(0x6632B8C6),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                ),
+                child: const Text(
+                  'Отмена',
+                  style: TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ),
