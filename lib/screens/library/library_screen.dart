@@ -186,15 +186,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF081F23),
+                foregroundColor: const Color(0xFF75EEFD),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  side: const BorderSide(
+                    color: Color(0x6632B8C6),
+                  ),
+                ),
+              ),
               onPressed: () {
                 Navigator.pop(context, false);
               },
               child: const Text(
                 'Отмена',
                 style: TextStyle(
-                  color: textSecondary,
                   fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -539,7 +552,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 onTap: _openSortSheet,
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
               if (isLoading)
                 const _LibraryLoadingState()

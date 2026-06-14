@@ -75,6 +75,24 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
     }
   }
 
+  String get playedTimeText {
+    if (currentGame.userHours <= 0 && currentGame.userMinutes <= 0) {
+      return '0ч';
+    }
+
+    final parts = <String>[];
+
+    if (currentGame.userHours > 0) {
+      parts.add('${currentGame.userHours}ч');
+    }
+
+    if (currentGame.userMinutes > 0) {
+      parts.add('${currentGame.userMinutes}м');
+    }
+
+    return parts.join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusColors = _statusColors(currentGame.status);
@@ -243,7 +261,7 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${currentGame.userHours}Ч',
+                        playedTimeText,
                         style: const TextStyle(
                           color: Color(0xFF78716C),
                           fontSize: 12,

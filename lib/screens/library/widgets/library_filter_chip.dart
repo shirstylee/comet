@@ -14,6 +14,18 @@ class LibraryFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color backgroundColor = isSelected
+        ? const Color(0xFF081F23)
+        : const Color(0xFF1D2020);
+
+    final Color borderColor = isSelected
+        ? const Color(0x6632B8C6)
+        : const Color(0x1AFFFFFF);
+
+    final Color textColor = isSelected
+        ? const Color(0xFF75EEFD)
+        : const Color(0xFFAAABAB);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -21,18 +33,17 @@ class LibraryFilterChip extends StatelessWidget {
         height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF25B0BE)
-              : const Color(0xFF232626),
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: borderColor,
+          ),
         ),
         alignment: Alignment.center,
         child: Text(
           text,
           style: TextStyle(
-            color: isSelected
-                ? const Color(0xFF00272B)
-                : const Color(0xFFAAABAB),
+            color: textColor,
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
