@@ -791,17 +791,17 @@ class _GameActivityCard extends StatelessWidget {
     }
 
     if (game.userHours <= 0 && game.userMinutes <= 0) {
-      return '0ч';
+      return '0ч.';
     }
 
     final parts = <String>[];
 
     if (game.userHours > 0) {
-      parts.add('${game.userHours}ч');
+      parts.add('${game.userHours}ч.');
     }
 
     if (game.userMinutes > 0) {
-      parts.add('${game.userMinutes}м');
+      parts.add('${game.userMinutes}м.');
     }
 
     return parts.join(' ');

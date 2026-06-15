@@ -77,17 +77,17 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
 
   String get playedTimeText {
     if (currentGame.userHours <= 0 && currentGame.userMinutes <= 0) {
-      return '0ч';
+      return '0ч.';
     }
 
     final parts = <String>[];
 
     if (currentGame.userHours > 0) {
-      parts.add('${currentGame.userHours}ч');
+      parts.add('${currentGame.userHours}ч.');
     }
 
     if (currentGame.userMinutes > 0) {
-      parts.add('${currentGame.userMinutes}м');
+      parts.add('${currentGame.userMinutes}м.');
     }
 
     return parts.join(' ');

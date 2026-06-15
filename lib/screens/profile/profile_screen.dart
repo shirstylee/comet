@@ -195,10 +195,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _timeText(LibraryGameModel game) {
-    if (game.userHours <= 0 && game.userMinutes <= 0) return '0ч';
-    if (game.userMinutes <= 0) return '${game.userHours}ч';
+    if (game.userHours <= 0 && game.userMinutes <= 0) return '0ч.';
+    if (game.userMinutes <= 0) return '${game.userHours}ч.';
 
-    return '${game.userHours}ч ${game.userMinutes}м';
+    return '${game.userHours}ч. ${game.userMinutes}м.';
   }
 
   Future<void> _openGame(LibraryGameModel game) async {
