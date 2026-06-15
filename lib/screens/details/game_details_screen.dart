@@ -588,27 +588,9 @@ class _GenreBadges extends StatelessWidget {
         children: badges.map((badge) {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: Container(
-              height: 26,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF232626),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.06),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                badge.toUpperCase(),
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Color(0xFFF4F3F3),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-              ),
+            child: _DetailBadge(
+              text: badge,
+              compact: true,
             ),
           );
         }).toList(),
@@ -858,7 +840,17 @@ class _RatingSection extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF111414),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.06),
+            blurRadius: 26,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -968,6 +960,14 @@ class _MetaCards extends StatelessWidget {
     return game.platforms.join(', ');
   }
 
+  String get hoursText {
+    if (game.hours <= 0) {
+      return 'Не указано';
+    }
+
+    return '${game.hours} ч.';
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -976,40 +976,40 @@ class _MetaCards extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: [
           _MetaCard(
-            title: game.metacritic == null ? 'РЕЙТИНГ' : 'METACRITIC',
+            title: game.metacritic == null ? 'Рейтинг' : 'Metacritic',
             value: metacriticText,
-            icon: null,
+            icon: Icons.star_rounded,
             highlighted: true,
           ),
           const SizedBox(width: 8),
           _MetaCard(
-            title: 'РЕЛИЗ',
+            title: 'Дата релиза',
             value: releaseText,
             icon: Icons.calendar_today_outlined,
           ),
           const SizedBox(width: 8),
           _MetaCard(
-            title: 'ВРЕМЯ ИГРЫ',
-            value: '${game.hours} hrs',
+            title: 'Время игры',
+            value: hoursText,
             icon: Icons.access_time_rounded,
           ),
           const SizedBox(width: 8),
           _MetaCard(
-            title: 'РАЗРАБОТЧИК',
+            title: 'Разработчик',
             value: developerText,
             icon: Icons.code_rounded,
             wide: true,
           ),
           const SizedBox(width: 8),
           _MetaCard(
-            title: 'ПЛАТФОРМЫ',
+            title: 'Платформы',
             value: platformsText,
             icon: Icons.sports_esports_rounded,
             wide: true,
           ),
           const SizedBox(width: 8),
           _MetaCard(
-            title: 'ВОЗРАСТ',
+            title: 'Возраст',
             value: game.esrbRating ?? 'Не указан',
             icon: Icons.verified_user_outlined,
             wide: true,
@@ -1037,78 +1037,65 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color valueColor =
+    highlighted ? const Color(0xFFBBFFB3) : const Color(0xFF75EEFD);
+
     return Container(
-      width: wide ? 145 : 115,
+      width: wide ? 152 : 118,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF232626),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Colors.white.withOpacity(0.04),
+          color: const Color(0x6632B8C6),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              color: valueColor,
+              size: 22,
+            ),
+            const SizedBox(height: 8),
+          ],
           Text(
             title,
             textAlign: TextAlign.center,
             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFFAAABAB),
               fontSize: 11,
               height: 1.1,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w800,
               letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: 8),
-          if (highlighted)
-            Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: const Color(0xFFBBFFB3),
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFBBFFB3),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            )
-          else ...[
-            if (icon != null)
-              Icon(
-                icon,
-                color: const Color(0xFFF4F3F3),
-                size: 22,
-              ),
-            const SizedBox(height: 6),
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFF4F3F3),
-                  fontSize: 13,
-                  height: 1.15,
-                  fontWeight: FontWeight.w600,
-                ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.center,
+              maxLines: wide ? 2 : 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: highlighted ? 20 : 13,
+                height: 1.15,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -1154,23 +1141,56 @@ class _AboutSection extends StatelessWidget {
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
           decoration: BoxDecoration(
             color: const Color(0xFF111414),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Colors.white.withOpacity(0.03),
+              color: const Color(0x6632B8C6),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          child: Text(
-            description,
-            maxLines: isExpanded ? null : 4,
-            overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 14,
-              height: 1.65,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(
+                    Icons.notes_rounded,
+                    color: Color(0xFF75EEFD),
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Описание',
+                    style: TextStyle(
+                      color: Color(0xFF75EEFD),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                description,
+                maxLines: isExpanded ? null : 4,
+                overflow:
+                isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFAAABAB),
+                  fontSize: 14,
+                  height: 1.65,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
         if (canExpand) ...[
@@ -1248,8 +1268,11 @@ class _ScreenshotsSection extends StatelessWidget {
                 height: 24,
                 padding: const EdgeInsets.symmetric(horizontal: 9),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF232626),
+                  color: const Color(0xFF081F23),
                   borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0x6632B8C6),
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -1535,10 +1558,10 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
                     height: 34,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1D2020),
+                      color: const Color(0xFF081F23),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.08),
+                        color: const Color(0x6632B8C6),
                       ),
                     ),
                     alignment: Alignment.center,
@@ -1589,6 +1612,47 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
   }
 }
 
+class _DetailBadge extends StatelessWidget {
+  const _DetailBadge({
+    required this.text,
+    this.compact = false,
+  });
+
+  final String text;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 30 : 34,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 12 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: const Color(0xFF75EEFD),
+          fontSize: compact ? 11 : 12,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
 class _SmallBadge extends StatelessWidget {
   const _SmallBadge({
     required this.text,
@@ -1598,27 +1662,6 @@ class _SmallBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF232626),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        text,
-        maxLines: 1,
-        style: const TextStyle(
-          color: Color(0xFFAAABAB),
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
+    return _DetailBadge(text: text);
   }
 }
