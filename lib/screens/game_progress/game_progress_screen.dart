@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../models/game_stage_model.dart';
 import '../../storage/library_storage.dart';
 import '../../widgets/game_cover.dart';
@@ -27,13 +26,7 @@ String _formatStageDate(DateTime date) {
 }
 
 String _limitStageDescription(String value) {
-  final cleanValue = value.trim();
-
-  if (cleanValue.length <= 100) {
-    return cleanValue;
-  }
-
-  return cleanValue.substring(0, 100);
+  return value.trim();
 }
 
 class GameProgressScreen extends StatefulWidget {
@@ -1247,91 +1240,97 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.55),
+      isScrollControlled: true,
       builder: (bottomSheetContext) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111414),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.06),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
-                ),
-              ],
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(bottomSheetContext).size.height * 0.82,
             ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const _BottomSheetHandle(),
-                  const SizedBox(height: 20),
-                  Text(
-                    stage.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                    ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF111414),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.06),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withOpacity(0.16),
+                    blurRadius: 34,
+                    offset: const Offset(0, 12),
                   ),
-                  if (stage.description.trim().isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _StageDescriptionPreview(
-                      description: stage.description,
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _BottomSheetHandle(),
+                    const SizedBox(height: 20),
+                    Text(
+                      stage.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  ],
-                  const SizedBox(height: 12),
-                  _StageMenuItem(
-                    icon: Icons.edit_rounded,
-                    title: 'Переименовать',
-                    onTap: () {
-                      Navigator.pop(bottomSheetContext);
-
-                      _openStageNameEditor(
-                        index: index,
-                        title: stage.title,
+                    if (stage.description.trim().isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _StageDescriptionPreview(
                         description: stage.description,
-                      );
-                    },
-                  ),
-                  if (canCompleteStage || canResumeStage) ...[
-                    const SizedBox(height: 8),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
                     _StageMenuItem(
-                      icon: canResumeStage
-                          ? Icons.restart_alt_rounded
-                          : Icons.check_circle_outline_rounded,
-                      title: canResumeStage ? 'Возобновить' : 'Завершить',
-                      onTap: () async {
+                      icon: Icons.edit_rounded,
+                      title: 'Переименовать',
+                      onTap: () {
                         Navigator.pop(bottomSheetContext);
 
-                        if (canResumeStage) {
-                          await _resumeStage(index);
-                          return;
-                        }
+                        _openStageNameEditor(
+                          index: index,
+                          title: stage.title,
+                          description: stage.description,
+                        );
+                      },
+                    ),
+                    if (canCompleteStage || canResumeStage) ...[
+                      const SizedBox(height: 8),
+                      _StageMenuItem(
+                        icon: canResumeStage
+                            ? Icons.restart_alt_rounded
+                            : Icons.check_circle_outline_rounded,
+                        title: canResumeStage ? 'Возобновить' : 'Завершить',
+                        onTap: () async {
+                          Navigator.pop(bottomSheetContext);
 
-                        await _completeStage(index);
+                          if (canResumeStage) {
+                            await _resumeStage(index);
+                            return;
+                          }
+
+                          await _completeStage(index);
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    _StageMenuItem(
+                      icon: Icons.delete_outline_rounded,
+                      title: 'Удалить',
+                      danger: true,
+                      onTap: () async {
+                        Navigator.pop(bottomSheetContext);
+                        await _deleteStage(index);
                       },
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  _StageMenuItem(
-                    icon: Icons.delete_outline_rounded,
-                    title: 'Удалить',
-                    danger: true,
-                    onTap: () async {
-                      Navigator.pop(bottomSheetContext);
-                      await _deleteStage(index);
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -2483,9 +2482,10 @@ class _StageDescriptionInput extends StatelessWidget {
         controller: controller,
         cursorColor: const Color(0xFF75EEFD),
         maxLines: null,
-        maxLength: 100,
         expands: true,
+        keyboardType: TextInputType.multiline,
         textAlignVertical: TextAlignVertical.top,
+        scrollPadding: const EdgeInsets.only(bottom: 90),
         style: const TextStyle(
           color: Color(0xFFF4F3F3),
           fontSize: 15,
@@ -2494,24 +2494,15 @@ class _StageDescriptionInput extends StatelessWidget {
         ),
         decoration: const InputDecoration(
           labelText: 'Описание (необязательно)',
-          hintText: 'До 100 символов',
           border: InputBorder.none,
           alignLabelWithHint: true,
           contentPadding: EdgeInsets.only(
             top: 8,
-            bottom: 0,
-          ),
-          counterStyle: TextStyle(
-            color: Color(0xFF747675),
-            fontSize: 11,
+            bottom: 8,
           ),
           labelStyle: TextStyle(
             color: Color(0xFFAAABAB),
             fontSize: 13,
-          ),
-          hintStyle: TextStyle(
-            color: Color(0xFF747675),
-            fontSize: 14,
           ),
         ),
       ),
@@ -2519,7 +2510,7 @@ class _StageDescriptionInput extends StatelessWidget {
   }
 }
 
-class _StageDescriptionPreview extends StatelessWidget {
+class _StageDescriptionPreview extends StatefulWidget {
   const _StageDescriptionPreview({
     required this.description,
   });
@@ -2527,12 +2518,24 @@ class _StageDescriptionPreview extends StatelessWidget {
   final String description;
 
   @override
+  State<_StageDescriptionPreview> createState() =>
+      _StageDescriptionPreviewState();
+}
+
+class _StageDescriptionPreviewState extends State<_StageDescriptionPreview> {
+  bool isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final cleanDescription = description.trim();
+    final cleanDescription = widget.description.trim();
 
     if (cleanDescription.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    final lineBreaksCount = '\n'.allMatches(cleanDescription).length;
+    final shouldShowExpandButton =
+        cleanDescription.length > 70 || lineBreaksCount >= 2;
 
     return Container(
       width: double.infinity,
@@ -2544,14 +2547,54 @@ class _StageDescriptionPreview extends StatelessWidget {
           color: const Color(0x6632B8C6),
         ),
       ),
-      child: Text(
-        cleanDescription,
-        style: const TextStyle(
-          color: Color(0xFFD6D3D1),
-          fontSize: 14,
-          height: 1.4,
-          fontWeight: FontWeight.w500,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: isExpanded ? 170 : 62,
+            ),
+            child: SingleChildScrollView(
+              physics: isExpanded
+                  ? const BouncingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(
+                  cleanDescription,
+                  maxLines: isExpanded ? null : 3,
+                  overflow: isExpanded
+                      ? TextOverflow.visible
+                      : TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFD6D3D1),
+                    fontSize: 14,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (shouldShowExpandButton) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  isExpanded = !isExpanded;
+                });
+              },
+              child: Text(
+                isExpanded ? 'Свернуть' : 'Раскрыть',
+                style: const TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
