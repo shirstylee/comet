@@ -619,10 +619,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     setState(() {
       stages.removeAt(index);
 
-      final newLastIndex = stages.length - 1;
-
-      if (stages[newLastIndex].type == TimelineItemType.done) {
-        stages[newLastIndex] = stages[newLastIndex].copyWith(
+      if (stages.length == 1 && stages.first.title == 'Начало игры') {
+        stages[0] = stages.first.copyWith(
           type: TimelineItemType.current,
           subtitle: 'В процессе',
           clearCompletedAt: true,
