@@ -370,12 +370,23 @@ class _EditProfileHeader extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: onBack,
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: Color(0xFFAAABAB),
-                size: 24,
+            child: GestureDetector(
+              onTap: onBack,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
+                ),
               ),
             ),
           ),

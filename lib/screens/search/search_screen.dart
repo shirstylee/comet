@@ -215,13 +215,20 @@ class _SearchHeader extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: onBack,
-              child: const SizedBox(
-                width: 32,
-                height: 42,
-                child: Icon(
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
                   Icons.arrow_back_rounded,
-                  color: textSecondary,
-                  size: 30,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
                 ),
               ),
             ),
