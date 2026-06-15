@@ -300,27 +300,27 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
     switch (status.toLowerCase()) {
       case 'пройдено':
         return _StatusColors(
-          text: const Color(0xFFBBFFB3),
-          background: const Color(0x33BBFFB3),
-          border: const Color(0x4DBBFFB3),
+          text: const Color(0xFF00671A),
+          background: const Color(0xFFBBFFB3),
+          border: const Color(0xFFBBFFB3),
         );
       case 'играю':
         return _StatusColors(
-          text: const Color(0xFF61ACFE),
-          background: const Color(0x3361ACFE),
-          border: const Color(0x4D61ACFE),
+          text: const Color(0xFF00272B),
+          background: const Color(0xFF61ACFE),
+          border: const Color(0xFF61ACFE),
         );
       case 'планирую':
         return _StatusColors(
-          text: const Color(0xFFA8A29E),
-          background: const Color(0x3378716C),
-          border: const Color(0x4D78716C),
+          text: const Color(0xFF00272B),
+          background: const Color(0xFF75EEFD),
+          border: const Color(0xFF75EEFD),
         );
       default:
         return _StatusColors(
-          text: const Color(0xFFA8A29E),
-          background: const Color(0x3378716C),
-          border: const Color(0x4D78716C),
+          text: const Color(0xFF00272B),
+          background: const Color(0xFF75EEFD),
+          border: const Color(0xFF75EEFD),
         );
     }
   }
