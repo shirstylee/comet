@@ -1267,7 +1267,7 @@ class _SmallReviewCard extends StatelessWidget {
                         Flexible(
                           flex: 8,
                           child: _SmallMetaPill(
-                            text: timeText.toUpperCase(),
+                            text: timeText,
                             color: const Color(0xFF22D3EE),
                             maxWidth: 56,
                           ),
