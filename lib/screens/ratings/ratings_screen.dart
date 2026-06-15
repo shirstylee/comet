@@ -564,15 +564,45 @@ class _RatingsHeader extends StatelessWidget {
             ),
           ],
         ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications_none_rounded,
-            color: accent,
-            size: 28,
-          ),
+        _HeaderIconButton(
+          icon: Icons.notifications_none_rounded,
+          onTap: () {},
         ),
       ],
+    );
+  }
+}
+
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: const Color(0x1A75EEFD),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0x6675EEFD),
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: const Color(0xFF75EEFD),
+          size: 23,
+        ),
+      ),
     );
   }
 }

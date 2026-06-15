@@ -352,51 +352,57 @@ class _ProfileTopHeader extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              onPressed: onEditTap,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 34,
-                minHeight: 34,
-              ),
-              icon: const Icon(
-                Icons.edit_rounded,
-                color: accent,
-                size: 22,
-              ),
+            _HeaderIconButton(
+              icon: Icons.edit_rounded,
+              onTap: onEditTap,
             ),
-            IconButton(
-              onPressed: () {},
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 34,
-                minHeight: 34,
-              ),
-              icon: const Icon(
-                Icons.notifications_none_rounded,
-                color: accent,
-                size: 24,
-              ),
+            const SizedBox(width: 10),
+            _HeaderIconButton(
+              icon: Icons.notifications_none_rounded,
+              onTap: () {},
             ),
-            IconButton(
-              onPressed: () {},
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 34,
-                minHeight: 34,
-              ),
-              icon: const Icon(
-                Icons.settings_rounded,
-                color: accent,
-                size: 24,
-              ),
+            const SizedBox(width: 10),
+            _HeaderIconButton(
+              icon: Icons.settings_rounded,
+              onTap: () {},
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: const Color(0x1A75EEFD),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0x6675EEFD),
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: const Color(0xFF75EEFD),
+          size: 23,
+        ),
+      ),
     );
   }
 }

@@ -273,25 +273,52 @@ class _HomeHeader extends StatelessWidget {
         ),
         Row(
           children: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.notifications_none_rounded,
-                color: accent,
-                size: 28,
-              ),
+            _HeaderIconButton(
+              icon: Icons.notifications_none_rounded,
+              onTap: () {},
             ),
-            IconButton(
-              onPressed: onSearchTap,
-              icon: const Icon(
-                Icons.search_rounded,
-                color: accent,
-                size: 30,
-              ),
+            const SizedBox(width: 10),
+            _HeaderIconButton(
+              icon: Icons.search_rounded,
+              onTap: onSearchTap,
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: const Color(0x1A75EEFD),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0x6675EEFD),
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: const Color(0xFF75EEFD),
+          size: 23,
+        ),
+      ),
     );
   }
 }
@@ -419,35 +446,82 @@ class _StatCard extends StatelessWidget {
   final String subtitle;
   final Color color;
 
+  IconData get icon {
+    if (title == 'ПРОЙДЕНО') return Icons.check_circle_outline_rounded;
+    if (title == 'ИГРАЮ') return Icons.sports_esports_rounded;
+    return Icons.star_rounded;
+  }
+
+  String get displayTitle {
+    if (title == 'ПРОЙДЕНО') return 'Пройдено';
+    if (title == 'ИГРАЮ') return 'Играю';
+    if (title == 'СРЕДНЯЯ ОЦЕНКА') return 'Средняя оценка';
+    return title;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100,
+      height: 112,
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(
-            color: color,
-            width: 4,
-          ),
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x3375EEFD),
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  displayTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFAAABAB),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const Spacer(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -476,7 +550,7 @@ class _StatCard extends StatelessWidget {
                         ? color
                         : const Color(0xFFAAABAB),
                     fontSize: subtitle == '★' ? 24 : 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
