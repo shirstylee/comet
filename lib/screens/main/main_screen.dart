@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
@@ -16,6 +17,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int currentIndex = 0;
+
+  final List<int> tabHistory = [0];
 
   final GlobalKey<_LibraryTabHolderState> libraryTabKey =
   GlobalKey<_LibraryTabHolderState>();
@@ -39,18 +42,62 @@ class _MainScreenState extends State<MainScreen> {
     const ProfileScreen(),
   ];
 
-  void _openLibraryTab() {
-    libraryTabKey.currentState?.refreshLibrary();
+  void _setTab(
+      int index, {
+        bool addToHistory = true,
+      }) {
+    if (index < 0 || index >= screens.length) {
+      return;
+    }
+
+    if (currentIndex == index) {
+      return;
+    }
 
     setState(() {
-      currentIndex = 1;
+      currentIndex = index;
+
+      if (!addToHistory) {
+        return;
+      }
+
+      if (tabHistory.isEmpty || tabHistory.last != index) {
+        tabHistory.add(index);
+      }
     });
   }
 
+  void _openPreviousTabOrExit() {
+    if (tabHistory.length > 1) {
+      setState(() {
+        tabHistory.removeLast();
+        currentIndex = tabHistory.last;
+      });
+
+      return;
+    }
+
+    if (currentIndex != 0) {
+      setState(() {
+        currentIndex = 0;
+        tabHistory
+          ..clear()
+          ..add(0);
+      });
+
+      return;
+    }
+
+    SystemNavigator.pop();
+  }
+
+  void _openLibraryTab() {
+    libraryTabKey.currentState?.refreshLibrary();
+    _setTab(1);
+  }
+
   void _openProfileTab() {
-    setState(() {
-      currentIndex = 3;
-    });
+    _setTab(3);
   }
 
   Future<void> _openSearchScreen() async {
@@ -64,16 +111,11 @@ class _MainScreenState extends State<MainScreen> {
     if (!mounted) return;
 
     libraryTabKey.currentState?.refreshLibrary();
-
-    setState(() {
-      currentIndex = 1;
-    });
+    _setTab(1);
   }
 
   void _openAllGamesForRating() {
-    setState(() {
-      currentIndex = 2;
-    });
+    _setTab(2);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ratingsTabKey.currentState?.openAllGamesForRating();
@@ -169,13 +211,13 @@ class _MainScreenState extends State<MainScreen> {
       return;
     }
 
-    setState(() {
-      if (index > 2) {
-        currentIndex = index - 1;
-      } else {
-        currentIndex = index;
-      }
-    });
+    final tabIndex = index > 2 ? index - 1 : index;
+
+    if (tabIndex == 1) {
+      libraryTabKey.currentState?.refreshLibrary();
+    }
+
+    _setTab(tabIndex);
   }
 
   int get bottomNavIndex {
@@ -188,21 +230,31 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0C0F0F),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: screens[currentIndex],
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: AppBottomNavBar(
-              currentIndex: bottomNavIndex,
-              onTap: _handleNavTap,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          return;
+        }
+
+        _openPreviousTabOrExit();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0C0F0F),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: screens[currentIndex],
             ),
-          ),
-        ],
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: AppBottomNavBar(
+                currentIndex: bottomNavIndex,
+                onTap: _handleNavTap,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -261,12 +313,23 @@ class _RatingsTabHolderState extends State<_RatingsTabHolder> {
     });
   }
 
+  void _handleAutoOpenHandled() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      openAllGamesOnStart = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return RatingsScreen(
       key: ValueKey(refreshKey),
       onProfileTap: widget.onProfileTap,
       openAllGamesOnStart: openAllGamesOnStart,
+      onAutoOpenHandled: _handleAutoOpenHandled,
     );
   }
 }
