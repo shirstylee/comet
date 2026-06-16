@@ -875,12 +875,11 @@ class _DistributionCard extends StatelessWidget {
   final int maxValue;
 
   Color _barColor(int rating) {
-    if (rating >= 9) return const Color(0xFF75EEFD);
-    if (rating >= 7) return const Color(0xFF61ACFE);
-    if (rating >= 5) return const Color(0xFF57534E);
-    if (rating >= 3) return const Color(0xFF44403C);
+    if (rating >= 8) return const Color(0xFF75EEFD);
+    if (rating >= 6) return const Color(0xFFFACC15);
+    if (rating >= 4) return const Color(0xFFF97316);
 
-    return const Color(0xFF232626);
+    return const Color(0xFFEF4444);
   }
 
   @override
@@ -1230,7 +1229,7 @@ class _AllRatingsButton extends StatelessWidget {
   }
 }
 
-class _AllRatingsScreen extends StatelessWidget {
+class _AllRatingsScreen extends StatefulWidget {
   const _AllRatingsScreen({
     required this.games,
     required this.onOpenGame,
@@ -1252,14 +1251,67 @@ class _AllRatingsScreen extends StatelessWidget {
   final String Function(DateTime date) formattedDate;
   final DateTime Function(LibraryGameModel game) ratingDate;
 
+  @override
+  State<_AllRatingsScreen> createState() => _AllRatingsScreenState();
+}
+
+class _AllRatingsScreenState extends State<_AllRatingsScreen> {
+  late List<LibraryGameModel> games;
+
+  @override
+  void initState() {
+    super.initState();
+
+    games = [...widget.games];
+    LibraryChangeNotifier.version.addListener(_onLibraryChanged);
+  }
+
+  void _onLibraryChanged() {
+    if (!mounted) return;
+
+    _loadRatedGames();
+  }
+
+  Future<void> _loadRatedGames() async {
+    final loadedGames = await LibraryStorage.getAllGames();
+
+    final result = loadedGames.where((game) {
+      return game.userRating != null && game.userRating! > 0;
+    }).toList();
+
+    result.sort((a, b) {
+      return widget.ratingDate(b).compareTo(widget.ratingDate(a));
+    });
+
+    if (!mounted) return;
+
+    setState(() {
+      games = result;
+    });
+  }
+
+  Future<void> _openGame(LibraryGameModel game) async {
+    await widget.onOpenGame(game);
+
+    if (!mounted) return;
+
+    await _loadRatedGames();
+  }
+
   double get averageRating {
     if (games.isEmpty) return 0;
 
     final sum = games.fold<double>(0, (value, game) {
-      return value + ratingOutOfTen(game.userRating);
+      return value + widget.ratingOutOfTen(game.userRating);
     });
 
     return sum / games.length;
+  }
+
+  @override
+  void dispose() {
+    LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
+    super.dispose();
   }
 
   @override
@@ -1286,15 +1338,15 @@ class _AllRatingsScreen extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
                   final game = games[index];
-                  final rating = ratingOutOfTen(game.userRating);
+                  final rating = widget.ratingOutOfTen(game.userRating);
 
                   return _AllRatingCard(
                     game: game,
                     rating: rating,
-                    dateText: formattedDate(ratingDate(game)),
-                    color: ratingColor(rating),
-                    quality: ratingQuality(rating),
-                    onTap: () => onOpenGame(game),
+                    dateText: widget.formattedDate(widget.ratingDate(game)),
+                    color: widget.ratingColor(rating),
+                    quality: widget.ratingQuality(rating),
+                    onTap: () => _openGame(game),
                   );
                 },
               ),
@@ -1605,7 +1657,7 @@ class _AllRatingCard extends StatelessWidget {
   }
 }
 
-class _AllGamesForRatingScreen extends StatelessWidget {
+class _AllGamesForRatingScreen extends StatefulWidget {
   const _AllGamesForRatingScreen({
     required this.games,
     required this.onOpenGame,
@@ -1628,6 +1680,58 @@ class _AllGamesForRatingScreen extends StatelessWidget {
   final DateTime Function(LibraryGameModel game) ratingDate;
 
   @override
+  State<_AllGamesForRatingScreen> createState() =>
+      _AllGamesForRatingScreenState();
+}
+
+class _AllGamesForRatingScreenState extends State<_AllGamesForRatingScreen> {
+  late List<LibraryGameModel> games;
+
+  @override
+  void initState() {
+    super.initState();
+
+    games = [...widget.games];
+    LibraryChangeNotifier.version.addListener(_onLibraryChanged);
+  }
+
+  void _onLibraryChanged() {
+    if (!mounted) return;
+
+    _loadGames();
+  }
+
+  Future<void> _loadGames() async {
+    final loadedGames = await LibraryStorage.getAllGames();
+
+    if (!mounted) return;
+
+    setState(() {
+      games = loadedGames;
+    });
+  }
+
+  Future<void> _openGame(
+      LibraryGameModel game, {
+        required bool openReview,
+      }) async {
+    await widget.onOpenGame(
+      game,
+      openReview: openReview,
+    );
+
+    if (!mounted) return;
+
+    await _loadGames();
+  }
+
+  @override
+  void dispose() {
+    LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final sortedGames = [...games];
 
@@ -1640,7 +1744,7 @@ class _AllGamesForRatingScreen extends StatelessWidget {
       }
 
       if (aHasRating && bHasRating) {
-        return ratingDate(b).compareTo(ratingDate(a));
+        return widget.ratingDate(b).compareTo(widget.ratingDate(a));
       }
 
       return b.addedAt.compareTo(a.addedAt);
@@ -1672,7 +1776,7 @@ class _AllGamesForRatingScreen extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
                   final game = sortedGames[index];
-                  final rating = ratingOutOfTen(game.userRating);
+                  final rating = widget.ratingOutOfTen(game.userRating);
                   final hasRating = rating > 0;
 
                   return _AllGameForRatingCard(
@@ -1680,13 +1784,14 @@ class _AllGamesForRatingScreen extends StatelessWidget {
                     rating: rating,
                     hasRating: hasRating,
                     dateText: hasRating
-                        ? formattedDate(ratingDate(game))
-                        : formattedDate(game.addedAt),
+                        ? widget.formattedDate(widget.ratingDate(game))
+                        : widget.formattedDate(game.addedAt),
                     color: hasRating
-                        ? ratingColor(rating)
+                        ? widget.ratingColor(rating)
                         : const Color(0xFF75EEFD),
-                    quality: hasRating ? ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
-                    onTap: () => onOpenGame(
+                    quality:
+                    hasRating ? widget.ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
+                    onTap: () => _openGame(
                       game,
                       openReview: !hasRating,
                     ),
