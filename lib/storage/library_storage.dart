@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/library_game_model.dart';
 import '../services/cover_cache_service.dart';
 import 'library_change_notifier.dart';
+import 'notification_storage.dart';
 
 class LibraryStorage {
   static const String _boxName = 'library_games';
@@ -35,13 +36,30 @@ class LibraryStorage {
 
     await box.put(game.id, game.toMap());
 
+    await _safeCreateNotification(
+          () => NotificationStorage.addGameAddedNotification(
+        gameId: game.id,
+        gameTitle: game.title,
+      ),
+    );
+
     LibraryChangeNotifier.notify();
   }
 
   static Future<void> updateGame(LibraryGameModel game) async {
     final box = await _openBox();
+    final oldValue = box.get(game.id);
+
+    final oldGame = oldValue is Map
+        ? LibraryGameModel.fromMap(oldValue)
+        : null;
 
     await box.put(game.id, game.toMap());
+
+    await _createUpdateNotifications(
+      oldGame: oldGame,
+      newGame: game,
+    );
 
     LibraryChangeNotifier.notify();
   }
@@ -49,14 +67,24 @@ class LibraryStorage {
   static Future<void> deleteGame(int gameId) async {
     final box = await _openBox();
     final value = box.get(gameId);
+    LibraryGameModel? deletedGame;
 
     if (value is Map) {
-      final game = LibraryGameModel.fromMap(value);
+      deletedGame = LibraryGameModel.fromMap(value);
 
-      await CoverCacheService.deleteCover(game.localImagePath);
+      await CoverCacheService.deleteCover(deletedGame.localImagePath);
     }
 
     await box.delete(gameId);
+
+    if (deletedGame != null) {
+      await _safeCreateNotification(
+            () => NotificationStorage.addGameDeletedNotification(
+          gameId: deletedGame!.id,
+          gameTitle: deletedGame.title,
+        ),
+      );
+    }
 
     LibraryChangeNotifier.notify();
   }
@@ -92,5 +120,69 @@ class LibraryStorage {
     await box.clear();
 
     LibraryChangeNotifier.notify();
+  }
+
+  static Future<void> _createUpdateNotifications({
+    required LibraryGameModel? oldGame,
+    required LibraryGameModel newGame,
+  }) async {
+    if (oldGame == null) return;
+
+    final ratingWasChanged = oldGame.userRating != newGame.userRating;
+    final ratingWasAdded = oldGame.userRating == null && newGame.userRating != null;
+
+    if (ratingWasChanged && newGame.userRating != null) {
+      await _safeCreateNotification(
+            () => NotificationStorage.addRatingNotification(
+          gameId: newGame.id,
+          gameTitle: newGame.title,
+          rating: newGame.userRating!,
+          isUpdate: !ratingWasAdded,
+        ),
+      );
+    }
+
+    final statusWasChanged = oldGame.status != newGame.status;
+    final gameBecameCompleted = statusWasChanged && _isCompletedStatus(newGame.status);
+
+    if (gameBecameCompleted) {
+      await _safeCreateNotification(
+            () => NotificationStorage.addGameCompletedNotification(
+          gameId: newGame.id,
+          gameTitle: newGame.title,
+        ),
+      );
+    }
+
+    final stageWasAdded = newGame.stages.length > oldGame.stages.length;
+
+    if (stageWasAdded) {
+      final stage = newGame.stages.last;
+
+      await _safeCreateNotification(
+            () => NotificationStorage.addProgressStageNotification(
+          gameId: newGame.id,
+          gameTitle: newGame.title,
+          stageTitle: stage.title,
+        ),
+      );
+    }
+  }
+
+  static bool _isCompletedStatus(String status) {
+    final normalizedStatus = status.trim().toLowerCase();
+
+    return normalizedStatus == 'пройдено' ||
+        normalizedStatus == 'completed';
+  }
+
+  static Future<void> _safeCreateNotification(
+      Future<void> Function() createNotification,
+      ) async {
+    try {
+      await createNotification();
+    } catch (_) {
+      // Ошибка уведомлений не должна ломать сохранение игры.
+    }
   }
 }
