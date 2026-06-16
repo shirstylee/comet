@@ -21,7 +21,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.initState();
 
     _loadNotifications();
-
     NotificationChangeNotifier.version.addListener(_onNotificationsChanged);
   }
 
@@ -33,8 +32,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _loadNotifications() async {
     try {
-      final loadedNotifications =
-      await NotificationStorage.getAllNotifications();
+      final loadedNotifications = await NotificationStorage.getAllNotifications();
 
       if (!mounted) return;
 
@@ -73,42 +71,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final emptyTop = constraints.maxHeight * 177 / 884;
-            final emptyHeight = constraints.maxHeight * 530.39 / 884;
-
-            return Stack(
-              children: [
-                if (hasNotifications)
-                  _NotificationsList(
-                    notifications: notifications,
-                    onDelete: _deleteNotification,
-                  )
-                else
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    top: emptyTop,
-                    height: emptyHeight,
-                    child: const _EmptyNotificationsState(),
-                  ),
-                _NotificationsTopBar(
-                  showClearButton: hasNotifications,
-                  onBack: () => Navigator.pop(context),
-                  onClear: _clearNotifications,
-                ),
-              ],
-            );
-          },
+        child: Column(
+          children: [
+            _NotificationsHeader(
+              showClearButton: hasNotifications,
+              onBack: () => Navigator.pop(context),
+              onClear: _clearNotifications,
+            ),
+            Expanded(
+              child: hasNotifications
+                  ? _NotificationsList(
+                notifications: notifications,
+                onDelete: _deleteNotification,
+              )
+                  : const _EmptyNotificationsState(),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _NotificationsTopBar extends StatelessWidget {
-  const _NotificationsTopBar({
+class _NotificationsHeader extends StatelessWidget {
+  const _NotificationsHeader({
     required this.showClearButton,
     required this.onBack,
     required this.onClear,
@@ -121,53 +107,56 @@ class _NotificationsTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      height: showClearButton ? 112 : 64,
-      color: const Color(0xCC0C0F0F),
+      height: showClearButton ? 128 : 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C0F0F).withOpacity(0.80),
+      ),
       child: Stack(
+        alignment: Alignment.topCenter,
         children: [
           Positioned(
-            left: 24,
-            top: 16,
+            left: 0,
+            top: 21,
             child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
               onTap: onBack,
-              child: const SizedBox(
-                width: 32,
-                height: 32,
-                child: Icon(
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
                   Icons.arrow_back_rounded,
                   color: Color(0xFF75EEFD),
-                  size: 32,
+                  size: 23,
                 ),
               ),
             ),
           ),
           const Positioned(
-            left: 0,
-            right: 0,
-            top: 20,
-            child: IgnorePointer(
-              child: Text(
-                'Уведомления',
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xFFF4F3F3),
-                  fontSize: 16,
-                  height: 1.5,
-                  fontWeight: FontWeight.w700,
-                ),
+            top: 26,
+            child: Text(
+              'Уведомления',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 20,
+                height: 1.4,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
               ),
             ),
           ),
           if (showClearButton)
             Positioned(
-              right: 16,
-              top: 72,
+              right: 0,
+              top: 82,
               child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
                 onTap: onClear,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(
@@ -176,7 +165,6 @@ class _NotificationsTopBar extends StatelessWidget {
                   ),
                   child: Text(
                     'Очистить всё',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Color(0xFF75EEFD),
                       fontSize: 16,
@@ -188,6 +176,131 @@ class _NotificationsTopBar extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+
+class _EmptyRadarIcon extends StatelessWidget {
+  const _EmptyRadarIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+              ),
+            ),
+          ),
+          Container(
+            width: 74,
+            height: 74,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF081F23),
+              border: Border.all(
+                color: const Color(0x6675EEFD),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF75EEFD).withOpacity(0.16),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF12343A),
+                  Color(0xFF071010),
+                ],
+              ),
+            ),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              color: Color(0xFF75EEFD),
+              size: 28,
+            ),
+          ),
+          Positioned(
+            right: 16,
+            top: 20,
+            child: Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF75EEFD),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF75EEFD).withOpacity(0.75),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyNotificationsState extends StatelessWidget {
+  const _EmptyNotificationsState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _EmptyRadarIcon(),
+            SizedBox(height: 24),
+            Text(
+              'На радарах всё\nспокойно',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 24,
+                height: 1.33,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Здесь будут появляться важные системные сообщения, новости и напоминания о релизах',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFAAABAB),
+                fontSize: 14,
+                height: 1.43,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -205,7 +318,7 @@ class _NotificationsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 112, 16, 48),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 48),
       itemCount: notifications.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
@@ -395,56 +508,6 @@ class _DeleteNotificationButton extends StatelessWidget {
             color: Color(0xFFAAABAB),
             size: 28,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyNotificationsState extends StatelessWidget {
-  const _EmptyNotificationsState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 91,
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 296,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'На радарах всё\nспокойно',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFF4F3F3),
-                    fontSize: 24,
-                    height: 1.33,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 312,
-              child: Text(
-                'Здесь будут появляться важные системные сообщения, новости и напоминания о релизах',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFFAAABAB),
-                  fontSize: 14,
-                  height: 1.43,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
