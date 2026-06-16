@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
 import '../../models/user_profile_model.dart';
+import '../../storage/library_change_notifier.dart';
 import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
@@ -51,6 +52,15 @@ class _RatingsScreenState extends State<RatingsScreen> {
   @override
   void initState() {
     super.initState();
+
+    _loadGames();
+
+    LibraryChangeNotifier.version.addListener(_onLibraryChanged);
+  }
+
+  void _onLibraryChanged() {
+    if (!mounted) return;
+
     _loadGames();
   }
 
@@ -441,6 +451,12 @@ class _RatingsScreenState extends State<RatingsScreen> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
+    super.dispose();
   }
 
   @override

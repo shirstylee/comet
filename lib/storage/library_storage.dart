@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/library_game_model.dart';
 import '../services/cover_cache_service.dart';
+import 'library_change_notifier.dart';
 
 class LibraryStorage {
   static const String _boxName = 'library_games';
@@ -33,12 +34,16 @@ class LibraryStorage {
     final box = await _openBox();
 
     await box.put(game.id, game.toMap());
+
+    LibraryChangeNotifier.notify();
   }
 
   static Future<void> updateGame(LibraryGameModel game) async {
     final box = await _openBox();
 
     await box.put(game.id, game.toMap());
+
+    LibraryChangeNotifier.notify();
   }
 
   static Future<void> deleteGame(int gameId) async {
@@ -52,6 +57,8 @@ class LibraryStorage {
     }
 
     await box.delete(gameId);
+
+    LibraryChangeNotifier.notify();
   }
 
   static Future<bool> containsGame(int gameId) async {
@@ -83,5 +90,7 @@ class LibraryStorage {
     }
 
     await box.clear();
+
+    LibraryChangeNotifier.notify();
   }
 }

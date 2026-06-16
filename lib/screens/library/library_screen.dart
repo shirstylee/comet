@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
 import '../../models/user_profile_model.dart';
+import '../../storage/library_change_notifier.dart';
 import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import 'widgets/empty_library_state.dart';
@@ -53,7 +54,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     _loadGames();
 
+    LibraryChangeNotifier.version.addListener(_onLibraryChanged);
     searchController.addListener(_onSearchChanged);
+  }
+
+  void _onLibraryChanged() {
+    if (!mounted) return;
+
+    _loadGames();
   }
 
   void _onSearchChanged() {
@@ -454,6 +462,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   void dispose() {
+    LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
     searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.dispose();
@@ -493,9 +502,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               _LibraryHeader(
                 onProfileTap: widget.onProfileTap,
               ),
-
               const SizedBox(height: 34),
-
               Text(
                 'Библиотека',
                 style: TextStyle(
@@ -515,15 +522,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   height: 1.4,
                 ),
               ),
-
               const SizedBox(height: 28),
-
               _LibrarySearchField(
                 controller: searchController,
               ),
-
               const SizedBox(height: 24),
-
               SizedBox(
                 height: 44,
                 child: ListView.separated(
@@ -543,17 +546,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   },
                 ),
               ),
-
               const SizedBox(height: 24),
-
               _SortButton(
                 title: selectedSortTitle,
                 icon: selectedSortIcon,
                 onTap: _openSortSheet,
               ),
-
               const SizedBox(height: 24),
-
               if (isLoading)
                 const _LibraryLoadingState()
               else if (!hasGames)
@@ -629,7 +628,6 @@ class _LibraryHeader extends StatelessWidget {
   }
 }
 
-
 class _HeaderIconButton extends StatelessWidget {
   const _HeaderIconButton({
     required this.icon,
@@ -678,10 +676,9 @@ class _ProfileAvatarButton extends StatelessWidget {
       future: ProfileStorage.getProfile(),
       builder: (context, snapshot) {
         final avatarPath = snapshot.data?.avatarPath;
-        final hasAvatar =
-            avatarPath != null &&
-                avatarPath.trim().isNotEmpty &&
-                File(avatarPath).existsSync();
+        final hasAvatar = avatarPath != null &&
+            avatarPath.trim().isNotEmpty &&
+            File(avatarPath).existsSync();
 
         return GestureDetector(
           onTap: onTap,
@@ -884,9 +881,7 @@ class _SortMenuItem extends StatelessWidget {
     final color = isSelected ? const Color(0xFF75EEFD) : const Color(0xFFAAABAB);
 
     return Material(
-      color: isSelected
-          ? const Color(0x2675EEFD)
-          : const Color(0xFF1D2020),
+      color: isSelected ? const Color(0x2675EEFD) : const Color(0xFF1D2020),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
