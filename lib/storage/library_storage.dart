@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../models/game_stage_model.dart';
 import '../models/library_game_model.dart';
 import '../services/cover_cache_service.dart';
 import 'library_change_notifier.dart';
@@ -166,7 +167,48 @@ class LibraryStorage {
           stageTitle: stage.title,
         ),
       );
+
+      return;
     }
+
+    final completedStage = _findCompletedStage(
+      oldStages: oldGame.stages,
+      newStages: newGame.stages,
+    );
+
+    if (completedStage != null && !_isInitialStage(completedStage.title)) {
+      await _safeCreateNotification(
+            () => NotificationStorage.addProgressStageCompletedNotification(
+          gameId: newGame.id,
+          gameTitle: newGame.title,
+          stageTitle: completedStage.title,
+        ),
+      );
+    }
+  }
+
+  static GameStageModel? _findCompletedStage({
+    required List<GameStageModel> oldStages,
+    required List<GameStageModel> newStages,
+  }) {
+    final count = oldStages.length < newStages.length
+        ? oldStages.length
+        : newStages.length;
+
+    for (var index = 0; index < count; index++) {
+      final oldStage = oldStages[index];
+      final newStage = newStages[index];
+
+      if (!oldStage.isDone && newStage.isDone) {
+        return newStage;
+      }
+    }
+
+    return null;
+  }
+
+  static bool _isInitialStage(String title) {
+    return title.trim().toLowerCase() == 'начало игры';
   }
 
   static bool _isCompletedStatus(String status) {

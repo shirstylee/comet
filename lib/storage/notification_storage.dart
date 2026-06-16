@@ -65,7 +65,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      '«$gameTitle добавлена в библиотеку. Теперь Comet будет отслеживать ваш игровой прогресс.»',
+      '$gameTitle добавлена в библиотеку. Теперь Comet будет отслеживать ваш игровой прогресс.',
       type: AppNotificationType.game,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -78,7 +78,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      '«$gameTitle удалена из библиотеки. Запись исчезла с вашей игровой орбиты.»',
+      '$gameTitle удалена из библиотеки. Запись исчезла с вашей игровой орбиты.',
       type: AppNotificationType.warning,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -95,8 +95,8 @@ class NotificationStorage {
 
     await addGameNotification(
       message: isUpdate
-          ? '«Оценка $gameTitle обновлена до $ratingText/10. Игра поднялась в вашем личном рейтинге.»'
-          : '«$gameTitle получила $ratingText/10. Оценка добавлена в вашу игровую статистику.»',
+          ? 'Оценка $gameTitle обновлена до $ratingText/10. Игра поднялась в вашем личном рейтинге.'
+          : '$gameTitle получила $ratingText/10. Оценка добавлена в вашу игровую статистику.',
       type: AppNotificationType.rating,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -109,7 +109,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      '«Финал достигнут: $gameTitle отмечена как пройденная. Ещё одна история завершена.»',
+      'Игра $gameTitle отмечена как пройденная. Финал достигнут, ещё одна история завершена.',
       type: AppNotificationType.completed,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -123,8 +123,22 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      '«Новый этап сохранён: “$stageTitle”. Прогресс добавлен в журнал прохождения.»',
+      'Для игры $gameTitle создан этап прохождения: $stageTitle. Прогресс добавлен в журнал прохождения.',
       type: AppNotificationType.progress,
+      gameId: gameId,
+      gameTitle: gameTitle,
+    );
+  }
+
+  static Future<void> addProgressStageCompletedNotification({
+    required int gameId,
+    required String gameTitle,
+    required String stageTitle,
+  }) async {
+    await addGameNotification(
+      message:
+      'Для игры $gameTitle завершён этап прохождения: $stageTitle. Прогресс обновлён в журнале прохождения.',
+      type: AppNotificationType.completed,
       gameId: gameId,
       gameTitle: gameTitle,
     );
