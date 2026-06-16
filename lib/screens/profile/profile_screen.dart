@@ -9,6 +9,7 @@ import '../../storage/library_change_notifier.dart';
 import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
+import '../notifications/notifications_screen.dart';
 import 'edit_profile_screen.dart';
 
 String _formatRating(double rating) {
@@ -244,6 +245,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _openNotificationsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotificationsScreen(),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
@@ -270,6 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               _ProfileTopHeader(
                 onEditTap: _openEditProfileScreen,
+                onNotificationsTap: _openNotificationsScreen,
               ),
               const SizedBox(height: 36),
               _ProfileHero(
@@ -333,9 +344,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _ProfileTopHeader extends StatelessWidget {
   const _ProfileTopHeader({
     required this.onEditTap,
+    required this.onNotificationsTap,
   });
 
   final VoidCallback onEditTap;
+  final VoidCallback onNotificationsTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -374,7 +387,7 @@ class _ProfileTopHeader extends StatelessWidget {
             const SizedBox(width: 10),
             _HeaderIconButton(
               icon: Icons.notifications_none_rounded,
-              onTap: () {},
+              onTap: onNotificationsTap,
             ),
             const SizedBox(width: 10),
             _HeaderIconButton(

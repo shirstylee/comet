@@ -9,6 +9,7 @@ import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 String _formatRating(double rating) {
   final roundedRating = double.parse(rating.toStringAsFixed(1));
@@ -332,6 +333,15 @@ class _RatingsScreenState extends State<RatingsScreen> {
     await _loadGames();
   }
 
+  Future<void> _openNotificationsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotificationsScreen(),
+      ),
+    );
+  }
+
   void _openGamePicker() {
     if (games.isEmpty) {
       _showMessage('В библиотеке пока нет игр');
@@ -489,6 +499,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
             children: [
               _RatingsHeader(
                 onProfileTap: widget.onProfileTap,
+                onNotificationsTap: _openNotificationsScreen,
               ),
               const SizedBox(height: 32),
               _TitleAndAction(
@@ -556,9 +567,11 @@ class _RatingsScreenState extends State<RatingsScreen> {
 class _RatingsHeader extends StatelessWidget {
   const _RatingsHeader({
     this.onProfileTap,
+    required this.onNotificationsTap,
   });
 
   final VoidCallback? onProfileTap;
+  final VoidCallback onNotificationsTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -587,7 +600,7 @@ class _RatingsHeader extends StatelessWidget {
         ),
         _HeaderIconButton(
           icon: Icons.notifications_none_rounded,
-          onTap: () {},
+          onTap: onNotificationsTap,
         ),
       ],
     );

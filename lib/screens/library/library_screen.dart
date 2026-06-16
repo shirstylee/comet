@@ -7,6 +7,7 @@ import '../../models/user_profile_model.dart';
 import '../../storage/library_change_notifier.dart';
 import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
+import '../notifications/notifications_screen.dart';
 import 'widgets/empty_library_state.dart';
 import 'widgets/library_filter_chip.dart';
 import 'widgets/library_game_card.dart';
@@ -460,6 +461,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  Future<void> _openNotificationsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotificationsScreen(),
+      ),
+    );
+  }
+
+
   @override
   void dispose() {
     LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
@@ -501,6 +512,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             children: [
               _LibraryHeader(
                 onProfileTap: widget.onProfileTap,
+                onNotificationsTap: _openNotificationsScreen,
               ),
               const SizedBox(height: 34),
               Text(
@@ -590,9 +602,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
 class _LibraryHeader extends StatelessWidget {
   const _LibraryHeader({
     this.onProfileTap,
+    required this.onNotificationsTap,
   });
 
   final VoidCallback? onProfileTap;
+  final VoidCallback onNotificationsTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -621,7 +635,7 @@ class _LibraryHeader extends StatelessWidget {
         ),
         _HeaderIconButton(
           icon: Icons.notifications_none_rounded,
-          onTap: () {},
+          onTap: onNotificationsTap,
         ),
       ],
     );

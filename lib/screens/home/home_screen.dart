@@ -10,6 +10,7 @@ import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
 import '../search/search_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -126,6 +127,15 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadGames();
   }
 
+  Future<void> _openNotificationsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotificationsScreen(),
+      ),
+    );
+  }
+
   Future<void> _openGameProgress(LibraryGameModel game) async {
     await Navigator.push(
       context,
@@ -201,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _HomeHeader(
                   onSearchTap: _openSearchScreen,
+                  onNotificationsTap: _openNotificationsScreen,
                   onProfileTap: widget.onProfileTap,
                 ),
 
@@ -254,10 +265,12 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.onSearchTap,
+    required this.onNotificationsTap,
     this.onProfileTap,
   });
 
   final VoidCallback onSearchTap;
+  final VoidCallback onNotificationsTap;
   final VoidCallback? onProfileTap;
 
   static const Color accent = Color(0xFF22D3EE);
@@ -289,7 +302,7 @@ class _HomeHeader extends StatelessWidget {
           children: [
             _HeaderIconButton(
               icon: Icons.notifications_none_rounded,
-              onTap: () {},
+              onTap: onNotificationsTap,
             ),
             const SizedBox(width: 10),
             _HeaderIconButton(
