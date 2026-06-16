@@ -20,6 +20,16 @@ String _formatRating(double rating) {
   return roundedRating.toStringAsFixed(1);
 }
 
+
+Color _ratingScaleColor(double rating) {
+  if (rating <= 0) return const Color(0xFF78716C);
+  if (rating >= 8) return const Color(0xFF75EEFD);
+  if (rating >= 6) return const Color(0xFFFACC15);
+  if (rating >= 4) return const Color(0xFFF97316);
+
+  return const Color(0xFFEF4444);
+}
+
 class RatingsScreen extends StatefulWidget {
   const RatingsScreen({
     super.key,
@@ -218,12 +228,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
   }
 
   Color _ratingColor(double rating) {
-    if (rating >= 9) return accent;
-    if (rating >= 8) return const Color(0xFF61ACFE);
-    if (rating >= 6) return const Color(0xFFA8A29E);
-    if (rating >= 4) return const Color(0xFF78716C);
-
-    return const Color(0xFF57534E);
+    return _ratingScaleColor(rating);
   }
 
   String _ratingQuality(double rating) {
@@ -797,6 +802,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ratingColor = _ratingScaleColor(averageRating);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
@@ -807,16 +814,16 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.star_border_rounded,
-            color: Color(0xFF75EEFD),
+            color: ratingColor,
             size: 42,
           ),
           const SizedBox(height: 14),
           Text(
             _formatRating(averageRating),
-            style: const TextStyle(
-              color: Color(0xFFF4F3F3),
+            style: TextStyle(
+              color: ratingColor,
               fontSize: 56,
               height: 1,
               fontWeight: FontWeight.w900,
@@ -875,11 +882,7 @@ class _DistributionCard extends StatelessWidget {
   final int maxValue;
 
   Color _barColor(int rating) {
-    if (rating >= 8) return const Color(0xFF75EEFD);
-    if (rating >= 6) return const Color(0xFFFACC15);
-    if (rating >= 4) return const Color(0xFFF97316);
-
-    return const Color(0xFFEF4444);
+    return _ratingScaleColor(rating.toDouble());
   }
 
   @override
@@ -1371,6 +1374,8 @@ class _AllRatingsHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ratingColor = _ratingScaleColor(averageRating);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1428,9 +1433,9 @@ class _AllRatingsHero extends StatelessWidget {
                     color: const Color(0x6675EEFD),
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.star_rounded,
-                  color: Color(0xFF75EEFD),
+                  color: ratingColor,
                   size: 34,
                 ),
               ),
@@ -1456,8 +1461,8 @@ class _AllRatingsHero extends StatelessWidget {
                       _formatRating(averageRating),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F3F3),
+                      style: TextStyle(
+                        color: ratingColor,
                         fontSize: 40,
                         height: 1,
                         fontWeight: FontWeight.w900,
@@ -2200,11 +2205,7 @@ class _GenreChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = rating >= 9
-        ? const Color(0xFF75EEFD)
-        : rating >= 8
-        ? const Color(0xFF61ACFE)
-        : const Color(0xFFA8A29E);
+    final color = _ratingScaleColor(rating);
 
     return Container(
       padding: const EdgeInsets.symmetric(
