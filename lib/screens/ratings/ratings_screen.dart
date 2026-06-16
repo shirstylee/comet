@@ -1328,78 +1328,96 @@ class _AllRatingsHero extends StatelessWidget {
         const SizedBox(height: 28),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF12343A),
-                Color(0xFF111414),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(26),
+            color: const Color(0xFF081F23),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: const Color(0x6632B8C6),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF22D3EE).withOpacity(0.08),
-                blurRadius: 32,
-                offset: const Offset(0, 16),
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.16),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                width: 72,
-                height: 72,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF081F23),
-                  borderRadius: BorderRadius.circular(22),
+                  color: const Color(0x1A75EEFD),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: const Color(0x6632B8C6),
+                    color: const Color(0x6675EEFD),
                   ),
                 ),
                 child: const Icon(
                   Icons.star_rounded,
                   color: Color(0xFF75EEFD),
-                  size: 38,
+                  size: 34,
                 ),
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      'СРЕДНЯЯ ОЦЕНКА',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 11,
+                        height: 1.2,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       _formatRating(averageRating),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFFF4F3F3),
-                        fontSize: 42,
+                        fontSize: 40,
                         height: 1,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -1.8,
+                        letterSpacing: -1.6,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '$count оценок сохранено',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFFD6D3D1),
-                        fontSize: 15,
-                        height: 1.35,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        height: 1.3,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Полный список ваших игровых оценок',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Color(0xFFAAABAB),
                         fontSize: 12,
                         height: 1.35,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1705,66 +1723,96 @@ class _AllGamesHero extends StatelessWidget {
         const SizedBox(height: 28),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFF111414),
-            borderRadius: BorderRadius.circular(26),
+            color: const Color(0xFF081F23),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: const Color(0x6632B8C6),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.16),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
-                width: 72,
-                height: 72,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF75EEFD),
-                      Color(0xFF25B0BE),
-                    ],
+                  color: const Color(0x1A75EEFD),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
                   ),
-                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: const Icon(
                   Icons.sports_esports_rounded,
-                  color: Color(0xFF00575F),
-                  size: 38,
+                  color: Color(0xFF75EEFD),
+                  size: 34,
                 ),
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      'БЕЗ ОЦЕНКИ',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 11,
+                        height: 1.2,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      '$unratedCount без оценки',
+                      '$unratedCount',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFFF4F3F3),
-                        fontSize: 25,
-                        height: 1.1,
+                        fontSize: 40,
+                        height: 1,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.7,
+                        letterSpacing: -1.6,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Всего в библиотеке: $totalCount',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFFAAABAB),
+                        color: Color(0xFFD6D3D1),
                         fontSize: 14,
-                        height: 1.35,
-                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Нажмите на игру, чтобы открыть оценку и прогресс',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Color(0xFF78716C),
+                        color: Color(0xFFAAABAB),
                         fontSize: 12,
                         height: 1.35,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1968,26 +2016,22 @@ class _CircleIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF111414),
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0x6632B8C6),
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: const Color(0x1A75EEFD),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0x6675EEFD),
           ),
-          child: Icon(
-            icon,
-            color: const Color(0xFF75EEFD),
-            size: 22,
-          ),
+        ),
+        child: Icon(
+          icon,
+          color: const Color(0xFF75EEFD),
+          size: 23,
         ),
       ),
     );
