@@ -24,8 +24,8 @@ class ProfileStorage {
     }
 
     return const UserProfileModel(
-      name: 'GamerOne',
-      status: 'Master Explorer',
+      name: '',
+      status: '',
       favoriteGenres: [],
       avatarPath: null,
     );
@@ -35,5 +35,17 @@ class ProfileStorage {
     final box = await _openBox();
 
     await box.put(_profileKey, profile.toMap());
+  }
+
+  static Future<bool> hasProfile() async {
+    final box = await _openBox();
+
+    return box.containsKey(_profileKey);
+  }
+
+  static Future<void> clearProfile() async {
+    final box = await _openBox();
+
+    await box.delete(_profileKey);
   }
 }

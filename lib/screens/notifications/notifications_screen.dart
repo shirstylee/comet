@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../models/app_notification_model.dart';
+import '../../storage/library_storage.dart';
 import '../../storage/notification_change_notifier.dart';
 import '../../storage/notification_storage.dart';
+import '../game_progress/game_progress_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -58,6 +60,60 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await NotificationStorage.clearNotifications();
   }
 
+  Future<void> _openNotificationGame(AppNotificationModel notification) async {
+    final gameId = notification.gameId;
+
+    if (gameId == null) {
+      _showMessage('У этого уведомления нет привязанной игры');
+      return;
+    }
+
+    final savedGame = await LibraryStorage.getGameById(gameId);
+
+    if (!mounted) return;
+
+    if (savedGame == null) {
+      _showMessage('Игра уже удалена из библиотеки');
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GameProgressScreen(
+          gameId: savedGame.id,
+          title: savedGame.title,
+          status: savedGame.status,
+          userHours: savedGame.userHours,
+          userMinutes: savedGame.userMinutes,
+          apiHours: savedGame.apiHours,
+          rating: savedGame.userRating ?? savedGame.apiRating ?? 0,
+        ),
+      ),
+    );
+  }
+
+  void _showMessage(String text) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: const Color(0xFF1A1D1D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+  }
+
   @override
   void dispose() {
     NotificationChangeNotifier.version.removeListener(_onNotificationsChanged);
@@ -83,6 +139,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ? _NotificationsList(
                 notifications: notifications,
                 onDelete: _deleteNotification,
+                onOpenGame: _openNotificationGame,
               )
                   : const _EmptyNotificationsState(),
             ),
@@ -310,10 +367,12 @@ class _NotificationsList extends StatelessWidget {
   const _NotificationsList({
     required this.notifications,
     required this.onDelete,
+    required this.onOpenGame,
   });
 
   final List<AppNotificationModel> notifications;
   final ValueChanged<AppNotificationModel> onDelete;
+  final ValueChanged<AppNotificationModel> onOpenGame;
 
   @override
   Widget build(BuildContext context) {
@@ -327,6 +386,7 @@ class _NotificationsList extends StatelessWidget {
         return _NotificationCard(
           notification: notification,
           onDelete: () => onDelete(notification),
+          onTap: () => onOpenGame(notification),
         );
       },
     );
@@ -337,64 +397,74 @@ class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
     required this.notification,
     required this.onDelete,
+    required this.onTap,
   });
 
   final AppNotificationModel notification;
   final VoidCallback onDelete;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = notification.accentColor;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _NotificationIcon(
-            icon: notification.icon,
-            color: color,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D2020),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    notification.message,
-                    style: const TextStyle(
-                      color: Color(0xFFF4F3F3),
-                      fontSize: 16,
-                      height: 1.62,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _relativeDateText(notification.createdAt),
-                    style: const TextStyle(
-                      color: Color(0xFFAAABAB),
-                      fontSize: 16,
-                      height: 1.5,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _NotificationIcon(
+                icon: notification.icon,
+                color: color,
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notification.message,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 16,
+                          height: 1.62,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _relativeDateText(notification.createdAt),
+                        style: const TextStyle(
+                          color: Color(0xFFAAABAB),
+                          fontSize: 16,
+                          height: 1.5,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              _DeleteNotificationButton(
+                onTap: onDelete,
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          _DeleteNotificationButton(
-            onTap: onDelete,
-          ),
-        ],
+        ),
       ),
     );
   }

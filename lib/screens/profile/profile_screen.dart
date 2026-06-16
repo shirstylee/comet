@@ -10,6 +10,7 @@ import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../settings/settings_screen.dart';
 import 'edit_profile_screen.dart';
 
 String _formatRating(double rating) {
@@ -254,6 +255,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _openSettingsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SettingsScreen(),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
@@ -281,6 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _ProfileTopHeader(
                 onEditTap: _openEditProfileScreen,
                 onNotificationsTap: _openNotificationsScreen,
+                onSettingsTap: _openSettingsScreen,
               ),
               const SizedBox(height: 36),
               _ProfileHero(
@@ -345,10 +356,12 @@ class _ProfileTopHeader extends StatelessWidget {
   const _ProfileTopHeader({
     required this.onEditTap,
     required this.onNotificationsTap,
+    required this.onSettingsTap,
   });
 
   final VoidCallback onEditTap;
   final VoidCallback onNotificationsTap;
+  final VoidCallback onSettingsTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -392,7 +405,7 @@ class _ProfileTopHeader extends StatelessWidget {
             const SizedBox(width: 10),
             _HeaderIconButton(
               icon: Icons.settings_rounded,
-              onTap: () {},
+              onTap: onSettingsTap,
             ),
           ],
         ),
