@@ -1524,19 +1524,19 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1D2020),
-                        borderRadius: BorderRadius.circular(999),
+                        color: const Color(0x1A75EEFD),
+                        shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.08),
+                          color: const Color(0x6675EEFD),
                         ),
                       ),
                       child: const Icon(
                         Icons.close_rounded,
-                        color: Color(0xFFF4F3F3),
-                        size: 26,
+                        color: Color(0xFF75EEFD),
+                        size: 23,
                       ),
                     ),
                   ),

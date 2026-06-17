@@ -318,22 +318,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     _SettingsActionTile(
-                      icon: Icons.info_outline_rounded,
-                      title: 'О приложении',
-                      height: 72,
-                      iconSize: 21,
-                      iconBoxSize: 38,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AboutAppScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    _SettingsActionTile(
                       icon: Icons.query_stats_rounded,
                       title: 'Статистика',
                       height: 72,
@@ -344,6 +328,22 @@ class SettingsScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const SettingsStatisticsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    _SettingsActionTile(
+                      icon: Icons.info_outline_rounded,
+                      title: 'О приложении',
+                      height: 72,
+                      iconSize: 21,
+                      iconBoxSize: 38,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AboutAppScreen(),
                           ),
                         );
                       },
