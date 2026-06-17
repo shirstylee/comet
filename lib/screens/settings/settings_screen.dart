@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../storage/library_storage.dart';
 import 'about_app_screen.dart';
+import 'export_data_screen.dart';
 import 'settings_statistics_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -283,10 +284,14 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsActionTile(
                       icon: Icons.file_upload_outlined,
                       title: 'Экспорт данных',
-                      onTap: () => _showMessage(
-                        context,
-                        'Экспорт библиотеки в JSON можно подключить следующим шагом',
-                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ExportDataScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 10),
                     _SettingsActionTile(
