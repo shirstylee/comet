@@ -26,20 +26,47 @@ class TimelineItem extends StatelessWidget {
   bool get isCurrent => type == TimelineItemType.current;
   bool get isLocked => type == TimelineItemType.locked;
 
+  Color get mainColor {
+    if (isDone) return const Color(0xFFBBFFB3);
+    if (isCurrent) return const Color(0xFF75EEFD);
+
+    return const Color(0xFF464848);
+  }
+
+  Color get cardColor {
+    if (isLocked) return const Color(0xFF111414);
+
+    return const Color(0xFF081F23);
+  }
+
+  Color get borderColor {
+    if (isLocked) return const Color(0x1A464848);
+
+    return const Color(0x6632B8C6);
+  }
+
+  Color get titleColor {
+    if (isLocked) return const Color(0xFF747675);
+
+    return const Color(0xFFF4F3F3);
+  }
+
+  String get statusText {
+    if (isDone) return 'ЗАВЕРШЕНО';
+    if (isCurrent) return 'В ПРОЦЕССЕ';
+
+    return 'ЗАКРЫТО';
+  }
+
+  IconData get statusIcon {
+    if (isDone) return Icons.check_circle_rounded;
+    if (isCurrent) return Icons.radio_button_checked_rounded;
+
+    return Icons.lock_outline_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Color mainColor = isDone
-        ? const Color(0xFFBBFFB3)
-        : isCurrent
-        ? const Color(0xFF75EEFD)
-        : const Color(0xFF464848);
-
-    final Color titleColor = isCurrent
-        ? const Color(0xFF75EEFD)
-        : isLocked
-        ? const Color(0xFF747675)
-        : const Color(0xFFF4F3F3);
-
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +83,11 @@ class TimelineItem extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: const Color(0xFF232626),
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF232626),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
                   ),
               ],
@@ -65,50 +96,90 @@ class TimelineItem extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.only(bottom: 16),
               child: Material(
-                color:
-                isCurrent ? const Color(0x4D232626) : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
                 child: InkWell(
                   onTap: onTap,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                   child: Container(
                     width: double.infinity,
-                    padding: isCurrent
-                        ? const EdgeInsets.fromLTRB(16, 12, 16, 12)
-                        : EdgeInsets.zero,
-                    decoration: isCurrent
-                        ? BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.04),
+                        color: borderColor,
                       ),
-                    )
-                        : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: mainColor.withOpacity(isLocked ? 0.02 : 0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.16),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          children: [
+                            _StageSmallPill(
+                              text: 'ЭТАП',
+                              color: mainColor,
+                              isLocked: isLocked,
+                            ),
+                            const Spacer(),
+                            if (onTap != null)
+                              Icon(
+                                Icons.more_horiz_rounded,
+                                color: isLocked
+                                    ? const Color(0xFF747675)
+                                    : const Color(0xFF75EEFD),
+                                size: 22,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: titleColor,
-                            fontSize: 18,
-                            height: 1.35,
-                            fontWeight:
-                            isLocked ? FontWeight.w500 : FontWeight.w800,
+                            fontSize: 19,
+                            height: 1.18,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.35,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: isLocked
-                                ? const Color(0xFF747675)
-                                : const Color(0xFFAAABAB),
-                            fontSize: 16,
-                            height: 1.4,
-                          ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: _StageStatusPill(
+                                icon: statusIcon,
+                                text: statusText,
+                                color: mainColor,
+                                isLocked: isLocked,
+                              ),
+                            ),
+                            if (subtitle.trim().isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: _StageDatePill(
+                                  text: subtitle,
+                                  isLocked: isLocked,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
@@ -118,6 +189,147 @@ class TimelineItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StageSmallPill extends StatelessWidget {
+  const _StageSmallPill({
+    required this.text,
+    required this.color,
+    required this.isLocked,
+  });
+
+  final String text;
+  final Color color;
+  final bool isLocked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 26,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: isLocked ? const Color(0xFF1D2020) : const Color(0xFF10262B),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: isLocked ? const Color(0x1A464848) : const Color(0x5532B8C6),
+          width: 0.8,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        style: TextStyle(
+          color: isLocked ? const Color(0xFF747675) : color,
+          fontSize: 11,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _StageStatusPill extends StatelessWidget {
+  const _StageStatusPill({
+    required this.icon,
+    required this.text,
+    required this.color,
+    required this.isLocked,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+  final bool isLocked;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color currentColor = isLocked ? const Color(0xFF747675) : color;
+
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: currentColor.withOpacity(isLocked ? 0.08 : 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: currentColor.withOpacity(isLocked ? 0.18 : 0.35),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: currentColor,
+            size: 15,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: currentColor,
+                  fontSize: 11,
+                  height: 1.2,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.55,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StageDatePill extends StatelessWidget {
+  const _StageDatePill({
+    required this.text,
+    required this.isLocked,
+  });
+
+  final String text;
+  final bool isLocked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10262B).withOpacity(isLocked ? 0.35 : 1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6).withOpacity(isLocked ? 0.35 : 1),
+        ),
+      ),
+      alignment: Alignment.center,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          text,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            color: isLocked ? const Color(0xFF747675) : const Color(0xFFAAABAB),
+            fontSize: 11,
+            height: 1.2,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.2,
+          ),
+        ),
       ),
     );
   }
