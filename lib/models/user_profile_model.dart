@@ -24,8 +24,8 @@ class UserProfileModel {
     final rawGenres = map['favoriteGenres'];
 
     return UserProfileModel(
-      name: map['name'] as String? ?? 'GamerOne',
-      status: map['status'] as String? ?? 'Master Explorer',
+      name: map['name'] as String? ?? '',
+      status: map['status'] as String? ?? '',
       favoriteGenres: rawGenres is List
           ? rawGenres.map((genre) => genre.toString()).toList()
           : const [],

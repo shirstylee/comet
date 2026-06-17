@@ -35,8 +35,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color accent = Color(0xFF22D3EE);
 
   UserProfileModel profile = const UserProfileModel(
-    name: 'GamerOne',
-    status: 'Master Explorer',
+    name: '',
+    status: '',
     favoriteGenres: [],
     avatarPath: null,
   );
@@ -466,7 +466,7 @@ class _ProfileHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusText = profile.status.trim().isEmpty
-        ? 'MASTER EXPLORER'
+        ? 'СТАТУС НЕ УКАЗАН'
         : profile.status.trim().toUpperCase();
 
     final avatarPath = profile.avatarPath;
@@ -524,7 +524,7 @@ class _ProfileHero extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         Text(
-          profile.name.trim().isEmpty ? 'GamerOne' : profile.name.trim(),
+          profile.name.trim().isEmpty ? 'Имя не указано' : profile.name.trim(),
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Color(0xFFF4F3F3),
