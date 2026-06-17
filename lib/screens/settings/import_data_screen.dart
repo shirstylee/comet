@@ -470,38 +470,37 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
                 padding: const EdgeInsets.fromLTRB(24, 104, 24, 136),
                 child: Column(
                   children: [
-                    const SizedBox(height: 20),
-                    const _ImportHeroIcon(),
-                    const SizedBox(height: 42),
-                    const Text(
-                      'Восстановление\nархива',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 30,
-                        height: 1.2,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.75,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Выберите ранее экспортированный файл JSON для восстановления вашей библиотеки, оценок и игрового прогресса.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 16,
-                        height: 1.62,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 8),
                     _ImportDropZone(
                       isChecking: isChecking,
                       onTap: _pickFile,
                     ),
-                    if (hasPreview) ...[
-                      const SizedBox(height: 32),
+                    if (!hasPreview) ...[
+                      const SizedBox(height: 34),
+                      const Text(
+                        'Восстановление\nархива',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 30,
+                          height: 1.2,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.75,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Выберите ранее экспортированный файл JSON для восстановления вашей библиотеки, оценок и игрового прогресса.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: textSecondary,
+                          fontSize: 16,
+                          height: 1.62,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 24),
                       _SelectedFileCard(
                         fileName: preview!.fileName,
                         fileSizeText: _formatSize(preview!.sizeBytes),
@@ -511,11 +510,11 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
                         profileIncluded: preview!.profileIncluded,
                         onRemove: isImporting ? null : _removeSelectedFile,
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       _PreviewButton(
                         onTap: isImporting ? null : _showPreviewDialog,
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       _ImportProgressIndicator(
                         value: importProgress,
                         percentText: progressText,

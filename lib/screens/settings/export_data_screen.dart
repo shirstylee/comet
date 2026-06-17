@@ -149,49 +149,47 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         child: Stack(
           children: [
             Positioned.fill(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 104, 24, 128),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 76, 24, 104),
                 child: isLoading
-                    ? const SizedBox(
-                  height: 520,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: accent,
-                    ),
+                    ? const Center(
+                  child: CircularProgressIndicator(
+                    color: accent,
                   ),
                 )
                     : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const _AmbientCircle(),
-                    const SizedBox(height: 8),
                     _ExportHeroIcon(
                       isExported: isExported,
                     ),
-                    const SizedBox(height: 42),
+                    const SizedBox(height: 18),
                     const Text(
                       'Создание архива',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: textPrimary,
-                        fontSize: 36,
-                        height: 1.1,
+                        fontSize: 30,
+                        height: 1.06,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.9,
+                        letterSpacing: -0.75,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
                     const Text(
-                      'Экспортируйте профиль, библиотеку, оценки и прогресс в JSON-файл для переноса на другое устройство или хранения резервной копии.',
+                      'Экспортируйте профиль, библиотеку, оценки и прогресс в JSON-файл для переноса или резервной копии.',
                       textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: textSecondary,
-                        fontSize: 16,
-                        height: 1.62,
+                        fontSize: 13,
+                        height: 1.38,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 52),
+                    const SizedBox(height: 20),
                     _ExportDetailsCard(
                       fileName: fileName,
                       estimatedSizeText: estimatedSizeText,
@@ -312,8 +310,8 @@ class _ExportHeroIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 138,
-      height: 138,
+      width: 106,
+      height: 106,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -333,8 +331,8 @@ class _ExportHeroIcon extends StatelessWidget {
           ),
           Center(
             child: Container(
-              width: 128,
-              height: 128,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 color: _ExportDataScreenState.surfaceLight,
                 shape: BoxShape.circle,
@@ -345,22 +343,22 @@ class _ExportHeroIcon extends StatelessWidget {
               child: const Icon(
                 Icons.cloud_upload_rounded,
                 color: _ExportDataScreenState.accent,
-                size: 62,
+                size: 48,
               ),
             ),
           ),
           Positioned(
-            right: -4,
-            bottom: -4,
+            right: -2,
+            bottom: -2,
             child: Container(
-              width: 42,
-              height: 42,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: const Color(0xFF232626),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: _ExportDataScreenState.background,
-                  width: 2,
+                  width: 1.6,
                 ),
               ),
               child: Icon(
@@ -368,7 +366,7 @@ class _ExportHeroIcon extends StatelessWidget {
                     ? Icons.check_circle_rounded
                     : Icons.check_rounded,
                 color: _ExportDataScreenState.success,
-                size: 24,
+                size: 20,
               ),
             ),
           ),
@@ -397,7 +395,7 @@ class _ExportDetailsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _ExportDataScreenState.surface,
         borderRadius: BorderRadius.circular(12),
@@ -415,17 +413,17 @@ class _ExportDetailsCard extends StatelessWidget {
       child: Column(
         children: [
           const _ExportCardHeader(),
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),
           _ExportFileNameRow(
             fileName: fileName,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _ExportInfoRow(
             icon: Icons.storage_rounded,
             title: 'Примерный размер',
             value: estimatedSizeText,
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerLeft,
             child: Wrap(
@@ -463,7 +461,7 @@ class _ExportCardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -625,8 +623,8 @@ class _ExportTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF232626),
         borderRadius: BorderRadius.circular(999),
@@ -672,7 +670,7 @@ class _BottomActionArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
