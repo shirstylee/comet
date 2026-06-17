@@ -87,19 +87,26 @@ class _SettingsStatisticsScreenState extends State<SettingsStatisticsScreen> {
     return '${hours}ч. ${minutes}м.';
   }
 
-  String get averageRatingText {
+  double? get averageRatingValue {
     final ratedGames = games.where((game) {
       return game.userRating != null && game.userRating! > 0;
     }).toList();
 
-    if (ratedGames.isEmpty) return '—/10';
+    if (ratedGames.isEmpty) return null;
 
     final totalRating = ratedGames.fold<double>(
       0,
           (sum, game) => sum + game.userRating!,
     );
 
-    final averageRating = totalRating / ratedGames.length;
+    return totalRating / ratedGames.length;
+  }
+
+  String get averageRatingText {
+    final averageRating = averageRatingValue;
+
+    if (averageRating == null) return '—/10';
+
     final roundedRating = double.parse(averageRating.toStringAsFixed(1));
 
     if (roundedRating == roundedRating.roundToDouble()) {
@@ -107,6 +114,28 @@ class _SettingsStatisticsScreenState extends State<SettingsStatisticsScreen> {
     }
 
     return '${roundedRating.toStringAsFixed(1)}/10';
+  }
+
+  Color get averageRatingColor {
+    final rating = averageRatingValue;
+
+    if (rating == null || rating <= 0) {
+      return textSecondary;
+    }
+
+    if (rating <= 3) {
+      return const Color(0xFFEF4444);
+    }
+
+    if (rating <= 5) {
+      return const Color(0xFFF97316);
+    }
+
+    if (rating <= 7) {
+      return const Color(0xFFFACC15);
+    }
+
+    return accent;
   }
 
   @override
@@ -141,6 +170,7 @@ class _SettingsStatisticsScreenState extends State<SettingsStatisticsScreen> {
                       gamesCount: gamesCount,
                       completedGamesCount: completedGamesCount,
                       averageRatingText: averageRatingText,
+                      averageRatingColor: averageRatingColor,
                       totalPlayedTimeText: totalPlayedTimeText,
                     ),
                     const SizedBox(height: 24),
@@ -282,12 +312,14 @@ class _StatisticsHero extends StatelessWidget {
     required this.gamesCount,
     required this.completedGamesCount,
     required this.averageRatingText,
+    required this.averageRatingColor,
     required this.totalPlayedTimeText,
   });
 
   final int gamesCount;
   final int completedGamesCount;
   final String averageRatingText;
+  final Color averageRatingColor;
   final String totalPlayedTimeText;
 
   String get subtitle {
@@ -387,7 +419,7 @@ class _StatisticsHero extends StatelessWidget {
                   icon: Icons.auto_awesome_rounded,
                   title: 'Средняя оценка',
                   value: averageRatingText,
-                  color: const Color(0xFFFACC15),
+                  color: averageRatingColor,
                 ),
               ),
               const SizedBox(width: 10),
