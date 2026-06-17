@@ -451,16 +451,22 @@ class _HeroMiniPill extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _SettingsStatisticsScreenState.textSecondary,
-                    fontSize: 9,
-                    height: 1.1,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    alignment: Alignment.centerLeft,
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      title.toUpperCase(),
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: _SettingsStatisticsScreenState.textSecondary,
+                        fontSize: 9,
+                        height: 1.1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.25,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -551,15 +557,21 @@ class _StatisticsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 9),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _SettingsStatisticsScreenState.textPrimary,
-              fontSize: 13,
-              height: 1.25,
-              fontWeight: FontWeight.w800,
+          SizedBox(
+            width: double.infinity,
+            child: FittedBox(
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: _SettingsStatisticsScreenState.textPrimary,
+                  fontSize: 13,
+                  height: 1.25,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
         ],
