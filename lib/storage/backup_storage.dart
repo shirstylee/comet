@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../models/library_game_model.dart';
 import 'library_storage.dart';
@@ -7,7 +7,7 @@ import 'profile_storage.dart';
 
 class BackupExportResult {
   const BackupExportResult({
-    required this.file,
+    required this.bytes,
     required this.fileName,
     required this.sizeBytes,
     required this.gamesCount,
@@ -15,7 +15,7 @@ class BackupExportResult {
     required this.stagesCount,
   });
 
-  final File file;
+  final Uint8List bytes;
   final String fileName;
   final int sizeBytes;
   final int gamesCount;
@@ -42,9 +42,7 @@ class BackupStorage {
     return 'comet_backup_${year}_${month}_$day.json';
   }
 
-  static Future<BackupExportResult> exportLibraryToJson({
-    required String directoryPath,
-  }) async {
+  static Future<BackupExportResult> buildBackupExportData() async {
     final games = await LibraryStorage.getAllGames();
     final profile = await ProfileStorage.getProfile();
     final fileName = buildBackupFileName();
@@ -52,21 +50,12 @@ class BackupStorage {
       games: games,
       profileMap: profile.toMap(),
     );
-
-    final file = File('$directoryPath${Platform.pathSeparator}$fileName');
-
-    await file.writeAsString(
-      jsonText,
-      encoding: utf8,
-      flush: true,
-    );
-
-    final sizeBytes = await file.length();
+    final bytes = Uint8List.fromList(utf8.encode(jsonText));
 
     return BackupExportResult(
-      file: file,
+      bytes: bytes,
       fileName: fileName,
-      sizeBytes: sizeBytes,
+      sizeBytes: bytes.length,
       gamesCount: games.length,
       ratedCount: _ratedCount(games),
       stagesCount: _stagesCount(games),

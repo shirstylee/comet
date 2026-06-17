@@ -75,28 +75,28 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
   Future<void> _startExport() async {
     if (isExporting) return;
 
-    final directoryPath = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Выберите папку для сохранения архива Comet',
-    );
-
-    if (!mounted) return;
-
-    if (directoryPath == null) {
-      _showMessage('Экспорт отменён');
-      return;
-    }
-
     setState(() {
       isExporting = true;
       isExported = false;
     });
 
     try {
-      final result = await BackupStorage.exportLibraryToJson(
-        directoryPath: directoryPath,
+      final result = await BackupStorage.buildBackupExportData();
+
+      final savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Сохранить архив Comet',
+        fileName: result.fileName,
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        bytes: result.bytes,
       );
 
       if (!mounted) return;
+
+      if (savedPath == null) {
+        _showMessage('Экспорт отменён');
+        return;
+      }
 
       setState(() {
         fileName = result.fileName;
@@ -110,7 +110,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
     } catch (_) {
       if (!mounted) return;
 
-      _showMessage('Не удалось сохранить архив в выбранную папку');
+      _showMessage('Не удалось сохранить архив');
     } finally {
       if (!mounted) return;
 
