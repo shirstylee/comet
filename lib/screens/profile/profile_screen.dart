@@ -130,9 +130,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final Map<String, int> genreCounts = {};
 
     for (final game in ratedGames) {
-      final genre = game.genre.trim().isEmpty ? 'Action' : game.genre.trim();
+      final genre = game.genre.trim();
+
+      if (genre.isEmpty) continue;
+
       genreCounts[genre] = (genreCounts[genre] ?? 0) + 1;
     }
+
+    if (genreCounts.isEmpty) return '—';
 
     final entries = genreCounts.entries.toList();
 
@@ -312,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     game: featured,
                     rating: _ratingOutOfTen(featured.userRating),
                     genre: featured.genre.trim().isEmpty
-                        ? 'Action'
+                        ? 'Жанр не указан'
                         : featured.genre.trim(),
                     releaseText: _releaseYearText(featured.year),
                     reviewDateText: _formattedDate(_ratingDate(featured)),
@@ -334,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           statusText: _statusText(game.status),
                           comment: _commentPreview(game.comment),
                           genre: game.genre.trim().isEmpty
-                              ? 'Action'
+                              ? 'Жанр не указан'
                               : game.genre.trim(),
                           timeText: _timeText(game),
                           onTap: () => _openGame(game),
