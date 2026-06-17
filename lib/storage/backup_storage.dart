@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:hive_flutter/hive_flutter.dart';
+
 import '../models/library_game_model.dart';
+import '../models/user_profile_model.dart';
+import 'library_change_notifier.dart';
 import 'library_storage.dart';
 import 'profile_storage.dart';
 
@@ -23,10 +27,35 @@ class BackupExportResult {
   final int stagesCount;
 }
 
+class BackupImportPreview {
+  const BackupImportPreview({
+    required this.fileName,
+    required this.sizeBytes,
+    required this.rawMap,
+    required this.games,
+    required this.gamesCount,
+    required this.ratedCount,
+    required this.stagesCount,
+    required this.profileIncluded,
+    required this.profile,
+  });
+
+  final String fileName;
+  final int sizeBytes;
+  final Map<String, dynamic> rawMap;
+  final List<LibraryGameModel> games;
+  final int gamesCount;
+  final int ratedCount;
+  final int stagesCount;
+  final bool profileIncluded;
+  final UserProfileModel? profile;
+}
+
 class BackupStorage {
   const BackupStorage._();
 
   static const int currentVersion = 1;
+  static const String _libraryBoxName = 'library_games';
 
   static String buildBackupFileName([DateTime? date]) {
     final currentDate = date ?? DateTime.now();
@@ -74,6 +103,79 @@ class BackupStorage {
         profileMap: profile.toMap(),
       ),
     ).length;
+  }
+
+  static Future<BackupImportPreview> readImportPreview({
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final jsonText = utf8.decode(bytes);
+    final decoded = jsonDecode(jsonText);
+
+    if (decoded is! Map) {
+      throw const FormatException('Неверная структура архива');
+    }
+
+    final rawMap = Map<String, dynamic>.from(decoded);
+
+    if (rawMap['app'] != 'Comet') {
+      throw const FormatException('Это не архив Comet');
+    }
+
+    final rawGames = rawMap['games'];
+
+    if (rawGames is! List) {
+      throw const FormatException('В архиве нет списка игр');
+    }
+
+    final games = rawGames
+        .whereType<Map>()
+        .map((gameMap) => LibraryGameModel.fromMap(gameMap))
+        .where((game) => game.title.trim().isNotEmpty)
+        .toList();
+
+    final rawProfile = rawMap['profile'];
+    final profile = rawProfile is Map
+        ? UserProfileModel.fromMap(rawProfile)
+        : null;
+
+    return BackupImportPreview(
+      fileName: fileName,
+      sizeBytes: bytes.length,
+      rawMap: rawMap,
+      games: games,
+      gamesCount: games.length,
+      ratedCount: _ratedCount(games),
+      stagesCount: _stagesCount(games),
+      profileIncluded: profile != null,
+      profile: profile,
+    );
+  }
+
+  static Future<void> importBackup(BackupImportPreview preview) async {
+    final libraryBox = await _openLibraryBox();
+
+    await libraryBox.clear();
+
+    for (final game in preview.games) {
+      await libraryBox.put(game.id, game.toMap());
+    }
+
+    final profile = preview.profile;
+
+    if (profile != null) {
+      await ProfileStorage.saveProfile(profile);
+    }
+
+    LibraryChangeNotifier.notify();
+  }
+
+  static Future<Box> _openLibraryBox() async {
+    if (Hive.isBoxOpen(_libraryBoxName)) {
+      return Hive.box(_libraryBoxName);
+    }
+
+    return Hive.openBox(_libraryBoxName);
   }
 
   static String _buildJsonText({

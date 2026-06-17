@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../storage/library_storage.dart';
 import 'about_app_screen.dart';
 import 'export_data_screen.dart';
+import 'import_data_screen.dart';
 import 'settings_statistics_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -275,10 +276,14 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsActionTile(
                       icon: Icons.file_download_outlined,
                       title: 'Импорт данных',
-                      onTap: () => _showMessage(
-                        context,
-                        'Импорт JSON можно подключить следующим шагом',
-                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ImportDataScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 10),
                     _SettingsActionTile(
