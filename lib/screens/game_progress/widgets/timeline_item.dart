@@ -34,12 +34,14 @@ class TimelineItem extends StatelessWidget {
   }
 
   Color get cardColor {
+    if (isDone) return const Color(0xFF102417);
     if (isLocked) return const Color(0xFF111414);
 
     return const Color(0xFF081F23);
   }
 
   Color get borderColor {
+    if (isDone) return const Color(0x99BBFFB3);
     if (isLocked) return const Color(0x1A464848);
 
     return const Color(0x6632B8C6);
@@ -85,7 +87,9 @@ class TimelineItem extends StatelessWidget {
                       width: 2,
                       margin: const EdgeInsets.only(top: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF232626),
+                        color: isDone
+                            ? const Color(0x6637D67A)
+                            : const Color(0xFF232626),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -114,8 +118,14 @@ class TimelineItem extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: mainColor.withOpacity(isLocked ? 0.02 : 0.08),
-                          blurRadius: 18,
+                          color: mainColor.withOpacity(
+                            isLocked
+                                ? 0.02
+                                : isDone
+                                ? 0.18
+                                : 0.08,
+                          ),
+                          blurRadius: isDone ? 26 : 18,
                           offset: const Offset(0, 8),
                         ),
                         BoxShadow(
@@ -133,6 +143,7 @@ class TimelineItem extends StatelessWidget {
                             _StageSmallPill(
                               text: 'ЭТАП',
                               color: mainColor,
+                              isDone: isDone,
                               isLocked: isLocked,
                             ),
                             const Spacer(),
@@ -141,7 +152,7 @@ class TimelineItem extends StatelessWidget {
                                 Icons.more_horiz_rounded,
                                 color: isLocked
                                     ? const Color(0xFF747675)
-                                    : const Color(0xFF75EEFD),
+                                    : mainColor,
                                 size: 22,
                               ),
                           ],
@@ -175,6 +186,7 @@ class TimelineItem extends StatelessWidget {
                               Flexible(
                                 child: _StageDatePill(
                                   text: subtitle,
+                                  isDone: isDone,
                                   isLocked: isLocked,
                                 ),
                               ),
@@ -198,11 +210,13 @@ class _StageSmallPill extends StatelessWidget {
   const _StageSmallPill({
     required this.text,
     required this.color,
+    required this.isDone,
     required this.isLocked,
   });
 
   final String text;
   final Color color;
+  final bool isDone;
   final bool isLocked;
 
   @override
@@ -211,10 +225,18 @@ class _StageSmallPill extends StatelessWidget {
       height: 26,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: isLocked ? const Color(0xFF1D2020) : const Color(0xFF10262B),
+        color: isLocked
+            ? const Color(0xFF1D2020)
+            : isDone
+            ? const Color(0x2237D67A)
+            : const Color(0xFF10262B),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: isLocked ? const Color(0x1A464848) : const Color(0x5532B8C6),
+          color: isLocked
+              ? const Color(0x1A464848)
+              : isDone
+              ? const Color(0x66BBFFB3)
+              : const Color(0x5532B8C6),
           width: 0.8,
         ),
       ),
@@ -297,10 +319,12 @@ class _StageStatusPill extends StatelessWidget {
 class _StageDatePill extends StatelessWidget {
   const _StageDatePill({
     required this.text,
+    required this.isDone,
     required this.isLocked,
   });
 
   final String text;
+  final bool isDone;
   final bool isLocked;
 
   @override
@@ -309,10 +333,18 @@ class _StageDatePill extends StatelessWidget {
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF10262B).withOpacity(isLocked ? 0.35 : 1),
+        color: isLocked
+            ? const Color(0xFF10262B).withOpacity(0.35)
+            : isDone
+            ? const Color(0x2237D67A)
+            : const Color(0xFF10262B),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: const Color(0x5532B8C6).withOpacity(isLocked ? 0.35 : 1),
+          color: isLocked
+              ? const Color(0x5532B8C6).withOpacity(0.35)
+              : isDone
+              ? const Color(0x55BBFFB3)
+              : const Color(0x5532B8C6),
         ),
       ),
       alignment: Alignment.center,
@@ -323,7 +355,11 @@ class _StageDatePill extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           style: TextStyle(
-            color: isLocked ? const Color(0xFF747675) : const Color(0xFFAAABAB),
+            color: isLocked
+                ? const Color(0xFF747675)
+                : isDone
+                ? const Color(0xFFD8FFD3)
+                : const Color(0xFFAAABAB),
             fontSize: 11,
             height: 1.2,
             fontWeight: FontWeight.w800,
