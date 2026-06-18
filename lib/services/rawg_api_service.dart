@@ -209,7 +209,7 @@ class RawgApiService {
 
   String _firstGenreFromJson(
       Map<String, dynamic> json, {
-        String fallback = 'Action',
+        String fallback = '',
       }) {
     final rawGenres = json['genres'];
 

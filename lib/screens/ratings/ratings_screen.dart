@@ -194,7 +194,9 @@ class _RatingsScreenState extends State<RatingsScreen> {
     final Map<String, List<double>> grouped = {};
 
     for (final game in ratedGames) {
-      final genre = game.genre.trim().isEmpty ? 'Action' : game.genre.trim();
+      final genre = game.genre.trim();
+
+      if (genre.isEmpty) continue;
 
       grouped.putIfAbsent(genre, () => []);
       grouped[genre]!.add(_ratingOutOfTen(game.userRating));
@@ -534,7 +536,7 @@ class _RatingsScreenState extends State<RatingsScreen> {
               const SizedBox(height: 32),
               const _SectionTitle('Распределение по жанрам'),
               const SizedBox(height: 24),
-              if (hasRatings)
+              if (genreRatings.isNotEmpty)
                 _GenreDistributionCard(
                   genres: genreRatings,
                 )
