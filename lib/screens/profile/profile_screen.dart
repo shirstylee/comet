@@ -999,35 +999,56 @@ class _FeaturedReviewCard extends StatelessWidget {
                       starSize: 25,
                     ),
                     const SizedBox(height: 28),
-                    const Text(
-                      'МОЙ КОММЕНТАРИЙ',
-                      style: TextStyle(
-                        color: Color(0xFFA8A29E),
-                        fontSize: 10,
-                        height: 1.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.only(left: 20),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          left: BorderSide(
-                            color: Color(0xFF22D3EE),
-                            width: 4,
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111414),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0x6632B8C6),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF75EEFD).withOpacity(0.05),
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
                           ),
-                        ),
+                        ],
                       ),
-                      child: Text(
-                        '«$comment»',
-                        style: const TextStyle(
-                          color: Color(0xFFE7E5E4),
-                          fontSize: 18,
-                          height: 1.62,
-                          fontStyle: FontStyle.italic,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.notes_rounded,
+                                color: Color(0xFF75EEFD),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Мой комментарий',
+                                style: TextStyle(
+                                  color: Color(0xFF75EEFD),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            '«$comment»',
+                            style: const TextStyle(
+                              color: Color(0xFFAAABAB),
+                              fontSize: 14,
+                              height: 1.65,
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 28),
