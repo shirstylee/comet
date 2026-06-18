@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../storage/backup_storage.dart';
 import '../../storage/library_storage.dart';
+import '../../storage/notification_storage.dart';
 
 class ExportDataScreen extends StatefulWidget {
   const ExportDataScreen({super.key});
@@ -104,11 +105,18 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         isExported = true;
       });
 
+      await NotificationStorage.addExportSuccessNotification(
+        fileName: result.fileName,
+        gamesCount: result.gamesCount,
+      );
+
       _showMessage(
         'Архив сохранён: ${result.fileName}',
       );
     } catch (_) {
       if (!mounted) return;
+
+      await NotificationStorage.addExportFailedNotification();
 
       _showMessage('Не удалось сохранить архив');
     } finally {
@@ -157,47 +165,60 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
                     color: accent,
                   ),
                 )
-                    : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const _AmbientCircle(),
-                    _ExportHeroIcon(
-                      isExported: isExported,
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Создание архива',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 30,
-                        height: 1.06,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.75,
+                    : LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.center,
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _AmbientCircle(),
+                              _ExportHeroIcon(
+                                isExported: isExported,
+                              ),
+                              const SizedBox(height: 18),
+                              const Text(
+                                'Создание архива',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 30,
+                                  height: 1.06,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.75,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Экспортируйте профиль, библиотеку, оценки и прогресс в JSON-файл для переноса или резервной копии.',
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: textSecondary,
+                                  fontSize: 13,
+                                  height: 1.38,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _ExportDetailsCard(
+                                fileName: fileName,
+                                estimatedSizeText: estimatedSizeText,
+                                gamesCount: gamesCount,
+                                ratedCount: ratedCount,
+                                stagesCount: stagesCount,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Экспортируйте профиль, библиотеку, оценки и прогресс в JSON-файл для переноса или резервной копии.',
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 13,
-                        height: 1.38,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _ExportDetailsCard(
-                      fileName: fileName,
-                      estimatedSizeText: estimatedSizeText,
-                      gamesCount: gamesCount,
-                      ratedCount: ratedCount,
-                      stagesCount: stagesCount,
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

@@ -144,6 +144,53 @@ class NotificationStorage {
     );
   }
 
+  static Future<void> addExportSuccessNotification({
+    required String fileName,
+    required int gamesCount,
+  }) async {
+    await addGameNotification(
+      message:
+      'Экспорт завершён успешно. Архив $fileName сохранён, игр в архиве: $gamesCount.',
+      type: AppNotificationType.success,
+    );
+  }
+
+  static Future<void> addExportFailedNotification() async {
+    await addGameNotification(
+      message:
+      'Экспорт не выполнен. Архив не удалось сохранить, попробуйте выбрать другое место или повторить позже.',
+      type: AppNotificationType.warning,
+    );
+  }
+
+  static Future<void> replaceWithImportSuccessNotification({
+    required int gamesCount,
+  }) async {
+    final box = await _openBox();
+
+    await box.clear();
+
+    final notification = AppNotificationModel(
+      id: _createNotificationId(),
+      message:
+      'Импорт завершён успешно. Библиотека восстановлена, игр импортировано: $gamesCount.',
+      type: AppNotificationType.restore,
+      createdAt: DateTime.now(),
+    );
+
+    await box.put(notification.id, notification.toMap());
+
+    NotificationChangeNotifier.notify();
+  }
+
+  static Future<void> addImportFailedNotification() async {
+    await addGameNotification(
+      message:
+      'Импорт не выполнен. Архив не удалось восстановить, проверьте JSON-файл и попробуйте снова.',
+      type: AppNotificationType.warning,
+    );
+  }
+
   static Future<void> deleteNotification(String id) async {
     final box = await _openBox();
 

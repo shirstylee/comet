@@ -9,6 +9,7 @@ import '../models/library_game_model.dart';
 import '../models/user_profile_model.dart';
 import 'library_change_notifier.dart';
 import 'library_storage.dart';
+import 'notification_storage.dart';
 import 'profile_storage.dart';
 
 class BackupExportResult {
@@ -207,6 +208,10 @@ class BackupStorage {
       final profile = UserProfileModel.fromMap(restoredProfileMap);
       await ProfileStorage.saveProfile(profile);
     }
+
+    await NotificationStorage.replaceWithImportSuccessNotification(
+      gamesCount: preview.gamesCount,
+    );
 
     LibraryChangeNotifier.notify();
   }

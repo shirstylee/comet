@@ -9,7 +9,6 @@ import '../../storage/library_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../../widgets/game_cover.dart';
 import '../game_progress/game_progress_screen.dart';
-import '../notifications/notifications_screen.dart';
 
 String _formatRating(double rating) {
   final roundedRating = double.parse(rating.toStringAsFixed(1));
@@ -333,15 +332,6 @@ class _RatingsScreenState extends State<RatingsScreen> {
     await _loadGames();
   }
 
-  Future<void> _openNotificationsScreen() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const NotificationsScreen(),
-      ),
-    );
-  }
-
   void _openGamePicker() {
     if (games.isEmpty) {
       _showMessage('В библиотеке пока нет игр');
@@ -499,7 +489,6 @@ class _RatingsScreenState extends State<RatingsScreen> {
             children: [
               _RatingsHeader(
                 onProfileTap: widget.onProfileTap,
-                onNotificationsTap: _openNotificationsScreen,
               ),
               const SizedBox(height: 32),
               _TitleAndAction(
@@ -553,7 +542,8 @@ class _RatingsScreenState extends State<RatingsScreen> {
                 const _EmptyGenreCard(),
               const SizedBox(height: 32),
               _InsightCard(
-                hasRatings: hasRatings,
+                games: games,
+                ratedGames: ratedGames,
                 averageRating: averageRating,
               ),
             ],
@@ -567,11 +557,9 @@ class _RatingsScreenState extends State<RatingsScreen> {
 class _RatingsHeader extends StatelessWidget {
   const _RatingsHeader({
     this.onProfileTap,
-    required this.onNotificationsTap,
   });
 
   final VoidCallback? onProfileTap;
-  final VoidCallback onNotificationsTap;
 
   static const Color accent = Color(0xFF22D3EE);
 
@@ -600,7 +588,7 @@ class _RatingsHeader extends StatelessWidget {
         ),
         _HeaderIconButton(
           icon: Icons.notifications_none_rounded,
-          onTap: onNotificationsTap,
+          onTap: () {},
         ),
       ],
     );
@@ -2292,52 +2280,251 @@ class _EmptyGenreCard extends StatelessWidget {
 
 class _InsightCard extends StatelessWidget {
   const _InsightCard({
-    required this.hasRatings,
+    required this.games,
+    required this.ratedGames,
     required this.averageRating,
   });
 
-  final bool hasRatings;
+  final List<LibraryGameModel> games;
+  final List<LibraryGameModel> ratedGames;
   final double averageRating;
+
+  int get completedCount {
+    return games.where((game) {
+      return game.status.trim().toLowerCase() == 'пройдено';
+    }).length;
+  }
+
+  int get playingCount {
+    return games.where((game) {
+      final status = game.status.trim().toLowerCase();
+      return status == 'играю' || status == 'в процессе';
+    }).length;
+  }
+
+  int get plannedCount {
+    return games.where((game) {
+      return game.status.trim().toLowerCase() == 'планирую';
+    }).length;
+  }
+
+  LibraryGameModel? get latestGame {
+    if (games.isEmpty) return null;
+
+    final sortedGames = [...games];
+    sortedGames.sort((a, b) => b.addedAt.compareTo(a.addedAt));
+
+    return sortedGames.first;
+  }
+
+  String get dominantStatusText {
+    final statusCounts = <String, int>{
+      'Пройдено': completedCount,
+      'Играю': playingCount,
+      'Планирую': plannedCount,
+    };
+
+    final sortedStatuses = statusCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    if (sortedStatuses.isEmpty || sortedStatuses.first.value <= 0) {
+      return 'без статуса';
+    }
+
+    return sortedStatuses.first.key;
+  }
+
+  String? get topGenre {
+    final genreCounts = <String, int>{};
+
+    for (final game in games) {
+      final genre = game.genre.trim();
+      if (genre.isEmpty) continue;
+
+      genreCounts[genre] = (genreCounts[genre] ?? 0) + 1;
+    }
+
+    if (genreCounts.isEmpty) return null;
+
+    final sortedGenres = genreCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return sortedGenres.first.key;
+  }
+
+  String get description {
+    if (games.isEmpty) {
+      return 'Здесь будет короткая сводка по библиотеке: последние добавления, статусы, жанры и сохранённые игры.';
+    }
+
+    final latestTitle = latestGame?.title.trim();
+    final latestText = latestTitle == null || latestTitle.isEmpty
+        ? 'последняя игра пока не определена'
+        : 'последнее добавление — «$latestTitle»';
+
+    final genre = topGenre;
+    final genreText = genre == null ? '' : ' Чаще всего встречается жанр: $genre.';
+
+    return 'В библиотеке ${games.length} игр, $latestText. Больше всего сейчас игр со статусом «$dominantStatusText». $genreText';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final text = hasRatings
-        ? averageRating >= 9
-        ? '"Вы — настоящий ценитель качественных игр."'
-        : '"Ваши оценки помогают лучше понять ваш игровой вкус."'
-        : '"Начните оценивать игры, чтобы получить персональную аналитику вашего игрового пути."';
+    final ratingText = averageRating <= 0
+        ? '—'
+        : '${_formatRating(averageRating)}/10';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           colors: [
-            Color(0xFF1D2020),
+            Color(0xFF10262B),
             Color(0xFF111414),
           ],
         ),
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        border: Border(
-          left: BorderSide(
-            color: Color(0xFF75EEFD),
-            width: 4,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
-        ),
+        ],
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFFD6D3D1),
-          fontSize: 16,
-          height: 1.45,
-          fontStyle: FontStyle.italic,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.collections_bookmark_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Игровая полка',
+                  style: TextStyle(
+                    color: Color(0xFFF4F3F3),
+                    fontSize: 20,
+                    height: 1.25,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            description,
+            style: const TextStyle(
+              color: Color(0xFFD6D3D1),
+              fontSize: 14,
+              height: 1.55,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InsightPill(
+                icon: Icons.sports_esports_rounded,
+                text: 'Игр: ${games.length}',
+              ),
+              _InsightPill(
+                icon: Icons.star_rounded,
+                text: 'Оценок: ${ratedGames.length}',
+              ),
+              _InsightPill(
+                icon: Icons.check_circle_rounded,
+                text: 'Пройдено: $completedCount',
+              ),
+              _InsightPill(
+                icon: Icons.schedule_rounded,
+                text: 'Играю: $playingCount',
+              ),
+              if (averageRating > 0)
+                _InsightPill(
+                  icon: Icons.auto_awesome_rounded,
+                  text: 'Средняя: $ratingText',
+                ),
+              if (topGenre != null)
+                _InsightPill(
+                  icon: Icons.category_rounded,
+                  text: topGenre!,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
+class _InsightPill extends StatelessWidget {
+  const _InsightPill({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: const Color(0xFF75EEFD),
+            size: 14,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFFAAABAB),
+              fontSize: 11,
+              height: 1.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class _GamePickerItem extends StatelessWidget {
   const _GamePickerItem({
     required this.game,

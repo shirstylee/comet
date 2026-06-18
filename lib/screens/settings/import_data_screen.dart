@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/library_game_model.dart';
 import '../../storage/backup_storage.dart';
+import '../../storage/notification_storage.dart';
 
 class ImportDataScreen extends StatefulWidget {
   const ImportDataScreen({super.key});
@@ -287,6 +288,8 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
       setState(() {
         importProgress = 0;
       });
+
+      await NotificationStorage.addImportFailedNotification();
 
       _showMessage('Не удалось импортировать данные');
     } finally {
@@ -1193,6 +1196,18 @@ class _PreviewSummaryCard extends StatelessWidget {
 
   final BackupImportPreview preview;
 
+  String get profileText {
+    if (!preview.profileIncluded) return 'нет';
+
+    final name = preview.profile?.name.trim();
+
+    if (name == null || name.isEmpty) {
+      return 'Имя не указано';
+    }
+
+    return name;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1224,7 +1239,7 @@ class _PreviewSummaryCard extends StatelessWidget {
           ),
           _PreviewLine(
             label: 'Профиль',
-            value: preview.profileIncluded ? 'есть' : 'нет',
+            value: profileText,
           ),
         ],
       ),
@@ -1371,10 +1386,14 @@ class _PreviewLine extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          SizedBox(
+            width: 76,
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: _ImportDataScreenState.textSecondary,
                 fontSize: 13,
@@ -1384,10 +1403,10 @@ class _PreviewLine extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
+          Expanded(
             child: Text(
               value,
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.left,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
