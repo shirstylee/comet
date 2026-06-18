@@ -78,11 +78,17 @@ class RawgApiService {
       },
     );
 
-    final detailsResponse = await _get(detailsUri);
+    final responses = await Future.wait<http.Response?>([
+      _get(detailsUri),
+      _safeGet(moviesUri),
+      _safeGet(screenshotsUri),
+    ]);
 
-    if (detailsResponse.statusCode != 200) {
+    final detailsResponse = responses[0];
+
+    if (detailsResponse == null || detailsResponse.statusCode != 200) {
       throw Exception(
-        'Ошибка загрузки подробностей: ${detailsResponse.statusCode}',
+        'Ошибка загрузки подробностей: ${detailsResponse?.statusCode ?? 'нет ответа'}',
       );
     }
 
@@ -92,35 +98,26 @@ class RawgApiService {
       throw Exception('RAWG API вернул неверный формат подробностей');
     }
 
+    final moviesResponse = responses[1];
+    final screenshotsResponse = responses[2];
+
     String? trailerUrl;
     List<String> screenshots = [];
 
-    try {
-      final moviesResponse = await _get(moviesUri);
+    if (moviesResponse != null && moviesResponse.statusCode == 200) {
+      final moviesDecoded = jsonDecode(moviesResponse.body);
 
-      if (moviesResponse.statusCode == 200) {
-        final moviesDecoded = jsonDecode(moviesResponse.body);
-
-        if (moviesDecoded is Map<String, dynamic>) {
-          trailerUrl = _trailerFromJson(moviesDecoded);
-        }
+      if (moviesDecoded is Map<String, dynamic>) {
+        trailerUrl = _trailerFromJson(moviesDecoded);
       }
-    } catch (_) {
-      trailerUrl = null;
     }
 
-    try {
-      final screenshotsResponse = await _get(screenshotsUri);
+    if (screenshotsResponse != null && screenshotsResponse.statusCode == 200) {
+      final screenshotsDecoded = jsonDecode(screenshotsResponse.body);
 
-      if (screenshotsResponse.statusCode == 200) {
-        final screenshotsDecoded = jsonDecode(screenshotsResponse.body);
-
-        if (screenshotsDecoded is Map<String, dynamic>) {
-          screenshots = _screenshotsFromJson(screenshotsDecoded);
-        }
+      if (screenshotsDecoded is Map<String, dynamic>) {
+        screenshots = _screenshotsFromJson(screenshotsDecoded);
       }
-    } catch (_) {
-      screenshots = [];
     }
 
     return _gameFromDetailsJson(
@@ -133,6 +130,14 @@ class RawgApiService {
 
   Future<http.Response> _get(Uri uri) {
     return http.get(uri).timeout(_requestTimeout);
+  }
+
+  Future<http.Response?> _safeGet(Uri uri) async {
+    try {
+      return await _get(uri);
+    } catch (_) {
+      return null;
+    }
   }
 
   GameModel _gameFromSearchJson(Map<String, dynamic> json) {

@@ -103,7 +103,7 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {
           isLoading = false;
           errorMessage =
-          'Не удалось загрузить игры. Проверьте интернет или API ключ.';
+          'Не удалось загрузить игры. Проверьте интернет.';
         });
       }
     });
@@ -361,7 +361,7 @@ class _LoadingSearchState extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Получаем данные из RAWG API',
+            'Получаем данные',
             style: TextStyle(
               color: Color(0xFFAAABAB),
               fontSize: 14,
@@ -436,64 +436,67 @@ class _SearchErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 120, 24, 0),
-      child: Column(
-        children: [
-          Icon(
-            Icons.wifi_off_rounded,
-            color: const Color(0xFFAAABAB).withOpacity(0.35),
-            size: 76,
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Ошибка загрузки',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFFF4F3F3),
-              fontSize: 24,
-              height: 1.25,
-              fontWeight: FontWeight.w800,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              color: const Color(0xFFAAABAB).withOpacity(0.35),
+              size: 76,
             ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 16,
-              height: 1.5,
-              fontWeight: FontWeight.w400,
+            const SizedBox(height: 28),
+            const Text(
+              'Ошибка загрузки',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 24,
+                height: 1.25,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 28),
-          SizedBox(
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(
-                Icons.refresh_rounded,
-                color: Color(0xFF75EEFD),
+            const SizedBox(height: 14),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFFAAABAB),
+                fontSize: 16,
+                height: 1.5,
+                fontWeight: FontWeight.w400,
               ),
-              label: const Text(
-                'Повторить',
-                style: TextStyle(
-                  color: Color(0xFF75EEFD),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(
+                  Icons.refresh_rounded,
                   color: Color(0xFF75EEFD),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+                label: const Text(
+                  'Повторить',
+                  style: TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(
+                    color: Color(0xFF75EEFD),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

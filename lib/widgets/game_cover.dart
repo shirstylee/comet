@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-class GameCover extends StatelessWidget {
+class GameCover extends StatefulWidget {
   const GameCover({
     super.key,
     required this.width,
@@ -26,8 +27,18 @@ class GameCover extends StatelessWidget {
   final bool showGradient;
   final double gradientOpacity;
 
+  @override
+  State<GameCover> createState() => _GameCoverState();
+}
+
+class _GameCoverState extends State<GameCover> {
+  static const Duration _networkRetryDelay = Duration(seconds: 4);
+
+  Timer? networkRetryTimer;
+  int networkRetryVersion = 0;
+
   bool get _hasLocalImage {
-    final path = localImagePath;
+    final path = widget.localImagePath;
 
     if (path == null || path.trim().isEmpty) {
       return false;
@@ -37,23 +48,65 @@ class GameCover extends StatelessWidget {
   }
 
   bool get _hasNetworkImage {
-    final url = imageUrl;
+    final url = widget.imageUrl;
 
     return url != null && url.trim().isNotEmpty;
   }
 
   @override
+  void didUpdateWidget(covariant GameCover oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.imageUrl != widget.imageUrl ||
+        oldWidget.localImagePath != widget.localImagePath) {
+      networkRetryTimer?.cancel();
+      networkRetryTimer = null;
+      networkRetryVersion = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    networkRetryTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleNetworkRetry() {
+    if (networkRetryTimer != null || !_hasNetworkImage) {
+      return;
+    }
+
+    networkRetryTimer = Timer(_networkRetryDelay, () async {
+      networkRetryTimer = null;
+
+      if (!mounted || !_hasNetworkImage) {
+        return;
+      }
+
+      await NetworkImage(widget.imageUrl!).evict();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        networkRetryVersion++;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: width,
-      height: height,
+      width: widget.width,
+      height: widget.height,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(widget.borderRadius),
         child: Stack(
           fit: StackFit.expand,
           children: [
             _buildCover(),
-            if (showGradient)
+            if (widget.showGradient)
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -62,7 +115,9 @@ class GameCover extends StatelessWidget {
                       end: Alignment.topCenter,
                       colors: [
                         const Color(0xFF0C0F0F).withOpacity(0.75),
-                        const Color(0xFF0C0F0F).withOpacity(gradientOpacity),
+                        const Color(0xFF0C0F0F).withOpacity(
+                          widget.gradientOpacity,
+                        ),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.52, 1.0],
@@ -79,8 +134,8 @@ class GameCover extends StatelessWidget {
   Widget _buildCover() {
     if (_hasLocalImage) {
       return Image.file(
-        File(localImagePath!),
-        fit: fit,
+        File(widget.localImagePath!),
+        fit: widget.fit,
         errorBuilder: (context, error, stackTrace) {
           return _buildNetworkOrFallback();
         },
@@ -92,24 +147,27 @@ class GameCover extends StatelessWidget {
 
   Widget _buildNetworkOrFallback() {
     if (!_hasNetworkImage) {
-      return _GameCoverFallback(iconSize: iconSize);
+      return _GameCoverFallback(iconSize: widget.iconSize);
     }
 
     return Image.network(
-      imageUrl!,
-      fit: fit,
+      widget.imageUrl!,
+      key: ValueKey('${widget.imageUrl}-$networkRetryVersion'),
+      fit: widget.fit,
+      gaplessPlayback: true,
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) {
           return child;
         }
 
         return _GameCoverFallback(
-          iconSize: iconSize,
+          iconSize: widget.iconSize,
           showLoader: true,
         );
       },
       errorBuilder: (context, error, stackTrace) {
-        return _GameCoverFallback(iconSize: iconSize);
+        _scheduleNetworkRetry();
+        return _GameCoverFallback(iconSize: widget.iconSize);
       },
     );
   }
