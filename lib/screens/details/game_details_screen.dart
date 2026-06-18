@@ -1125,102 +1125,122 @@ class _AboutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canExpand = description.length > 220;
+    const descriptionTextStyle = TextStyle(
+      color: Color(0xFFAAABAB),
+      fontSize: 14,
+      height: 1.65,
+      fontWeight: FontWeight.w500,
+    );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Об игре',
-          style: TextStyle(
-            color: Color(0xFFF4F3F3),
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textWidth = (constraints.maxWidth - 36)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: description,
+            style: descriptionTextStyle,
           ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          decoration: BoxDecoration(
-            color: const Color(0xFF111414),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: const Color(0x6632B8C6),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF75EEFD).withOpacity(0.05),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+          maxLines: 4,
+          textDirection: Directionality.of(context),
+        )..layout(maxWidth: textWidth);
+
+        final canExpand = textPainter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Об игре',
+              style: TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(
-                    Icons.notes_rounded,
-                    color: Color(0xFF75EEFD),
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Описание',
-                    style: TextStyle(
-                      color: Color(0xFF75EEFD),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF111414),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0x6632B8C6),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF75EEFD).withOpacity(0.05),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Text(
-                description,
-                maxLines: isExpanded ? null : 4,
-                overflow:
-                isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFAAABAB),
-                  fontSize: 14,
-                  height: 1.65,
-                  fontWeight: FontWeight.w500,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.notes_rounded,
+                        color: Color(0xFF75EEFD),
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Описание',
+                        style: TextStyle(
+                          color: Color(0xFF75EEFD),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    description,
+                    maxLines: isExpanded ? null : 4,
+                    overflow: isExpanded
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
+                    style: descriptionTextStyle,
+                  ),
+                ],
+              ),
+            ),
+            if (canExpand) ...[
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: onToggle,
+                child: Row(
+                  children: [
+                    Text(
+                      isExpanded ? 'СВЕРНУТЬ' : 'РАСКРЫТЬ',
+                      style: const TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFF75EEFD),
+                      size: 18,
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-        ),
-        if (canExpand) ...[
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: onToggle,
-            child: Row(
-              children: [
-                Text(
-                  isExpanded ? 'СВЕРНУТЬ' : 'РАСКРЫТЬ',
-                  style: const TextStyle(
-                    color: Color(0xFF75EEFD),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  isExpanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: const Color(0xFF75EEFD),
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+          ],
+        );
+      },
     );
   }
 }
