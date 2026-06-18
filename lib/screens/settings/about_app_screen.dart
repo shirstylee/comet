@@ -59,7 +59,7 @@ class _AboutHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 72,
+      height: 64,
       color: AboutAppScreen.headerBackground,
       child: Stack(
         alignment: Alignment.center,
@@ -75,10 +75,10 @@ class _AboutHeader extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AboutAppScreen.textPrimary,
-              fontSize: 24,
+              fontSize: 16,
               height: 1.5,
               fontWeight: FontWeight.w700,
-              letterSpacing: -0.75,
+              letterSpacing: -0.4,
             ),
           ),
         ],

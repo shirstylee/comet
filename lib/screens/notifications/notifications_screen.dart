@@ -163,77 +163,79 @@ class _NotificationsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: showClearButton ? 128 : 80,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C0F0F).withOpacity(0.80),
-      ),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Positioned(
-            left: 0,
-            top: 21,
-            child: GestureDetector(
-              onTap: onBack,
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0x1A75EEFD),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0x6675EEFD),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: Color(0xFF75EEFD),
-                  size: 23,
-                ),
-              ),
-            ),
-          ),
-          const Positioned(
-            top: 26,
-            child: Text(
-              'Уведомления',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFFF4F3F3),
-                fontSize: 20,
-                height: 1.4,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-          if (showClearButton)
-            Positioned(
-              right: 0,
-              top: 82,
-              child: GestureDetector(
-                onTap: onClear,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    'Очистить всё',
-                    style: TextStyle(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: double.infinity,
+          height: 64,
+          color: const Color(0xCC0C0F0F),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                left: 24,
+                child: GestureDetector(
+                  onTap: onBack,
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0x1A75EEFD),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0x6675EEFD),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
                       color: Color(0xFF75EEFD),
-                      fontSize: 16,
-                      height: 1.5,
-                      fontWeight: FontWeight.w500,
+                      size: 23,
                     ),
                   ),
                 ),
               ),
+              const Text(
+                'Уведомления',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFFF4F3F3),
+                  fontSize: 16,
+                  height: 1.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (showClearButton)
+          Container(
+            width: double.infinity,
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            color: const Color(0xCC0C0F0F),
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: onClear,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Text(
+                  'Очистить всё',
+                  style: TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 14,
+                    height: 1.4,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
