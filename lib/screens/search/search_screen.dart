@@ -548,28 +548,69 @@ class _ResultsTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'Результаты',
-          style: TextStyle(
-            color: Color(0xFFF4F3F3),
-            fontSize: 24,
-            height: 1.15,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+        const Expanded(
+          child: Text(
+            'Результаты',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Color(0xFFF4F3F3),
+              fontSize: 24,
+              height: 1.15,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
           ),
         ),
-        Text(
-          'Найдено: $count',
-          style: const TextStyle(
-            color: Color(0xFFAAABAB),
-            fontSize: 16,
-            height: 1.25,
-            fontWeight: FontWeight.w400,
-          ),
+        const SizedBox(width: 12),
+        _ResultsCountBadge(
+          count: count,
         ),
       ],
+    );
+  }
+}
+
+class _ResultsCountBadge extends StatelessWidget {
+  const _ResultsCountBadge({
+    required this.count,
+  });
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'НАЙДЕНО: $count',
+        maxLines: 1,
+        softWrap: false,
+        style: const TextStyle(
+          color: Color(0xFF75EEFD),
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+        ),
+      ),
     );
   }
 }
