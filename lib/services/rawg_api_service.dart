@@ -9,6 +9,7 @@ class RawgApiService {
   RawgApiService();
 
   static const String _baseUrl = 'api.rawg.io';
+  static const Duration _requestTimeout = Duration(seconds: 10);
 
   Future<List<GameModel>> searchGames(String query) async {
     final trimmedQuery = query.trim();
@@ -28,7 +29,7 @@ class RawgApiService {
       },
     );
 
-    final response = await http.get(uri);
+    final response = await _get(uri);
 
     if (response.statusCode != 200) {
       throw Exception('Ошибка RAWG API: ${response.statusCode}');
@@ -77,10 +78,12 @@ class RawgApiService {
       },
     );
 
-    final detailsResponse = await http.get(detailsUri);
+    final detailsResponse = await _get(detailsUri);
 
     if (detailsResponse.statusCode != 200) {
-      throw Exception('Ошибка загрузки подробностей: ${detailsResponse.statusCode}');
+      throw Exception(
+        'Ошибка загрузки подробностей: ${detailsResponse.statusCode}',
+      );
     }
 
     final detailsDecoded = jsonDecode(detailsResponse.body);
@@ -93,7 +96,7 @@ class RawgApiService {
     List<String> screenshots = [];
 
     try {
-      final moviesResponse = await http.get(moviesUri);
+      final moviesResponse = await _get(moviesUri);
 
       if (moviesResponse.statusCode == 200) {
         final moviesDecoded = jsonDecode(moviesResponse.body);
@@ -107,7 +110,7 @@ class RawgApiService {
     }
 
     try {
-      final screenshotsResponse = await http.get(screenshotsUri);
+      final screenshotsResponse = await _get(screenshotsUri);
 
       if (screenshotsResponse.statusCode == 200) {
         final screenshotsDecoded = jsonDecode(screenshotsResponse.body);
@@ -126,6 +129,10 @@ class RawgApiService {
       trailerUrl: trailerUrl,
       screenshots: screenshots,
     );
+  }
+
+  Future<http.Response> _get(Uri uri) {
+    return http.get(uri).timeout(_requestTimeout);
   }
 
   GameModel _gameFromSearchJson(Map<String, dynamic> json) {
@@ -157,7 +164,8 @@ class RawgApiService {
       }) {
     final released = json['released']?.toString() ?? fallbackGame.released;
     final year = _yearFromReleasedDate(released);
-    final imageUrl = json['background_image']?.toString() ?? fallbackGame.imageUrl;
+    final imageUrl =
+        json['background_image']?.toString() ?? fallbackGame.imageUrl;
 
     final description = _cleanDescription(
       json['description_raw']?.toString() ??
@@ -169,14 +177,7 @@ class RawgApiService {
       id: json['id'] as int? ?? fallbackGame.id,
       title: json['name']?.toString() ?? fallbackGame.title,
       year: year,
-
-      // ВАЖНО:
-      // Жанр берём из карточки поиска и больше не перезаписываем его
-      // данными detail-запроса RAWG. У RAWG порядок жанров в search и details
-      // может отличаться, из-за этого в поиске могло быть Adventure,
-      // а на экране игры — Action.
       genre: _preserveSearchGenre(fallbackGame.genre, json),
-
       platforms: _platformsFromJson(json, fallback: fallbackGame.platforms),
       rating: (json['rating'] as num?)?.toDouble() ?? fallbackGame.rating,
       hours: json['playtime'] as int? ?? fallbackGame.hours,

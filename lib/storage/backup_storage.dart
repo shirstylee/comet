@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/library_game_model.dart';
 import '../models/user_profile_model.dart';
+import '../services/cover_cache_service.dart';
 import 'library_change_notifier.dart';
 import 'library_storage.dart';
 import 'notification_storage.dart';
@@ -185,6 +186,7 @@ class BackupStorage {
       throw const FormatException('В архиве нет списка игр');
     }
 
+    await _deleteCurrentLocalCovers(libraryBox);
     await libraryBox.clear();
 
     for (final rawGame in rawGames) {
@@ -222,6 +224,21 @@ class BackupStorage {
     }
 
     return Hive.openBox(_libraryBoxName);
+  }
+
+  static Future<void> _deleteCurrentLocalCovers(Box libraryBox) async {
+    final currentValues = libraryBox.values.toList(growable: false);
+
+    for (final value in currentValues) {
+      if (value is! Map) continue;
+
+      try {
+        final game = LibraryGameModel.fromMap(value);
+        await CoverCacheService.deleteCover(game.localImagePath);
+      } catch (_) {
+        // Если старая запись повреждена, импорт всё равно должен продолжиться.
+      }
+    }
   }
 
   static Future<Map<String, dynamic>> _buildGameExportMap(
