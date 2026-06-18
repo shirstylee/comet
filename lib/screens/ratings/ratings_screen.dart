@@ -806,68 +806,176 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratingColor = _ratingScaleColor(averageRating);
+    final ratingText = averageRating <= 0 ? '—' : _formatRating(averageRating);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF10262B),
+            Color(0xFF111414),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.10),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.20),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _SummaryMetricPlaque(
+              icon: Icons.star_rounded,
+              label: 'СРЕДНЯЯ',
+              value: ratingText,
+              caption: 'ОЦЕНКА',
+              color: ratingColor,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _SummaryMetricPlaque(
+              icon: Icons.rate_review_rounded,
+              label: 'ОЦЕНЕНО',
+              value: '$ratedCount',
+              caption: 'ИГР',
+              color: const Color(0xFF75EEFD),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryMetricPlaque extends StatelessWidget {
+  const _SummaryMetricPlaque({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.caption,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String caption;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 118,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.star_border_rounded,
-            color: ratingColor,
-            size: 42,
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(
+                    color: color.withOpacity(0.35),
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFAAABAB),
+                    fontSize: 10,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            _formatRating(averageRating),
-            style: TextStyle(
-              color: ratingColor,
-              fontSize: 56,
-              height: 1,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -2.4,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Средняя оценка',
-            style: TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 16,
-              height: 1.3,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 42),
-          Container(
-            height: 1,
-            width: double.infinity,
-            color: const Color(0xFF464848).withOpacity(0.15),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            '$ratedCount',
-            style: const TextStyle(
-              color: Color(0xFFF4F3F3),
-              fontSize: 34,
-              height: 1,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Оценено игр',
-            style: TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 16,
-              height: 1.3,
-              fontWeight: FontWeight.w500,
-            ),
+          const Spacer(),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 38,
+                      height: 0.95,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1.3,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Text(
+                  caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFD6D3D1),
+                    fontSize: 10,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -892,27 +1000,80 @@ class _DistributionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF111414),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF10262B),
+            Color(0xFF111414),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.09),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 30,
+            offset: const Offset(0, 16),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Распределение оценок',
-            style: TextStyle(
-              color: Color(0xFFF4F3F3),
-              fontSize: 20,
-              height: 1.4,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0x6675EEFD),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.bar_chart_rounded,
+                  color: Color(0xFF75EEFD),
+                  size: 23,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: const Text(
+                    'Распределение оценок',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: Color(0xFFF4F3F3),
+                      fontSize: 20,
+                      height: 1.25,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
           for (int rating = 10; rating >= 1; rating--)
             Padding(
-              padding: EdgeInsets.only(bottom: rating == 1 ? 0 : 16),
+              padding: EdgeInsets.only(bottom: rating == 1 ? 0 : 10),
               child: _DistributionRow(
                 rating: rating,
                 count: distribution[rating] ?? 0,
@@ -943,64 +1104,96 @@ class _DistributionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = maxValue == 0 ? 0.0 : count / maxValue;
 
-    return Row(
-      children: [
-        SizedBox(
-          width: 28,
-          child: Text(
-            '$rating',
-            style: const TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: count > 0
+              ? color.withOpacity(0.22)
+              : const Color(0x3332B8C6),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 26,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: color.withOpacity(0.30),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$rating',
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                height: 1.2,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: Stack(
-              children: [
-                Container(
-                  height: 10,
-                  color: const Color(0xFF232626),
-                ),
-                FractionallySizedBox(
-                  widthFactor: value,
-                  child: Container(
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: color,
-                      boxShadow: count > 0
-                          ? [
-                        BoxShadow(
-                          color: color.withOpacity(0.35),
-                          blurRadius: 12,
-                        ),
-                      ]
-                          : [],
+          const SizedBox(width: 12),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: Stack(
+                children: [
+                  Container(
+                    height: 9,
+                    color: const Color(0xFF10262B),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: value,
+                    child: Container(
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: color,
+                        boxShadow: count > 0
+                            ? [
+                          BoxShadow(
+                            color: color.withOpacity(0.40),
+                            blurRadius: 12,
+                          ),
+                        ]
+                            : [],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 28,
-          child: Text(
-            '$count',
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Color(0xFF78716C),
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 12),
+          Container(
+            width: 34,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF10262B),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: const Color(0x3332B8C6),
+              ),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: Color(0xFFD6D3D1),
+                fontSize: 12,
+                height: 1.2,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -2178,14 +2371,37 @@ class _GenreDistributionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF111414),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF10262B),
+            Color(0xFF111414),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.09),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 30,
+            offset: const Offset(0, 16),
+          ),
+        ],
       ),
       child: Wrap(
-        spacing: 12,
-        runSpacing: 14,
+        spacing: 10,
+        runSpacing: 10,
         children: genres.map((genre) {
           return _GenreChip(
             title: genre.title,
@@ -2211,35 +2427,62 @@ class _GenreChip extends StatelessWidget {
     final color = _ratingScaleColor(rating);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 10,
-      ),
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFF232626),
+        color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: const Color(0xFF464848).withOpacity(0.10),
+          color: const Color(0x6632B8C6),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const Icon(
+            Icons.category_rounded,
+            color: Color(0xFF75EEFD),
+            size: 15,
+          ),
+          const SizedBox(width: 7),
           Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFFF4F3F3),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            _formatRating(rating),
-            style: TextStyle(
-              color: color,
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
+          const SizedBox(width: 9),
+          Container(
+            height: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: color.withOpacity(0.30),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _formatRating(rating),
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                height: 1.2,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -2256,25 +2499,53 @@ class _EmptyGenreCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 32,
+        horizontal: 20,
+        vertical: 30,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF111414),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF10262B),
+            Color(0xFF111414),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF464848).withOpacity(0.30),
+          color: const Color(0x6632B8C6),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      child: const Text(
-        'Статистика по жанрам появится позже',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Color(0xFF78716C),
-          fontSize: 14,
-          height: 1.4,
-          fontStyle: FontStyle.italic,
-        ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.category_outlined,
+            color: Color(0xFF75EEFD),
+            size: 20,
+          ),
+          SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              'Статистика по жанрам появится позже',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFAAABAB),
+                fontSize: 14,
+                height: 1.4,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

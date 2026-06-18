@@ -859,10 +859,21 @@ class _ProfileBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF232626),
+        color: const Color(0xFF141818),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0xFF2A2E2E),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       alignment: Alignment.center,
       child: FittedBox(
@@ -873,10 +884,11 @@ class _ProfileBadge extends StatelessWidget {
           softWrap: false,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Color(0xFFD6D3D1),
+            color: Color(0xFFAAABAB),
             fontSize: 12,
             height: 1.3,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.3,
           ),
         ),
       ),
