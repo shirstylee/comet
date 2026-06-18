@@ -167,25 +167,23 @@ class _BrandingSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        ShaderMask(
-          shaderCallback: (bounds) {
-            return const LinearGradient(
-              colors: [
-                AboutAppScreen.accent,
-                AboutAppScreen.accentDark,
-              ],
-            ).createShader(bounds);
-          },
-          child: const Text(
-            'Comet',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 48,
-              height: 1,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -2.4,
-            ),
+        Text(
+          'Comet',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            foreground: Paint()
+              ..shader = const LinearGradient(
+                colors: [
+                  AboutAppScreen.accent,
+                  AboutAppScreen.accentDark,
+                ],
+              ).createShader(
+                const Rect.fromLTWH(0, 0, 320, 64),
+              ),
+            fontSize: 48,
+            height: 1,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -2.4,
           ),
         ),
         const SizedBox(height: 8),
@@ -289,7 +287,7 @@ class _InfoCardsSection extends StatelessWidget {
         SizedBox(height: 12),
         _AboutInfoCard(
           icon: Icons.notifications_active_outlined,
-          title: 'Системные уведомления',
+          title: 'Внутренние уведомления',
           text:
           'Comet сообщает о добавлении игр, изменении оценок, этапах прохождения и завершённых играх.',
         ),
