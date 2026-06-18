@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../storage/library_storage.dart';
+import '../../storage/notification_storage.dart';
+import '../../storage/profile_storage.dart';
 import 'about_app_screen.dart';
 import 'export_data_screen.dart';
 import 'import_data_screen.dart';
 import 'settings_statistics_screen.dart';
+import '../onboarding/welcome_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -186,7 +189,7 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
           content: const Text(
-            'Это действие позже можно подключить к очистке библиотеки, профиля и уведомлений. Сейчас экран настроек подготовлен под эту функцию.',
+            'Будут удалены библиотека игр, оценки, комментарии, этапы прохождения, уведомления и профиль. После сброса потребуется повторно создать профиль пользователя.',
             style: TextStyle(
               color: textSecondary,
               fontSize: 14,
@@ -222,12 +225,12 @@ class SettingsScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Navigator.pop(dialogContext, true),
               icon: const Icon(
-                Icons.check_rounded,
+                Icons.delete_forever_rounded,
                 color: Colors.white,
                 size: 20,
               ),
               label: const Text(
-                'Понятно',
+                'Сбросить',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -248,7 +251,18 @@ class SettingsScreen extends StatelessWidget {
 
     if (result != true || !context.mounted) return;
 
-    _showMessage(context, 'Сброс данных пока не подключён');
+    await LibraryStorage.clearLibrary();
+    await ProfileStorage.clearProfile();
+    await NotificationStorage.clearNotifications();
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const WelcomeScreen(),
+      ),
+          (route) => false,
+    );
   }
 
   @override

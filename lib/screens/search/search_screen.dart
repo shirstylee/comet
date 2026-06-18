@@ -600,7 +600,7 @@ class _ResultsCountBadge extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        'НАЙДЕНО: $count',
+        'Найдено: $count',
         maxLines: 1,
         softWrap: false,
         style: const TextStyle(
