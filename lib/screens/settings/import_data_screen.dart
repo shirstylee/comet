@@ -7,9 +7,15 @@ import 'package:flutter/material.dart';
 import '../../models/library_game_model.dart';
 import '../../storage/backup_storage.dart';
 import '../../storage/notification_storage.dart';
+import '../main/main_screen.dart';
 
 class ImportDataScreen extends StatefulWidget {
-  const ImportDataScreen({super.key});
+  const ImportDataScreen({
+    super.key,
+    this.openMainAfterImport = false,
+  });
+
+  final bool openMainAfterImport;
 
   @override
   State<ImportDataScreen> createState() => _ImportDataScreenState();
@@ -279,7 +285,17 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
 
       _showMessage('Данные успешно импортированы');
 
-      Navigator.pop(context);
+      if (widget.openMainAfterImport) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MainScreen(),
+          ),
+              (route) => false,
+        );
+      } else {
+        Navigator.pop(context);
+      }
     } catch (_) {
       if (!mounted) return;
 

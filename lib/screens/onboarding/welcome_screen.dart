@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../profile/create_profile_screen.dart';
+import '../settings/import_data_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -151,7 +152,16 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ImportDataScreen(
+                            openMainAfterImport: true,
+                          ),
+                        ),
+                      );
+                    },
                     icon: const Icon(
                       Icons.sync_alt_rounded,
                       color: accent,
