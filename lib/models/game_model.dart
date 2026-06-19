@@ -22,7 +22,7 @@ class GameModel {
 
   final int id;
   final String title;
-  final int year;
+  final int? year;
   final String genre;
   final List<String> platforms;
   final double rating;

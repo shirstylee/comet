@@ -186,36 +186,90 @@ class BackupStorage {
       throw const FormatException('В архиве нет списка игр');
     }
 
-    await _deleteCurrentLocalCovers(libraryBox);
-    await libraryBox.clear();
+    final oldLibraryEntries = Map<dynamic, dynamic>.from(libraryBox.toMap());
+    final oldLibraryValues = libraryBox.values.toList(growable: false);
+    final oldHasProfile = await ProfileStorage.hasProfile();
+    final oldProfile = oldHasProfile ? await ProfileStorage.getProfile() : null;
+    final importId = DateTime.now().millisecondsSinceEpoch.toString();
+    final importedGames = <LibraryGameModel>[];
+    final importedCoverPaths = <String>[];
 
-    for (final rawGame in rawGames) {
-      if (rawGame is! Map) continue;
+    UserProfileModel? importedProfile;
+    String? importedAvatarPath;
 
-      final gameMap = Map<String, dynamic>.from(rawGame);
-      final restoredGameMap = await _restoreGameCover(gameMap);
-      final game = LibraryGameModel.fromMap(restoredGameMap);
+    try {
+      for (final rawGame in rawGames) {
+        if (rawGame is! Map) continue;
 
-      if (game.title.trim().isEmpty) continue;
+        final gameMap = Map<String, dynamic>.from(rawGame);
+        final restoredGameMap = await _restoreGameCover(
+          gameMap,
+          importId: importId,
+        );
+        final game = LibraryGameModel.fromMap(restoredGameMap);
 
-      await libraryBox.put(game.id, game.toMap());
-    }
+        if (game.title.trim().isEmpty) continue;
 
-    final rawProfile = preview.rawMap['profile'];
+        final localImagePath = game.localImagePath;
+        if (localImagePath != null && localImagePath.trim().isNotEmpty) {
+          importedCoverPaths.add(localImagePath);
+        }
 
-    if (rawProfile is Map) {
-      final restoredProfileMap = await _restoreProfileAvatar(
-        Map<String, dynamic>.from(rawProfile),
+        importedGames.add(game);
+      }
+
+      final rawProfile = preview.rawMap['profile'];
+
+      if (rawProfile is Map) {
+        final restoredProfileMap = await _restoreProfileAvatar(
+          Map<String, dynamic>.from(rawProfile),
+          importId: importId,
+        );
+        importedProfile = UserProfileModel.fromMap(restoredProfileMap);
+        importedAvatarPath = importedProfile.avatarPath;
+      }
+
+      await libraryBox.clear();
+
+      for (final game in importedGames) {
+        await libraryBox.put(game.id, game.toMap());
+      }
+
+      if (importedProfile != null) {
+        await ProfileStorage.saveProfile(importedProfile);
+      }
+
+      await NotificationStorage.replaceWithImportSuccessNotification(
+        gamesCount: importedGames.length,
       );
-      final profile = UserProfileModel.fromMap(restoredProfileMap);
-      await ProfileStorage.saveProfile(profile);
+
+      await _deleteLocalCoversFromValues(
+        oldLibraryValues,
+        keepPaths: importedCoverPaths,
+      );
+
+      LibraryChangeNotifier.notify();
+    } catch (_) {
+      await libraryBox.clear();
+
+      for (final entry in oldLibraryEntries.entries) {
+        await libraryBox.put(entry.key, entry.value);
+      }
+
+      if (oldProfile != null) {
+        await ProfileStorage.saveProfile(oldProfile);
+      } else {
+        await ProfileStorage.clearProfile();
+      }
+
+      await _deleteImportedFiles(
+        coverPaths: importedCoverPaths,
+        avatarPath: importedAvatarPath,
+      );
+
+      LibraryChangeNotifier.notify();
+      rethrow;
     }
-
-    await NotificationStorage.replaceWithImportSuccessNotification(
-      gamesCount: preview.gamesCount,
-    );
-
-    LibraryChangeNotifier.notify();
   }
 
   static Future<Box> _openLibraryBox() async {
@@ -226,18 +280,55 @@ class BackupStorage {
     return Hive.openBox(_libraryBoxName);
   }
 
-  static Future<void> _deleteCurrentLocalCovers(Box libraryBox) async {
-    final currentValues = libraryBox.values.toList(growable: false);
+  static Future<void> _deleteLocalCoversFromValues(
+      List<dynamic> values, {
+        List<String> keepPaths = const [],
+      }) async {
+    final normalizedKeepPaths = keepPaths
+        .where((path) => path.trim().isNotEmpty)
+        .map((path) => path.trim())
+        .toSet();
 
-    for (final value in currentValues) {
+    for (final value in values) {
       if (value is! Map) continue;
 
       try {
         final game = LibraryGameModel.fromMap(value);
-        await CoverCacheService.deleteCover(game.localImagePath);
+        final localImagePath = game.localImagePath;
+
+        if (localImagePath == null ||
+            localImagePath.trim().isEmpty ||
+            normalizedKeepPaths.contains(localImagePath.trim())) {
+          continue;
+        }
+
+        await CoverCacheService.deleteCover(localImagePath);
       } catch (_) {
         // Если старая запись повреждена, импорт всё равно должен продолжиться.
       }
+    }
+  }
+
+  static Future<void> _deleteImportedFiles({
+    required List<String> coverPaths,
+    required String? avatarPath,
+  }) async {
+    for (final path in coverPaths) {
+      await CoverCacheService.deleteCover(path);
+    }
+
+    if (avatarPath == null || avatarPath.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      final file = File(avatarPath);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // Если временный аватар удалить не удалось, импорт всё равно откатывается.
     }
   }
 
@@ -308,8 +399,9 @@ class BackupStorage {
   }
 
   static Future<Map<String, dynamic>> _restoreGameCover(
-      Map<String, dynamic> gameMap,
-      ) async {
+      Map<String, dynamic> gameMap, {
+        required String importId,
+      }) async {
     final rawCoverBackup = gameMap['coverBackup'];
 
     if (rawCoverBackup is! Map) {
@@ -325,9 +417,10 @@ class BackupStorage {
     try {
       final bytes = base64Decode(base64Text);
       final gameId = _readGameId(gameMap['id']);
-      final fileName = _safeCoverFileName(
-        gameId,
-        rawCoverBackup['fileName']?.toString(),
+      final fileName = _safeImportedCoverFileName(
+        gameId: gameId,
+        importId: importId,
+        sourcePath: rawCoverBackup['fileName']?.toString(),
       );
       final coversDirectory = await _getCoversDirectory();
       final file = File('${coversDirectory.path}/$fileName');
@@ -348,8 +441,9 @@ class BackupStorage {
   }
 
   static Future<Map<String, dynamic>> _restoreProfileAvatar(
-      Map<String, dynamic> profileMap,
-      ) async {
+      Map<String, dynamic> profileMap, {
+        required String importId,
+      }) async {
     final rawAvatarBackup = profileMap['avatarBackup'];
 
     if (rawAvatarBackup is! Map) {
@@ -364,10 +458,11 @@ class BackupStorage {
 
     try {
       final bytes = base64Decode(base64Text);
-      final fileName = _safeFileName(
+      final originalFileName = _safeFileName(
         rawAvatarBackup['fileName']?.toString(),
         fallback: 'profile_avatar.jpg',
       );
+      final fileName = '${importId}_$originalFileName';
       final profileDirectory = await _getProfileDirectory();
       final file = File('${profileDirectory.path}/$fileName');
 
@@ -451,6 +546,16 @@ class BackupStorage {
     if (value is num) return value.toInt();
 
     return DateTime.now().millisecondsSinceEpoch;
+  }
+
+  static String _safeImportedCoverFileName({
+    required int gameId,
+    required String importId,
+    required String? sourcePath,
+  }) {
+    final extension = _safeFileExtension(sourcePath);
+
+    return 'game_${gameId}_$importId$extension';
   }
 
   static String _safeCoverFileName(int gameId, String? sourcePath) {

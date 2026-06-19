@@ -359,11 +359,11 @@ class RawgApiService {
         .trim();
   }
 
-  int _yearFromReleasedDate(String? released) {
+  int? _yearFromReleasedDate(String? released) {
     if (released == null || released.length < 4) {
-      return DateTime.now().year;
+      return null;
     }
 
-    return int.tryParse(released.substring(0, 4)) ?? DateTime.now().year;
+    return int.tryParse(released.substring(0, 4));
   }
 }

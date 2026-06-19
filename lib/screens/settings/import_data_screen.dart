@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import '../../models/library_game_model.dart';
 import '../../storage/backup_storage.dart';
 import '../../storage/notification_storage.dart';
+import '../../storage/profile_storage.dart';
 import '../main/main_screen.dart';
+import '../profile/create_profile_screen.dart';
 
 class ImportDataScreen extends StatefulWidget {
   const ImportDataScreen({
@@ -286,13 +288,7 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
       _showMessage('Данные успешно импортированы');
 
       if (widget.openMainAfterImport) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const MainScreen(),
-          ),
-              (route) => false,
-        );
+        await _openScreenAfterOnboardingImport();
       } else {
         Navigator.pop(context);
       }
@@ -332,6 +328,51 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
         importProgress = (importProgress + 0.04).clamp(0.0, 0.92).toDouble();
       });
     });
+  }
+
+  Future<void> _openScreenAfterOnboardingImport() async {
+    final hasCompleteProfile = await _hasCompleteProfile();
+
+    if (!mounted) return;
+
+    if (hasCompleteProfile) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainScreen(),
+        ),
+            (route) => false,
+      );
+      return;
+    }
+
+    _showMessage('Данные импортированы. Создайте профиль');
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreateProfileScreen(),
+      ),
+    );
+  }
+
+  Future<bool> _hasCompleteProfile() async {
+    if (!await ProfileStorage.hasProfile()) {
+      return false;
+    }
+
+    final profile = await ProfileStorage.getProfile();
+    final avatarPath = profile.avatarPath?.trim();
+
+    if (profile.name.trim().isEmpty ||
+        profile.status.trim().isEmpty ||
+        profile.favoritePlatforms.isEmpty ||
+        avatarPath == null ||
+        avatarPath.isEmpty) {
+      return false;
+    }
+
+    return File(avatarPath).exists();
   }
 
   Future<bool?> _showImportConfirmation() {

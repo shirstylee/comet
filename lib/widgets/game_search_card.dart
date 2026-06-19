@@ -31,6 +31,26 @@ class _GameSearchCardState extends State<GameSearchCard>
   @override
   bool get wantKeepAlive => true;
 
+  String get yearText {
+    final year = game.year;
+
+    if (year == null) {
+      return 'Год неизвестен';
+    }
+
+    return year.toString();
+  }
+
+  String get subtitleText {
+    final genre = game.genre.trim();
+
+    if (genre.isEmpty) {
+      return yearText;
+    }
+
+    return '$yearText • $genre';
+  }
+
   static const Color cardColor = Color(0xFF111414);
   static const Color green = Color(0xFFBBFFB3);
   static const Color accent = Color(0xFF75EEFD);
@@ -247,7 +267,7 @@ class _GameSearchCardState extends State<GameSearchCard>
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  '${game.year} • ${game.genre}',
+                                  subtitleText,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -360,7 +380,7 @@ class _GameSearchCardState extends State<GameSearchCard>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '${game.year} • ${game.genre}',
+                          subtitleText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

@@ -906,7 +906,7 @@ class _RatingSection extends StatelessWidget {
             children: [
               _SmallBadge(text: game.genre),
               _SmallBadge(text: 'RAWG ${game.rating.toStringAsFixed(1)}'),
-              if (game.year > 0) _SmallBadge(text: 'TOP ${game.year}'),
+              if (game.year != null) _SmallBadge(text: 'TOP ${game.year}'),
             ],
           ),
         ],
@@ -926,7 +926,13 @@ class _MetaCards extends StatelessWidget {
     final released = game.released;
 
     if (released == null || released.trim().isEmpty) {
-      return game.year.toString();
+      final year = game.year;
+
+      if (year == null) {
+        return 'Год неизвестен';
+      }
+
+      return year.toString();
     }
 
     return released;
