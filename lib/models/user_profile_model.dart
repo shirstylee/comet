@@ -21,7 +21,7 @@ class UserProfileModel {
   }
 
   factory UserProfileModel.fromMap(Map<dynamic, dynamic> map) {
-    final rawPlatforms = map['favoritePlatforms'] ?? map['favoriteGenres'];
+    final rawPlatforms = map['favoritePlatforms'];
 
     return UserProfileModel(
       name: map['name'] as String? ?? '',
