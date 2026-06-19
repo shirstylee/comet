@@ -9,7 +9,7 @@ import '../services/cover_cache_service.dart';
 import '../storage/library_storage.dart';
 import '../widgets/game_cover.dart';
 
-class GameSearchCard extends StatelessWidget {
+class GameSearchCard extends StatefulWidget {
   const GameSearchCard({
     super.key,
     required this.game,
@@ -18,6 +18,18 @@ class GameSearchCard extends StatelessWidget {
 
   final GameModel game;
   final int index;
+
+  @override
+  State<GameSearchCard> createState() => _GameSearchCardState();
+}
+
+class _GameSearchCardState extends State<GameSearchCard>
+    with AutomaticKeepAliveClientMixin<GameSearchCard> {
+  GameModel get game => widget.game;
+  int get index => widget.index;
+
+  @override
+  bool get wantKeepAlive => true;
 
   static const Color cardColor = Color(0xFF111414);
   static const Color green = Color(0xFFBBFFB3);
@@ -273,6 +285,8 @@ class GameSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return GestureDetector(
       onTap: () => _openDetails(context),
       child: Container(

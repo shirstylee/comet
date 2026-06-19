@@ -513,6 +513,8 @@ class _ResultsState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      key: const PageStorageKey<String>('search-results-list'),
+      cacheExtent: 2400,
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
       itemCount: results.length + 1,
       separatorBuilder: (_, index) {
@@ -530,6 +532,7 @@ class _ResultsState extends StatelessWidget {
         final game = results[gameIndex];
 
         return GameSearchCard(
+          key: ValueKey('search-game-${game.id}'),
           game: game,
           index: gameIndex,
         );

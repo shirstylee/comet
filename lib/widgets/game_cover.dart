@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class GameCover extends StatefulWidget {
@@ -31,11 +32,27 @@ class GameCover extends StatefulWidget {
   State<GameCover> createState() => _GameCoverState();
 }
 
-class _GameCoverState extends State<GameCover> {
+class _GameCoverState extends State<GameCover>
+    with AutomaticKeepAliveClientMixin<GameCover> {
   static const Duration _networkRetryDelay = Duration(seconds: 4);
+
+  static final Set<String> loadedNetworkUrls = <String>{};
 
   Timer? networkRetryTimer;
   int networkRetryVersion = 0;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  String? get _normalizedImageUrl {
+    final url = widget.imageUrl?.trim();
+
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+
+    return url;
+  }
 
   bool get _hasLocalImage {
     final path = widget.localImagePath;
@@ -47,10 +64,14 @@ class _GameCoverState extends State<GameCover> {
     return File(path).existsSync();
   }
 
-  bool get _hasNetworkImage {
-    final url = widget.imageUrl;
+  bool get _isNetworkImageAlreadyLoaded {
+    final url = _normalizedImageUrl;
 
-    return url != null && url.trim().isNotEmpty;
+    if (url == null) {
+      return false;
+    }
+
+    return loadedNetworkUrls.contains(url);
   }
 
   @override
@@ -71,19 +92,32 @@ class _GameCoverState extends State<GameCover> {
     super.dispose();
   }
 
+  void _markNetworkImageAsLoaded(String url) {
+    loadedNetworkUrls.add(url);
+
+    networkRetryTimer?.cancel();
+    networkRetryTimer = null;
+  }
+
   void _scheduleNetworkRetry() {
-    if (networkRetryTimer != null || !_hasNetworkImage) {
+    final url = _normalizedImageUrl;
+
+    if (networkRetryTimer != null || url == null) {
       return;
     }
 
     networkRetryTimer = Timer(_networkRetryDelay, () async {
       networkRetryTimer = null;
 
-      if (!mounted || !_hasNetworkImage) {
+      if (!mounted) {
         return;
       }
 
-      await NetworkImage(widget.imageUrl!).evict();
+      try {
+        await CachedNetworkImage.evictFromCache(url);
+      } catch (_) {
+        // Ошибка очистки кэша не должна ломать экран.
+      }
 
       if (!mounted) {
         return;
@@ -97,6 +131,8 @@ class _GameCoverState extends State<GameCover> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return SizedBox(
       width: widget.width,
       height: widget.height,
@@ -136,6 +172,7 @@ class _GameCoverState extends State<GameCover> {
       return Image.file(
         File(widget.localImagePath!),
         fit: widget.fit,
+        gaplessPlayback: true,
         errorBuilder: (context, error, stackTrace) {
           return _buildNetworkOrFallback();
         },
@@ -146,18 +183,32 @@ class _GameCoverState extends State<GameCover> {
   }
 
   Widget _buildNetworkOrFallback() {
-    if (!_hasNetworkImage) {
+    final url = _normalizedImageUrl;
+
+    if (url == null) {
       return _GameCoverFallback(iconSize: widget.iconSize);
     }
 
-    return Image.network(
-      widget.imageUrl!,
-      key: ValueKey('${widget.imageUrl}-$networkRetryVersion'),
+    return CachedNetworkImage(
+      imageUrl: url,
+      cacheKey: url,
+      key: ValueKey('$url-$networkRetryVersion'),
       fit: widget.fit,
-      gaplessPlayback: true,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
+      useOldImageOnUrlChange: true,
+      fadeInDuration: Duration.zero,
+      fadeOutDuration: Duration.zero,
+      imageBuilder: (context, imageProvider) {
+        _markNetworkImageAsLoaded(url);
+
+        return Image(
+          image: imageProvider,
+          fit: widget.fit,
+          gaplessPlayback: true,
+        );
+      },
+      placeholder: (context, _) {
+        if (_isNetworkImageAlreadyLoaded) {
+          return _GameCoverFallback(iconSize: widget.iconSize);
         }
 
         return _GameCoverFallback(
@@ -165,8 +216,9 @@ class _GameCoverState extends State<GameCover> {
           showLoader: true,
         );
       },
-      errorBuilder: (context, error, stackTrace) {
+      errorWidget: (context, _, error) {
         _scheduleNetworkRetry();
+
         return _GameCoverFallback(iconSize: widget.iconSize);
       },
     );
