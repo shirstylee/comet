@@ -18,7 +18,6 @@ class ProfileStorage {
 
   static Future<UserProfileModel> getProfile() async {
     final box = await _openBox();
-
     final value = box.get(_profileKey);
 
     if (value is Map) {
@@ -28,7 +27,7 @@ class ProfileStorage {
     return const UserProfileModel(
       name: '',
       status: '',
-      favoriteGenres: [],
+      favoritePlatforms: [],
       avatarPath: null,
     );
   }
@@ -36,7 +35,10 @@ class ProfileStorage {
   static Future<void> saveProfile(UserProfileModel profile) async {
     final box = await _openBox();
 
-    await box.put(_profileKey, profile.toMap());
+    await box.put(
+      _profileKey,
+      profile.toMap(),
+    );
   }
 
   static Future<bool> hasProfile() async {

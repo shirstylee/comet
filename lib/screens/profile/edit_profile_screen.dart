@@ -49,7 +49,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     nicknameController.text = widget.profile.name;
     statusController.text = widget.profile.status;
     currentAvatarPath = widget.profile.avatarPath;
-    selectedPlatforms.addAll(widget.profile.favoriteGenres);
+    selectedPlatforms.addAll(widget.profile.favoritePlatforms);
   }
 
   @override
@@ -127,7 +127,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       UserProfileModel(
         name: nickname,
         status: status,
-        favoriteGenres: selectedPlatforms.toList(),
+        favoritePlatforms: selectedPlatforms.toList(),
         avatarPath: currentAvatarPath,
       ),
     );

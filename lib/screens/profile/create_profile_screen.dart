@@ -110,7 +110,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       UserProfileModel(
         name: nicknameController.text.trim(),
         status: statusController.text.trim(),
-        favoriteGenres: selectedPlatforms.toList(),
+        favoritePlatforms: selectedPlatforms.toList(),
         avatarPath: avatarFile?.path,
       ),
     );

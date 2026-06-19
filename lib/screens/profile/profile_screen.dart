@@ -37,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   UserProfileModel profile = const UserProfileModel(
     name: '',
     status: '',
-    favoriteGenres: [],
+    favoritePlatforms: [],
     avatarPath: null,
   );
 
@@ -304,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 gamesCount: games.length,
                 completedCount: completedGames.length,
                 favoriteGenre: favoriteGenre,
-                platforms: profile.favoriteGenres,
+                platforms: profile.favoritePlatforms,
               ),
               const SizedBox(height: 48),
               const _SectionHeader(title: 'Оценки'),
