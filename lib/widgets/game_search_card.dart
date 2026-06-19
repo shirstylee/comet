@@ -37,16 +37,24 @@ class _GameSearchCardState extends State<GameSearchCard>
   static const Color textPrimary = Color(0xFFF4F3F3);
   static const Color textSecondary = Color(0xFFAAABAB);
 
-  void _openDetails(BuildContext context) {
-    Navigator.push(
+  Future<void> _openDetails(BuildContext context) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => GameDetailsScreen(game: game),
       ),
     );
+
+    if (!context.mounted) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Future<void> _openGameProgressScreen(BuildContext context) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     final savedGame = await LibraryStorage.getGameById(game.id);
 
     if (!context.mounted) return;
@@ -73,6 +81,10 @@ class _GameSearchCardState extends State<GameSearchCard>
         ),
       ),
     );
+
+    if (!context.mounted) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Future<void> _addGameToLibrary(BuildContext context) async {
@@ -164,6 +176,8 @@ class _GameSearchCardState extends State<GameSearchCard>
   }
 
   void _showGameActions(BuildContext context) {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     final pageContext = context;
 
     showModalBottomSheet(
@@ -288,7 +302,9 @@ class _GameSearchCardState extends State<GameSearchCard>
     super.build(context);
 
     return GestureDetector(
-      onTap: () => _openDetails(context),
+      onTap: () {
+        _openDetails(context);
+      },
       child: Container(
         height: 160,
         decoration: BoxDecoration(

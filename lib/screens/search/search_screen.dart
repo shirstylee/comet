@@ -28,6 +28,7 @@ class _SearchScreenState extends State<SearchScreen> {
   int searchRequestId = 0;
 
   String lastSearchedQuery = '';
+  int resultsListVersion = 0;
 
   @override
   void initState() {
@@ -53,6 +54,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (query.isEmpty) {
       searchRequestId++;
       lastSearchedQuery = '';
+      resultsListVersion++;
 
       setState(() {
         results = [];
@@ -79,6 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
       }
 
       lastSearchedQuery = currentQuery;
+      resultsListVersion++;
 
       final currentRequestId = ++searchRequestId;
 
@@ -102,8 +105,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
         setState(() {
           isLoading = false;
-          errorMessage =
-          'Не удалось загрузить игры. Проверьте интернет.';
+          errorMessage = 'Не удалось загрузить игры. Проверьте интернет.';
         });
       }
     });
@@ -172,8 +174,9 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return _ResultsState(
-      key: const ValueKey('results-state'),
+      key: ValueKey('results-state-$resultsListVersion'),
       results: results,
+      listKey: 'search-results-list-$resultsListVersion',
     );
   }
 }
@@ -506,14 +509,16 @@ class _ResultsState extends StatelessWidget {
   const _ResultsState({
     super.key,
     required this.results,
+    required this.listKey,
   });
 
   final List<GameModel> results;
+  final String listKey;
 
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      key: const PageStorageKey<String>('search-results-list'),
+      key: PageStorageKey<String>(listKey),
       cacheExtent: 2400,
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
       itemCount: results.length + 1,
