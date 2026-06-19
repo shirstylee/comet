@@ -22,7 +22,6 @@ class BackupExportResult {
     required this.ratedCount,
     required this.stagesCount,
   });
-
   final Uint8List bytes;
   final String fileName;
   final int sizeBytes;
@@ -37,22 +36,35 @@ class BackupImportPreview {
     required this.sizeBytes,
     required this.rawMap,
     required this.games,
+    required this.rawGamesCount,
     required this.gamesCount,
+    required this.skippedGamesCount,
     required this.ratedCount,
     required this.stagesCount,
     required this.profileIncluded,
     required this.profile,
   });
-
   final String fileName;
   final int sizeBytes;
   final Map<String, dynamic> rawMap;
   final List<LibraryGameModel> games;
+  final int rawGamesCount;
   final int gamesCount;
+  final int skippedGamesCount;
   final int ratedCount;
   final int stagesCount;
   final bool profileIncluded;
   final UserProfileModel? profile;
+  bool get hasSkippedGames => skippedGamesCount > 0;
+}
+
+class _ParsedImportGames {
+  const _ParsedImportGames({
+    required this.games,
+    required this.skippedCount,
+  });
+  final List<LibraryGameModel> games;
+  final int skippedCount;
 }
 
 class BackupStorage {
@@ -85,7 +97,6 @@ class BackupStorage {
     final games = await LibraryStorage.getAllGames();
     final profile = await ProfileStorage.getProfile();
     final fileName = buildBackupFileName();
-
     final exportedGames = <Map<String, dynamic>>[];
 
     for (final game in games) {
@@ -93,7 +104,6 @@ class BackupStorage {
     }
 
     final profileMap = await _buildProfileExportMap(profile);
-
     final jsonText = _buildJsonText(
       games: exportedGames,
       profileMap: profileMap,
@@ -115,7 +125,6 @@ class BackupStorage {
   ]) async {
     final games = preparedGames ?? await LibraryStorage.getAllGames();
     final profile = await ProfileStorage.getProfile();
-
     final exportedGames = <Map<String, dynamic>>[];
 
     for (final game in games) {
@@ -157,12 +166,7 @@ class BackupStorage {
       throw const FormatException('В архиве нет списка игр');
     }
 
-    final games = rawGames
-        .whereType<Map>()
-        .map((gameMap) => LibraryGameModel.fromMap(gameMap))
-        .where((game) => game.title.trim().isNotEmpty)
-        .toList();
-
+    final parsedGames = _parsePreviewGames(rawGames);
     final rawProfile = rawMap['profile'];
     final profile = rawProfile is Map
         ? UserProfileModel.fromMap(rawProfile)
@@ -172,10 +176,12 @@ class BackupStorage {
       fileName: fileName,
       sizeBytes: bytes.length,
       rawMap: rawMap,
-      games: games,
-      gamesCount: games.length,
-      ratedCount: _ratedCount(games),
-      stagesCount: _stagesCount(games),
+      games: parsedGames.games,
+      rawGamesCount: rawGames.length,
+      gamesCount: parsedGames.games.length,
+      skippedGamesCount: parsedGames.skippedCount,
+      ratedCount: _ratedCount(parsedGames.games),
+      stagesCount: _stagesCount(parsedGames.games),
       profileIncluded: profile != null,
       profile: profile,
     );
@@ -206,21 +212,26 @@ class BackupStorage {
       for (final rawGame in rawGames) {
         if (rawGame is! Map) continue;
 
-        final gameMap = Map<String, dynamic>.from(rawGame);
-        final restoredGameMap = await _restoreGameCover(
-          gameMap,
-          importId: importId,
-        );
-        final game = LibraryGameModel.fromMap(restoredGameMap);
+        try {
+          final gameMap = Map<String, dynamic>.from(rawGame);
+          final restoredGameMap = await _restoreGameCover(
+            gameMap,
+            importId: importId,
+          );
+          final game = LibraryGameModel.fromMap(restoredGameMap);
 
-        if (game.title.trim().isEmpty) continue;
+          if (game.title.trim().isEmpty) continue;
 
-        final localImagePath = game.localImagePath;
-        if (localImagePath != null && localImagePath.trim().isNotEmpty) {
-          importedCoverPaths.add(localImagePath);
+          final localImagePath = game.localImagePath;
+          if (localImagePath != null && localImagePath.trim().isNotEmpty) {
+            importedCoverPaths.add(localImagePath);
+          }
+
+          importedGames.add(game);
+        } catch (_) {
+          // Повреждённая запись игры пропускается.
+          // Количество таких записей показывается пользователю на предпросмотре.
         }
-
-        importedGames.add(game);
       }
 
       final rawProfile = preview.rawMap['profile'];
@@ -308,6 +319,36 @@ class BackupStorage {
     }
 
     throw const FormatException('В архиве не указана версия');
+  }
+
+  static _ParsedImportGames _parsePreviewGames(List<dynamic> rawGames) {
+    final games = <LibraryGameModel>[];
+    var skippedCount = 0;
+
+    for (final rawGame in rawGames) {
+      if (rawGame is! Map) {
+        skippedCount++;
+        continue;
+      }
+
+      try {
+        final game = LibraryGameModel.fromMap(rawGame);
+
+        if (game.title.trim().isEmpty) {
+          skippedCount++;
+          continue;
+        }
+
+        games.add(game);
+      } catch (_) {
+        skippedCount++;
+      }
+    }
+
+    return _ParsedImportGames(
+      games: games,
+      skippedCount: skippedCount,
+    );
   }
 
   static Future<void> _deleteLocalCoversFromValues(
