@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/user_profile_model.dart';
+import '../../services/avatar_storage_service.dart';
 import '../../storage/profile_storage.dart';
 import '../main/main_screen.dart';
 
@@ -25,6 +26,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final ImagePicker picker = ImagePicker();
 
   File? avatarFile;
+  bool isSaving = false;
 
   final List<String> platforms = [
     'PC',
@@ -106,23 +108,41 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       return;
     }
 
-    await ProfileStorage.saveProfile(
-      UserProfileModel(
-        name: nicknameController.text.trim(),
-        status: statusController.text.trim(),
-        favoritePlatforms: selectedPlatforms.toList(),
-        avatarPath: avatarFile?.path,
-      ),
-    );
+    setState(() {
+      isSaving = true;
+    });
 
-    if (!mounted) return;
+    try {
+      final savedAvatarPath = await AvatarStorageService.saveAvatar(avatarFile!);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MainScreen(),
-      ),
-    );
+      await ProfileStorage.saveProfile(
+        UserProfileModel(
+          name: nicknameController.text.trim(),
+          status: statusController.text.trim(),
+          favoritePlatforms: selectedPlatforms.toList(),
+          avatarPath: savedAvatarPath,
+        ),
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainScreen(),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      showError('Не удалось сохранить профиль');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -305,7 +325,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: goToMainScreen,
+                    onPressed: isSaving ? null : goToMainScreen,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,

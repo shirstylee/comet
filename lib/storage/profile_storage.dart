@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/user_profile_model.dart';
+import '../services/avatar_storage_service.dart';
 
 class ProfileStorage {
   static const String _boxName = 'user_profile';
@@ -34,10 +33,21 @@ class ProfileStorage {
 
   static Future<void> saveProfile(UserProfileModel profile) async {
     final box = await _openBox();
+    final oldValue = box.get(_profileKey);
+    String? oldAvatarPath;
+
+    if (oldValue is Map) {
+      oldAvatarPath = UserProfileModel.fromMap(oldValue).avatarPath;
+    }
 
     await box.put(
       _profileKey,
       profile.toMap(),
+    );
+
+    await _deleteOldAvatarIfNeeded(
+      oldAvatarPath: oldAvatarPath,
+      newAvatarPath: profile.avatarPath,
     );
   }
 
@@ -54,25 +64,24 @@ class ProfileStorage {
     if (value is Map) {
       final profile = UserProfileModel.fromMap(value);
 
-      await _deleteAvatarFile(profile.avatarPath);
+      await AvatarStorageService.deleteAvatar(profile.avatarPath);
     }
 
     await box.delete(_profileKey);
   }
 
-  static Future<void> _deleteAvatarFile(String? avatarPath) async {
-    if (avatarPath == null || avatarPath.trim().isEmpty) {
+  static Future<void> _deleteOldAvatarIfNeeded({
+    required String? oldAvatarPath,
+    required String? newAvatarPath,
+  }) async {
+    if (oldAvatarPath == null || oldAvatarPath.trim().isEmpty) {
       return;
     }
 
-    try {
-      final file = File(avatarPath);
-
-      if (await file.exists()) {
-        await file.delete();
-      }
-    } catch (_) {
-      // Ошибка удаления файла аватара не должна ломать сброс профиля.
+    if (oldAvatarPath == newAvatarPath) {
+      return;
     }
+
+    await AvatarStorageService.deleteAvatar(oldAvatarPath);
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/user_profile_model.dart';
+import '../../services/avatar_storage_service.dart';
 import '../../storage/profile_storage.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -31,6 +32,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   File? avatarFile;
   String? currentAvatarPath;
+  bool isSaving = false;
 
   final List<String> platforms = const [
     'PC',
@@ -123,18 +125,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    await ProfileStorage.saveProfile(
-      UserProfileModel(
-        name: nickname,
-        status: status,
-        favoritePlatforms: selectedPlatforms.toList(),
-        avatarPath: currentAvatarPath,
-      ),
-    );
+    final hasAvatar = avatarFile != null ||
+        (currentAvatarPath != null &&
+            currentAvatarPath!.trim().isNotEmpty &&
+            File(currentAvatarPath!).existsSync());
 
-    if (!mounted) return;
+    if (!hasAvatar) {
+      showError('Загрузите аватар');
+      return;
+    }
 
-    Navigator.pop(context, true);
+    setState(() {
+      isSaving = true;
+    });
+
+    String? copiedAvatarPath;
+
+    try {
+      String? avatarPathToSave = currentAvatarPath;
+
+      if (avatarFile != null) {
+        copiedAvatarPath = await AvatarStorageService.saveAvatar(avatarFile!);
+        avatarPathToSave = copiedAvatarPath;
+      } else if (currentAvatarPath != null &&
+          currentAvatarPath!.trim().isNotEmpty &&
+          File(currentAvatarPath!).existsSync() &&
+          !(await AvatarStorageService.isManagedAvatarPath(currentAvatarPath))) {
+        copiedAvatarPath = await AvatarStorageService.saveAvatar(
+          File(currentAvatarPath!),
+        );
+        avatarPathToSave = copiedAvatarPath;
+      }
+
+      await ProfileStorage.saveProfile(
+        UserProfileModel(
+          name: nickname,
+          status: status,
+          favoritePlatforms: selectedPlatforms.toList(),
+          avatarPath: avatarPathToSave,
+        ),
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (_) {
+      if (copiedAvatarPath != null) {
+        await AvatarStorageService.deleteAvatar(copiedAvatarPath);
+      }
+
+      if (!mounted) return;
+
+      showError('Не удалось сохранить профиль');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
   }
 
   void closeKeyboard() {
@@ -319,7 +368,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ],
                           ),
                           child: ElevatedButton(
-                            onPressed: saveProfile,
+                            onPressed: isSaving ? null : saveProfile,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
