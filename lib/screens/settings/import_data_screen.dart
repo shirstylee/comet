@@ -852,10 +852,6 @@ class _SelectedFileCard extends StatelessWidget {
                 text: 'Игры: ${preview.gamesCount}',
               ),
               _FileMetaPill(
-                icon: Icons.list_alt_rounded,
-                text: 'В архиве: ${preview.rawGamesCount}',
-              ),
-              _FileMetaPill(
                 icon: Icons.star_rounded,
                 text: 'Оценки: ${preview.ratedCount}',
               ),
