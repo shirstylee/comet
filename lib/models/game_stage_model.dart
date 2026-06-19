@@ -25,13 +25,48 @@ class GameStageModel {
 
   factory GameStageModel.fromMap(Map<dynamic, dynamic> map) {
     return GameStageModel(
-      title: map['title'] as String? ?? 'Этап',
-      subtitle: map['subtitle'] as String? ?? 'В процессе',
-      isDone: map['isDone'] as bool? ?? false,
-      description: map['description'] as String? ?? '',
-      completedAt: map['completedAt'] == null
-          ? null
-          : DateTime.tryParse(map['completedAt'].toString()),
+      title: _readString(map['title'], fallback: 'Этап'),
+      subtitle: _readString(map['subtitle'], fallback: 'В процессе'),
+      isDone: _readBool(map['isDone']),
+      description: _readString(map['description'], fallback: ''),
+      completedAt: _readDateTime(map['completedAt']),
     );
+  }
+
+  static String _readString(dynamic value, {required String fallback}) {
+    if (value == null) return fallback;
+
+    final text = value.toString().trim();
+
+    return text.isEmpty ? fallback : text;
+  }
+
+  static bool _readBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+
+    if (value is String) {
+      final text = value.trim().toLowerCase();
+
+      if (text == 'true' || text == '1' || text == 'yes') {
+        return true;
+      }
+
+      if (text == 'false' || text == '0' || text == 'no') {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  static DateTime? _readDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+
+    return DateTime.tryParse(value.toString());
   }
 }

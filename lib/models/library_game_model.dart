@@ -136,46 +136,125 @@ class LibraryGameModel {
   }
 
   factory LibraryGameModel.fromMap(Map<dynamic, dynamic> map) {
-    final rawStages = map['stages'];
-    final rawPlatforms = map['platforms'];
-
-    final rawGenre = map['genre'];
-    final cleanGenre = rawGenre == null ? '' : rawGenre.toString().trim();
-
-    final rawApiHours = map['apiHours'];
-    final parsedApiHours = rawApiHours is num ? rawApiHours.toInt() : 0;
-
-    final parsedAddedAt = map['addedAt'] == null
-        ? DateTime.now()
-        : DateTime.tryParse(map['addedAt'].toString()) ?? DateTime.now();
-
-    final parsedRatedAt = map['ratedAt'] == null
-        ? null
-        : DateTime.tryParse(map['ratedAt'].toString());
-
     return LibraryGameModel(
-      id: map['id'] as int? ?? 0,
-      title: map['title'] as String? ?? 'Без названия',
-      status: map['status'] as String? ?? 'Играю',
-      addedAt: parsedAddedAt,
-      ratedAt: parsedRatedAt,
-      imageUrl: map['imageUrl'] as String?,
-      localImagePath: map['localImagePath'] as String?,
-      year: map['year'] as int?,
-      genre: cleanGenre,
-      platforms: rawPlatforms is List
-          ? rawPlatforms.map((platform) => platform.toString()).toList()
-          : const [],
-      apiRating: (map['apiRating'] as num?)?.toDouble(),
-      apiHours: parsedApiHours,
-      userHours: map['userHours'] as int? ?? 0,
-      userMinutes: map['userMinutes'] as int? ?? 0,
-      userRating: (map['userRating'] as num?)?.toDouble(),
-      comment: map['comment'] as String?,
-      isFavorite: map['isFavorite'] as bool? ?? false,
-      stages: rawStages is List
-          ? rawStages.map((stage) => GameStageModel.fromMap(stage)).toList()
-          : const [],
+      id: _readInt(map['id']),
+      title: _readString(map['title'], fallback: 'Без названия'),
+      status: _readString(map['status'], fallback: 'Играю'),
+      addedAt: _readDateTime(map['addedAt']) ?? DateTime.now(),
+      ratedAt: _readDateTime(map['ratedAt']),
+      imageUrl: _readOptionalString(map['imageUrl']),
+      localImagePath: _readOptionalString(map['localImagePath']),
+      year: _readNullableInt(map['year']),
+      genre: _readString(map['genre'], fallback: ''),
+      platforms: _readStringList(map['platforms']),
+      apiRating: _readNullableDouble(map['apiRating']),
+      apiHours: _readInt(map['apiHours']),
+      userHours: _readInt(map['userHours']),
+      userMinutes: _readInt(map['userMinutes']),
+      userRating: _readNullableDouble(map['userRating']),
+      comment: _readOptionalString(map['comment']),
+      isFavorite: _readBool(map['isFavorite']),
+      stages: _readStages(map['stages']),
     );
+  }
+
+  static int _readInt(dynamic value) {
+    final parsed = _parseNumber(value)?.toInt() ?? 0;
+
+    return parsed < 0 ? 0 : parsed;
+  }
+
+  static int? _readNullableInt(dynamic value) {
+    return _parseNumber(value)?.toInt();
+  }
+
+  static double? _readNullableDouble(dynamic value) {
+    return _parseNumber(value)?.toDouble();
+  }
+
+  static num? _parseNumber(dynamic value) {
+    if (value is num) return value;
+
+    if (value is String) {
+      final text = value.trim();
+
+      if (text.isEmpty) return null;
+
+      return num.tryParse(text.replaceAll(',', '.'));
+    }
+
+    return null;
+  }
+
+  static String _readString(dynamic value, {required String fallback}) {
+    if (value == null) return fallback;
+
+    final text = value.toString().trim();
+
+    return text.isEmpty ? fallback : text;
+  }
+
+  static String? _readOptionalString(dynamic value) {
+    if (value == null) return null;
+
+    final text = value.toString().trim();
+
+    return text.isEmpty ? null : text;
+  }
+
+  static bool _readBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+
+    if (value is String) {
+      final text = value.trim().toLowerCase();
+
+      if (text == 'true' || text == '1' || text == 'yes') {
+        return true;
+      }
+
+      if (text == 'false' || text == '0' || text == 'no') {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  static DateTime? _readDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+
+    return DateTime.tryParse(value.toString());
+  }
+
+  static List<String> _readStringList(dynamic value) {
+    if (value is! List) return const [];
+
+    return value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  static List<GameStageModel> _readStages(dynamic value) {
+    if (value is! List) return const [];
+
+    final stages = <GameStageModel>[];
+
+    for (final item in value) {
+      if (item is! Map) continue;
+
+      try {
+        stages.add(GameStageModel.fromMap(item));
+      } catch (_) {
+        // Повреждённый этап не должен ломать импорт всей игры.
+      }
+    }
+
+    return stages;
   }
 }

@@ -21,15 +21,34 @@ class UserProfileModel {
   }
 
   factory UserProfileModel.fromMap(Map<dynamic, dynamic> map) {
-    final rawPlatforms = map['favoritePlatforms'];
-
     return UserProfileModel(
-      name: map['name'] as String? ?? '',
-      status: map['status'] as String? ?? '',
-      favoritePlatforms: rawPlatforms is List
-          ? rawPlatforms.map((platform) => platform.toString()).toList()
-          : const [],
-      avatarPath: map['avatarPath'] as String?,
+      name: _readString(map['name']),
+      status: _readString(map['status']),
+      favoritePlatforms: _readStringList(map['favoritePlatforms']),
+      avatarPath: _readOptionalString(map['avatarPath']),
     );
+  }
+
+  static String _readString(dynamic value) {
+    if (value == null) return '';
+
+    return value.toString().trim();
+  }
+
+  static String? _readOptionalString(dynamic value) {
+    if (value == null) return null;
+
+    final text = value.toString().trim();
+
+    return text.isEmpty ? null : text;
+  }
+
+  static List<String> _readStringList(dynamic value) {
+    if (value is! List) return const [];
+
+    return value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
 }

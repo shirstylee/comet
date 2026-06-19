@@ -59,6 +59,7 @@ class BackupStorage {
   const BackupStorage._();
 
   static const int currentVersion = 2;
+  static const Set<int> _supportedImportVersions = {currentVersion};
   static const String _libraryBoxName = 'library_games';
   static const String _coversFolderName = 'covers';
   static const String _profileFolderName = 'profile';
@@ -148,6 +149,8 @@ class BackupStorage {
       throw const FormatException('Это не архив Comet');
     }
 
+    _validateArchiveVersion(rawMap);
+
     final rawGames = rawMap['games'];
 
     if (rawGames is! List) {
@@ -179,6 +182,8 @@ class BackupStorage {
   }
 
   static Future<void> importBackup(BackupImportPreview preview) async {
+    _validateArchiveVersion(preview.rawMap);
+
     final libraryBox = await _openLibraryBox();
     final rawGames = preview.rawMap['games'];
 
@@ -278,6 +283,31 @@ class BackupStorage {
     }
 
     return Hive.openBox(_libraryBoxName);
+  }
+
+  static void _validateArchiveVersion(Map<String, dynamic> rawMap) {
+    final version = _readArchiveVersion(rawMap['version']);
+
+    if (!_supportedImportVersions.contains(version)) {
+      throw FormatException(
+        'Версия архива не поддерживается. Поддерживаемая версия: $currentVersion',
+      );
+    }
+  }
+
+  static int _readArchiveVersion(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    if (value is String) {
+      final parsed = int.tryParse(value.trim());
+
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+
+    throw const FormatException('В архиве не указана версия');
   }
 
   static Future<void> _deleteLocalCoversFromValues(
