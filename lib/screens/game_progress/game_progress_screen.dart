@@ -1408,14 +1408,8 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                   children: [
                     const _BottomSheetHandle(),
                     const SizedBox(height: 20),
-                    Text(
-                      stage.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    _StageTitlePreview(
+                      title: stage.title,
                     ),
                     if (stage.description.trim().isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -2643,6 +2637,83 @@ class _StageDescriptionInput extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StageTitlePreview extends StatefulWidget {
+  const _StageTitlePreview({
+    required this.title,
+  });
+
+  final String title;
+
+  @override
+  State<_StageTitlePreview> createState() => _StageTitlePreviewState();
+}
+
+class _StageTitlePreviewState extends State<_StageTitlePreview> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanTitle = widget.title.trim();
+
+    if (cleanTitle.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final lineBreaksCount = '\n'.allMatches(cleanTitle).length;
+    final shouldShowExpandButton = cleanTitle.length > 44 || lineBreaksCount >= 1;
+
+    return Column(
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: isExpanded ? 156 : 60,
+          ),
+          child: SingleChildScrollView(
+            physics: isExpanded
+                ? const BouncingScrollPhysics()
+                : const NeverScrollableScrollPhysics(),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                cleanTitle,
+                textAlign: TextAlign.center,
+                maxLines: isExpanded ? null : 2,
+                overflow: isExpanded
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _GameProgressScreenState.textPrimary,
+                  fontSize: 22,
+                  height: 1.18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (shouldShowExpandButton) ...[
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isExpanded = !isExpanded;
+              });
+            },
+            child: Text(
+              isExpanded ? 'Свернуть' : 'Раскрыть',
+              style: const TextStyle(
+                color: _GameProgressScreenState.accent,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -513,39 +515,69 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 115),
-        child: SizedBox(
-          height: 320,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: _HeroBackground(game: game),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        background.withOpacity(0.05),
-                        background.withOpacity(0.35),
-                        background,
-                      ],
-                      stops: const [0.0, 0.55, 1.0],
+      child: SizedBox(
+        height: 435,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 58,
+              height: 112,
+              child: _HeroTopBlur(game: game),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 95,
+              height: 340,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: _HeroBackground(game: game),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            background.withOpacity(0.18),
+                            background.withOpacity(0.25),
+                            background,
+                          ],
+                          stops: const [0.0, 0.50, 1.0],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.center,
+                          colors: [
+                            background.withOpacity(0.54),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.42],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 4,
+                    child: _GenreBadges(game: game),
+                  ),
+                ],
               ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 4,
-                child: _GenreBadges(game: game),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -563,11 +595,66 @@ class _HeroBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return GameCover(
       width: double.infinity,
-      height: 320,
+      height: 340,
       imageUrl: game.imageUrl,
       borderRadius: 0,
       iconSize: 110,
       showGradient: false,
+    );
+  }
+}
+
+class _HeroTopBlur extends StatelessWidget {
+  const _HeroTopBlur({
+    required this.game,
+  });
+
+  final GameModel game;
+
+  static const Color background = Color(0xFF0C0F0F);
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(
+                sigmaX: 18,
+                sigmaY: 18,
+              ),
+              child: Transform.scale(
+                scale: 1.12,
+                child: GameCover(
+                  width: double.infinity,
+                  height: 112,
+                  imageUrl: game.imageUrl,
+                  borderRadius: 0,
+                  iconSize: 70,
+                  showGradient: false,
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    background,
+                    background.withOpacity(0.74),
+                    background.withOpacity(0.18),
+                  ],
+                  stops: const [0.0, 0.42, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
