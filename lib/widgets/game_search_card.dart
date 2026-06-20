@@ -41,6 +41,16 @@ class _GameSearchCardState extends State<GameSearchCard>
     return year.toString();
   }
 
+  String get genreText {
+    final genre = game.genre.trim();
+
+    if (genre.isEmpty) {
+      return 'Жанр не указан';
+    }
+
+    return genre;
+  }
+
   String get subtitleText {
     final genre = game.genre.trim();
 
@@ -49,6 +59,14 @@ class _GameSearchCardState extends State<GameSearchCard>
     }
 
     return '$yearText • $genre';
+  }
+
+  String get hoursText {
+    if (game.hours <= 0) {
+      return '—';
+    }
+
+    return '${game.hours}ч.';
   }
 
   static const Color cardColor = Color(0xFF111414);
@@ -266,14 +284,9 @@ class _GameSearchCardState extends State<GameSearchCard>
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(
-                                  subtitleText,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: textSecondary,
-                                    fontSize: 14,
-                                  ),
+                                _GameInfoBadges(
+                                  yearText: yearText,
+                                  genreText: genreText,
                                 ),
                               ],
                             ),
@@ -365,30 +378,16 @@ class _GameSearchCardState extends State<GameSearchCard>
                               ),
                             ),
                             const SizedBox(width: 8),
-                            GestureDetector(
+                            _CardMenuButton(
                               onTap: () => _showGameActions(context),
-                              child: const SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: Icon(
-                                  Icons.more_vert_rounded,
-                                  color: textSecondary,
-                                  size: 22,
-                                ),
-                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          subtitleText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: textSecondary,
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
+                        _GameInfoBadges(
+                          yearText: yearText,
+                          genreText: genreText,
+                          compact: true,
                         ),
                       ],
                     ),
@@ -430,7 +429,7 @@ class _GameSearchCardState extends State<GameSearchCard>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${game.hours}h',
+                              hoursText,
                               style: const TextStyle(
                                 color: textSecondary,
                                 fontSize: 12,
@@ -445,6 +444,115 @@ class _GameSearchCardState extends State<GameSearchCard>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardMenuButton extends StatelessWidget {
+  const _CardMenuButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: const Color(0x99111414),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withOpacity(0.08),
+          ),
+        ),
+        child: const Icon(
+          Icons.more_horiz_rounded,
+          color: Color(0xFFF4F3F3),
+          size: 22,
+        ),
+      ),
+    );
+  }
+}
+
+class _GameInfoBadges extends StatelessWidget {
+  const _GameInfoBadges({
+    required this.yearText,
+    required this.genreText,
+    this.compact = false,
+  });
+
+  final String yearText;
+  final String genreText;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: compact ? 28 : 30,
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _GameInfoBadge(
+              text: yearText,
+              compact: compact,
+            ),
+            const SizedBox(width: 8),
+            _GameInfoBadge(
+              text: genreText,
+              compact: compact,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GameInfoBadge extends StatelessWidget {
+  const _GameInfoBadge({
+    required this.text,
+    required this.compact,
+  });
+
+  final String text;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 28 : 30,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 11 : 13,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: const Color(0xFF75EEFD),
+          fontSize: compact ? 11 : 12,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
         ),
       ),
     );
