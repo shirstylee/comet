@@ -7,6 +7,15 @@ import 'widgets/progress_card.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/timeline_item.dart';
 
+Color _ratingScaleColor(double rating) {
+  if (rating <= 0) return const Color(0xFF78716C);
+  if (rating >= 8) return const Color(0xFF75EEFD);
+  if (rating >= 6) return const Color(0xFFFACC15);
+  if (rating >= 4) return const Color(0xFFF97316);
+
+  return const Color(0xFFEF4444);
+}
+
 String _formatStageDate(DateTime date) {
   const months = [
     'янв',
@@ -1519,7 +1528,9 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
                       child: GameStatCard(
                         title: 'Оценка',
                         value: ratingText,
-                        valueColor: const Color(0xFFBBFFB3),
+                        valueColor: _ratingScaleColor(
+                          currentRating.toDouble(),
+                        ),
                         compactValue: true,
                         onTap: _openReviewScreen,
                       ),
@@ -1617,8 +1628,6 @@ class _ReviewScreenState extends State<_ReviewScreen> {
   static const Color textPrimary = Color(0xFFF4F3F3);
   static const Color textSecondary = Color(0xFFAAABAB);
 
-  static const int maxReviewLength = 500;
-
   late int selectedRating = widget.rating;
   late final TextEditingController reviewController =
   TextEditingController(text: widget.review);
@@ -1643,6 +1652,10 @@ class _ReviewScreenState extends State<_ReviewScreen> {
     if (selectedRating <= 0) return '—/10';
 
     return '$selectedRating/10';
+  }
+
+  Color get selectedRatingColor {
+    return _ratingScaleColor(selectedRating.toDouble());
   }
 
   void _saveReview() {
@@ -1714,8 +1727,6 @@ class _ReviewScreenState extends State<_ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewLength = reviewController.text.length;
-
     return Scaffold(
       backgroundColor: background,
       body: Stack(
@@ -1768,8 +1779,8 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                           ),
                           Text(
                             ratingText,
-                            style: const TextStyle(
-                              color: accent,
+                            style: TextStyle(
+                              color: selectedRatingColor,
                               fontSize: 30,
                               height: 1.2,
                               fontWeight: FontWeight.w900,
@@ -1815,7 +1826,6 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                       TextField(
                         controller: reviewController,
                         maxLines: null,
-                        maxLength: maxReviewLength,
                         cursorColor: accent,
                         style: const TextStyle(
                           color: textPrimary,
@@ -1831,18 +1841,6 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                           ),
                           border: InputBorder.none,
                           counterText: '',
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Text(
-                          '$reviewLength из $maxReviewLength символов',
-                          style: const TextStyle(
-                            color: textSecondary,
-                            fontSize: 12,
-                            height: 1.3,
-                          ),
                         ),
                       ),
                     ],
@@ -1884,8 +1882,8 @@ class _ReviewTopBar extends StatelessWidget {
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
-                width: 34,
-                height: 34,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: const Color(0x1A75EEFD),
                   shape: BoxShape.circle,
@@ -2015,8 +2013,8 @@ class _ReviewRatingCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color =
-    isSelected ? const Color(0xFF75EEFD) : const Color(0xFFAAABAB);
+    final selectedColor = _ratingScaleColor(rating.toDouble());
+    final color = isSelected ? selectedColor : const Color(0xFFAAABAB);
 
     return Material(
       color: Colors.transparent,
@@ -2029,19 +2027,17 @@ class _ReviewRatingCircle extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0x2675EEFD)
+                ? selectedColor.withOpacity(0.15)
                 : const Color(0xFF1D2020),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF75EEFD)
-                  : const Color(0x1A464848),
+              color: isSelected ? selectedColor : const Color(0x1A464848),
               width: isSelected ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: isSelected
-                    ? const Color(0xFF75EEFD).withOpacity(0.22)
+                    ? selectedColor.withOpacity(0.22)
                     : Colors.black.withOpacity(0.20),
                 blurRadius: isSelected ? 18 : 15,
                 offset: const Offset(0, 8),
