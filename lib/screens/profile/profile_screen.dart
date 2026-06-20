@@ -1250,8 +1250,8 @@ class _FeaturedReviewDatePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: const Color(0xFF082326),
         borderRadius: BorderRadius.circular(999),
@@ -1265,9 +1265,9 @@ class _FeaturedReviewDatePill extends StatelessWidget {
           const Icon(
             Icons.event_available_rounded,
             color: Color(0xFF22D3EE),
-            size: 13,
+            size: 15,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 9),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1278,10 +1278,10 @@ class _FeaturedReviewDatePill extends StatelessWidget {
                   maxLines: 1,
                   style: TextStyle(
                     color: Color(0xFFA8A29E),
-                    fontSize: 8.5,
-                    height: 1.0,
+                    fontSize: 10,
+                    height: 1.1,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.25,
+                    letterSpacing: 0.45,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1294,10 +1294,10 @@ class _FeaturedReviewDatePill extends StatelessWidget {
                     softWrap: false,
                     style: const TextStyle(
                       color: Color(0xFF22D3EE),
-                      fontSize: 10,
-                      height: 1.0,
+                      fontSize: 12,
+                      height: 1.1,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.0,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
