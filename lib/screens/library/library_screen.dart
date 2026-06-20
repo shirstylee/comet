@@ -762,8 +762,8 @@ class _LibraryCollectionBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        height: 33,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
         decoration: BoxDecoration(
           color: const Color(0xFF101515),
           borderRadius: BorderRadius.circular(999),
@@ -775,15 +775,15 @@ class _LibraryCollectionBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(
-              width: 22,
-              height: 22,
+              width: 19,
+              height: 19,
               child: Icon(
                 Icons.sports_esports_rounded,
                 color: Color(0xFF75EEFD),
-                size: 18,
+                size: 16,
               ),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 6),
             Text.rich(
               TextSpan(
                 children: [
@@ -791,7 +791,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '$gamesCount $gamesWord',
                     style: const TextStyle(
                       color: Color(0xFF75EEFD),
-                      fontSize: 13.5,
+                      fontSize: 12.8,
                       height: 1.1,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.05,
@@ -801,7 +801,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '  в коллекции',
                     style: TextStyle(
                       color: Color(0xFFAAABAB),
-                      fontSize: 13.5,
+                      fontSize: 12.8,
                       height: 1.1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.05,
