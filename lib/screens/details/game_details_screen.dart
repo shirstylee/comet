@@ -543,19 +543,6 @@ class _HeroSection extends StatelessWidget {
                     ),
                   ),
                 ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.07),
-                      ),
-                    ),
-                  ),
-                ),
                 Positioned(
                   left: 16,
                   right: 16,
