@@ -762,8 +762,8 @@ class _LibraryCollectionBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 13),
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: const Color(0xFF101515),
           borderRadius: BorderRadius.circular(999),
@@ -774,23 +774,16 @@ class _LibraryCollectionBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: const Color(0x1475EEFD),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: const Color(0x3375EEFD),
-                ),
-              ),
-              child: const Icon(
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: Icon(
                 Icons.sports_esports_rounded,
                 color: Color(0xFF75EEFD),
-                size: 15,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 9),
+            const SizedBox(width: 7),
             Text.rich(
               TextSpan(
                 children: [
@@ -798,7 +791,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '$gamesCount $gamesWord',
                     style: const TextStyle(
                       color: Color(0xFF75EEFD),
-                      fontSize: 15,
+                      fontSize: 13.5,
                       height: 1.1,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.05,
@@ -808,7 +801,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '  в коллекции',
                     style: TextStyle(
                       color: Color(0xFFAAABAB),
-                      fontSize: 15,
+                      fontSize: 13.5,
                       height: 1.1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.05,
