@@ -6,6 +6,7 @@ import '../../models/library_game_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../storage/library_change_notifier.dart';
 import '../../storage/library_storage.dart';
+import '../../storage/library_view_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../notifications/notifications_screen.dart';
 import 'widgets/empty_library_state.dart';
@@ -61,9 +62,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.initState();
 
     _loadGames();
+    _loadSavedViewType();
 
     LibraryChangeNotifier.version.addListener(_onLibraryChanged);
     searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _loadSavedViewType() async {
+    final savedViewType = await LibraryViewStorage.getViewType();
+
+    if (!mounted) return;
+
+    setState(() {
+      selectedViewType =
+      savedViewType == LibraryViewStorage.gridViewType
+          ? LibraryViewType.grid
+          : LibraryViewType.list;
+    });
   }
 
   void _onLibraryChanged() {
@@ -396,11 +411,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           title: 'Список',
                           subtitle: 'Одна большая карточка игры в строку',
                           isSelected: selectedViewType == LibraryViewType.list,
-                          onTap: () {
+                          onTap: () async {
                             Navigator.pop(bottomSheetContext);
+
                             setState(() {
                               selectedViewType = LibraryViewType.list;
                             });
+
+                            await LibraryViewStorage.saveViewType(
+                              LibraryViewStorage.listViewType,
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -409,11 +429,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           title: 'Сетка',
                           subtitle: 'Компактная сетка с двумя карточками',
                           isSelected: selectedViewType == LibraryViewType.grid,
-                          onTap: () {
+                          onTap: () async {
                             Navigator.pop(bottomSheetContext);
+
                             setState(() {
                               selectedViewType = LibraryViewType.grid;
                             });
+
+                            await LibraryViewStorage.saveViewType(
+                              LibraryViewStorage.gridViewType,
+                            );
                           },
                         ),
                       ],
