@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../storage/library_storage.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
@@ -101,6 +102,10 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _openSearchScreen() async {
+    final libraryCountBeforeSearch = await _getLibraryCount();
+
+    if (!mounted) return;
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -110,8 +115,24 @@ class _MainScreenState extends State<MainScreen> {
 
     if (!mounted) return;
 
+    final libraryCountAfterSearch = await _getLibraryCount();
+
+    if (!mounted || libraryCountAfterSearch <= libraryCountBeforeSearch) {
+      return;
+    }
+
     libraryTabKey.currentState?.refreshLibrary();
     _setTab(1);
+  }
+
+  Future<int> _getLibraryCount() async {
+    try {
+      final games = await LibraryStorage.getAllGames();
+
+      return games.length;
+    } catch (_) {
+      return 0;
+    }
   }
 
   void _openAllGamesForRating() {

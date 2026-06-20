@@ -1657,6 +1657,7 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
   bool _isClampingMatrix = false;
   double? _imageAspectRatio;
   Size _viewportSize = Size.zero;
+  int _activePointers = 0;
 
   @override
   void initState() {
@@ -1673,6 +1674,7 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
     if (oldWidget.imageUrl != widget.imageUrl) {
       _resetZoom();
       _imageAspectRatio = null;
+      _activePointers = 0;
       _resolveImageSize();
     }
   }
@@ -1728,6 +1730,31 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
     _imageListener = null;
   }
 
+  void _handlePointerDown(PointerDownEvent event) {
+    _activePointers++;
+
+    if (_activePointers >= 2) {
+      widget.onZoomChanged(true);
+    }
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    _activePointers = (_activePointers - 1).clamp(0, 10).toInt();
+    _syncParentSwipeState();
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    _activePointers = (_activePointers - 1).clamp(0, 10).toInt();
+    _syncParentSwipeState();
+  }
+
+  void _syncParentSwipeState() {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+    final shouldLockPageView = currentScale > 1.05 || _activePointers >= 2;
+
+    widget.onZoomChanged(shouldLockPageView);
+  }
+
   void _saveDoubleTapPosition(TapDownDetails details) {
     _doubleTapDetails = details;
   }
@@ -1741,9 +1768,9 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
       setState(() {
         _isZoomed = isZoomed;
       });
-
-      widget.onZoomChanged(isZoomed);
     }
+
+    widget.onZoomChanged(isZoomed || _activePointers >= 2);
 
     _clampCurrentMatrix();
   }
@@ -1759,7 +1786,7 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
       });
     }
 
-    widget.onZoomChanged(false);
+    widget.onZoomChanged(_activePointers >= 2);
   }
 
   void _toggleZoom() {
@@ -1796,6 +1823,24 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
     widget.onZoomChanged(true);
   }
 
+  void _handleInteractionStart(ScaleStartDetails details) {
+    if (_activePointers >= 2) {
+      widget.onZoomChanged(true);
+    }
+  }
+
+  void _handleInteractionUpdate(ScaleUpdateDetails details) {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+
+    if (currentScale > 1.05 && !_isZoomed && mounted) {
+      setState(() {
+        _isZoomed = true;
+      });
+    }
+
+    widget.onZoomChanged(currentScale > 1.05 || _activePointers >= 2);
+  }
+
   void _handleInteractionEnd(ScaleEndDetails details) {
     final currentScale = _controller.value.getMaxScaleOnAxis();
 
@@ -1805,6 +1850,7 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
     }
 
     _clampCurrentMatrix();
+    widget.onZoomChanged(true);
   }
 
   void _clampCurrentMatrix() {
@@ -1943,56 +1989,63 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onDoubleTapDown: _saveDoubleTapPosition,
-      onDoubleTap: _toggleZoom,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          _viewportSize = Size(
-            constraints.maxWidth,
-            constraints.maxHeight,
-          );
+    return Listener(
+      onPointerDown: _handlePointerDown,
+      onPointerUp: _handlePointerUp,
+      onPointerCancel: _handlePointerCancel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onDoubleTapDown: _saveDoubleTapPosition,
+        onDoubleTap: _toggleZoom,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            _viewportSize = Size(
+              constraints.maxWidth,
+              constraints.maxHeight,
+            );
 
-          return InteractiveViewer(
-            transformationController: _controller,
-            minScale: 1,
-            maxScale: 5,
-            panEnabled: _isZoomed,
-            scaleEnabled: true,
-            boundaryMargin: EdgeInsets.zero,
-            clipBehavior: Clip.hardEdge,
-            onInteractionEnd: _handleInteractionEnd,
-            child: SizedBox(
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              child: Center(
-                child: Image.network(
-                  widget.imageUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
+            return InteractiveViewer(
+              transformationController: _controller,
+              minScale: 1,
+              maxScale: 5,
+              panEnabled: _isZoomed,
+              scaleEnabled: true,
+              boundaryMargin: EdgeInsets.zero,
+              clipBehavior: Clip.hardEdge,
+              onInteractionStart: _handleInteractionStart,
+              onInteractionUpdate: _handleInteractionUpdate,
+              onInteractionEnd: _handleInteractionEnd,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                child: Center(
+                  child: Image.network(
+                    widget.imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
 
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF75EEFD),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: Color(0xFFAAABAB),
-                        size: 46,
-                      ),
-                    );
-                  },
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF75EEFD),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Color(0xFFAAABAB),
+                          size: 46,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
