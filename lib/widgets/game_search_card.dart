@@ -58,7 +58,7 @@ class _GameSearchCardState extends State<GameSearchCard>
       return yearText;
     }
 
-    return '$yearText • $genre';
+    return '$genre • $yearText';
   }
 
   String get hoursText {
@@ -503,12 +503,12 @@ class _GameInfoBadges extends StatelessWidget {
         child: Row(
           children: [
             _GameInfoBadge(
-              text: yearText,
+              text: genreText,
               compact: compact,
             ),
             const SizedBox(width: 8),
             _GameInfoBadge(
-              text: genreText,
+              text: yearText,
               compact: compact,
             ),
           ],

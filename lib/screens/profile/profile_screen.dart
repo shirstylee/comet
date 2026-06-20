@@ -481,8 +481,8 @@ class _ProfileHero extends StatelessWidget {
       children: [
         Center(
           child: Container(
-            width: 128,
-            height: 128,
+            width: 140,
+            height: 140,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -520,7 +520,7 @@ class _ProfileHero extends StatelessWidget {
                   child: Icon(
                     Icons.sports_esports_rounded,
                     color: Color(0xFF22D3EE),
-                    size: 52,
+                    size: 58,
                   ),
                 ),
               ),
@@ -991,14 +991,10 @@ class _FeaturedReviewCard extends StatelessWidget {
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$genre • $releaseText',
-                      style: const TextStyle(
-                        color: Color(0xFF78716C),
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
+                    const SizedBox(height: 10),
+                    _FeaturedGameInfoBadges(
+                      genreText: genre,
+                      yearText: releaseText,
                     ),
                     const SizedBox(height: 24),
                     _ReviewRatingBadge(
@@ -1076,16 +1072,8 @@ class _FeaturedReviewCard extends StatelessWidget {
                           timeText: timeText,
                         ),
                         const Spacer(),
-                        Text(
-                          'ОЦЕНЕНО:\n$reviewDateText',
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(
-                            color: Color(0xFF57534E),
-                            fontSize: 10,
-                            height: 1.3,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.7,
-                          ),
+                        _FeaturedReviewDatePill(
+                          dateText: reviewDateText,
                         ),
                       ],
                     ),
@@ -1100,6 +1088,137 @@ class _FeaturedReviewCard extends StatelessWidget {
   }
 }
 
+
+class _FeaturedGameInfoBadges extends StatelessWidget {
+  const _FeaturedGameInfoBadges({
+    required this.genreText,
+    required this.yearText,
+  });
+
+  final String genreText;
+  final String yearText;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 30,
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _FeaturedGameInfoBadge(text: genreText),
+            const SizedBox(width: 8),
+            _FeaturedGameInfoBadge(text: yearText),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedGameInfoBadge extends StatelessWidget {
+  const _FeaturedGameInfoBadge({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Color(0xFF75EEFD),
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedReviewDatePill extends StatelessWidget {
+  const _FeaturedReviewDatePill({
+    required this.dateText,
+  });
+
+  final String dateText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF082326),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.event_available_rounded,
+            color: Color(0xFF22D3EE),
+            size: 15,
+          ),
+          const SizedBox(width: 9),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'ОЦЕНЕНО:',
+                maxLines: 1,
+                style: TextStyle(
+                  color: Color(0xFFA8A29E),
+                  fontSize: 10,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.45,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                dateText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF22D3EE),
+                  fontSize: 12,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _FeaturedTimePill extends StatelessWidget {
   const _FeaturedTimePill({
