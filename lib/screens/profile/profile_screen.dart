@@ -1348,34 +1348,47 @@ class _FeaturedTimePill extends StatelessWidget {
             size: 15,
           ),
           const SizedBox(width: 9),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'ВРЕМЯ В ИГРЕ:',
-                maxLines: 1,
-                style: TextStyle(
-                  color: Color(0xFFA8A29E),
-                  fontSize: 10,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.45,
+          SizedBox(
+            width: 78,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'ВРЕМЯ В ИГРЕ:',
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    color: Color(0xFFA8A29E),
+                    fontSize: 10,
+                    height: 1.1,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.45,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                timeText,
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Color(0xFF22D3EE),
-                  fontSize: 12,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.2,
+                const SizedBox(height: 3),
+                SizedBox(
+                  width: double.infinity,
+                  height: 14,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      timeText,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: const TextStyle(
+                        color: Color(0xFF22D3EE),
+                        fontSize: 12,
+                        height: 1.1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
