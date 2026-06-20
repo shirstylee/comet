@@ -5,6 +5,15 @@ import '../../../storage/library_storage.dart';
 import '../../../widgets/game_cover.dart';
 import '../../game_progress/game_progress_screen.dart';
 
+Color _ratingScaleColor(double rating) {
+  if (rating <= 0) return const Color(0xFF78716C);
+  if (rating >= 8) return const Color(0xFF75EEFD);
+  if (rating >= 6) return const Color(0xFFFACC15);
+  if (rating >= 4) return const Color(0xFFF97316);
+
+  return const Color(0xFFEF4444);
+}
+
 class LibraryGameCard extends StatefulWidget {
   const LibraryGameCard({
     super.key,
@@ -96,9 +105,11 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
   @override
   Widget build(BuildContext context) {
     final statusColors = _statusColors(currentGame.status);
+    final ratingValue = currentGame.userRating ?? 0;
+    final ratingColor = _ratingScaleColor(ratingValue);
     final String ratingText = currentGame.userRating == null
         ? '-'
-        : currentGame.userRating!.round().toString();
+        : currentGame.userRating!.round().clamp(1, 10).toString();
 
     return GestureDetector(
       onTap: () => _openProgressScreen(context),
@@ -204,7 +215,7 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
             ),
             Container(
               height: 90,
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
               child: Column(
                 children: [
                   Row(
@@ -224,26 +235,36 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        height: 26,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        height: 28,
+                        padding: const EdgeInsets.symmetric(horizontal: 9),
                         decoration: BoxDecoration(
-                          color: const Color(0x801C1917),
-                          borderRadius: BorderRadius.circular(8),
+                          color: ratingColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(
+                            color: ratingColor.withOpacity(0.34),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: ratingColor.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.star_rounded,
-                              color: Color(0xFFEAB308),
+                              color: ratingColor,
                               size: 16,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               ratingText,
-                              style: const TextStyle(
-                                color: Color(0xFFF4F3F3),
+                              style: TextStyle(
+                                color: ratingColor,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                           ],
@@ -251,38 +272,20 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.access_time_rounded,
-                        color: Color(0xFF78716C),
-                        size: 13,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        playedTimeText,
-                        style: const TextStyle(
-                          color: Color(0xFF78716C),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.5,
+                      Flexible(
+                        child: _LibraryInfoPill(
+                          icon: Icons.access_time_rounded,
+                          text: playedTimeText,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      const Icon(
-                        Icons.calendar_month_rounded,
-                        color: Color(0xFF78716C),
-                        size: 13,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${currentGame.year ?? '—'}',
-                        style: const TextStyle(
-                          color: Color(0xFF78716C),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.5,
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: _LibraryInfoPill(
+                          icon: Icons.calendar_month_rounded,
+                          text: '${currentGame.year ?? '—'}',
                         ),
                       ),
                     ],
@@ -323,6 +326,67 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
           border: const Color(0xFF75EEFD),
         );
     }
+  }
+}
+
+class _LibraryInfoPill extends StatelessWidget {
+  const _LibraryInfoPill({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: const Color(0xFF75EEFD),
+            size: 12,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                text,
+                maxLines: 1,
+                softWrap: false,
+                style: const TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontSize: 10,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

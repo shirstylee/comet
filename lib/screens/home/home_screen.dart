@@ -12,6 +12,15 @@ import '../game_progress/game_progress_screen.dart';
 import '../search/search_screen.dart';
 import '../notifications/notifications_screen.dart';
 
+Color _ratingScaleColor(double rating) {
+  if (rating <= 0) return const Color(0xFF78716C);
+  if (rating >= 8) return const Color(0xFF75EEFD);
+  if (rating >= 6) return const Color(0xFFFACC15);
+  if (rating >= 4) return const Color(0xFFF97316);
+
+  return const Color(0xFFEF4444);
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -425,6 +434,9 @@ class _StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final averageRatingValue = double.tryParse(averageRating) ?? 0;
+    final averageRatingColor = _ratingScaleColor(averageRatingValue);
+
     return Column(
       children: [
         Row(
@@ -453,7 +465,7 @@ class _StatsSection extends StatelessWidget {
           title: 'СРЕДНЯЯ ОЦЕНКА',
           value: averageRating,
           subtitle: '★',
-          color: const Color(0xFF75EEFD),
+          color: averageRatingColor,
         ),
       ],
     );
@@ -696,6 +708,141 @@ class _RecentActivitySection extends StatelessWidget {
   }
 }
 
+class _AllGamesHeaderButton extends StatelessWidget {
+  const _AllGamesHeaderButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          decoration: BoxDecoration(
+            color: const Color(0xFF081F23),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0x6632B8C6),
+              width: 1.1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.16),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.grid_view_rounded,
+                color: Color(0xFF75EEFD),
+                size: 17,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Все игры',
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontSize: 13,
+                  height: 1.2,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              SizedBox(width: 5),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Color(0xFF75EEFD),
+                size: 12,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityInfoPill extends StatelessWidget {
+  const _ActivityInfoPill({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 28,
+      constraints: const BoxConstraints(
+        maxWidth: 170,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withOpacity(0.30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 13,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                height: 1.15,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
     required this.onAllGamesTap,
@@ -719,19 +866,8 @@ class _SectionHeader extends StatelessWidget {
             letterSpacing: -0.75,
           ),
         ),
-        TextButton(
-          onPressed: onAllGamesTap,
-          child: const Text(
-            'ВСЕ\nИГРЫ',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF75EEFD),
-              fontSize: 14,
-              height: 1.35,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.4,
-            ),
-          ),
+        _AllGamesHeaderButton(
+          onTap: onAllGamesTap,
         ),
       ],
     );
@@ -900,37 +1036,17 @@ class _GameActivityCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(
-                          isCompleted
-                              ? Icons.check_circle_rounded
-                              : Icons.access_time_rounded,
-                          color: isCompleted
-                              ? const Color(0xFFBBFFB3)
-                              : const Color(0xFFAAABAB),
-                          size: isCompleted ? 11 : 12,
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: isCompleted
-                                  ? const Color(0xFFBBFFB3)
-                                  : const Color(0xFFAAABAB),
-                              fontSize: isCompleted ? 12 : 13,
-                              height: 1.25,
-                              fontWeight: isCompleted
-                                  ? FontWeight.w800
-                                  : FontWeight.w500,
-                              letterSpacing: isCompleted ? 1.0 : 0,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _ActivityInfoPill(
+                        icon: isCompleted
+                            ? Icons.check_circle_rounded
+                            : Icons.access_time_rounded,
+                        text: subtitle,
+                        color: isCompleted
+                            ? const Color(0xFFBBFFB3)
+                            : const Color(0xFF75EEFD),
+                      ),
                     ),
                   ],
                 ),
