@@ -1046,15 +1046,8 @@ class _FeaturedReviewCard extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Text(
-                            '«$comment»',
-                            style: const TextStyle(
-                              color: Color(0xFFAAABAB),
-                              fontSize: 14,
-                              height: 1.65,
-                              fontWeight: FontWeight.w500,
-                              fontStyle: FontStyle.italic,
-                            ),
+                          _ExpandableFeaturedComment(
+                            comment: comment,
                           ),
                         ],
                       ),
@@ -1071,9 +1064,11 @@ class _FeaturedReviewCard extends StatelessWidget {
                         _FeaturedTimePill(
                           timeText: timeText,
                         ),
-                        const Spacer(),
-                        _FeaturedReviewDatePill(
-                          dateText: reviewDateText,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _FeaturedReviewDatePill(
+                            dateText: reviewDateText,
+                          ),
                         ),
                       ],
                     ),
@@ -1088,6 +1083,96 @@ class _FeaturedReviewCard extends StatelessWidget {
   }
 }
 
+
+class _ExpandableFeaturedComment extends StatefulWidget {
+  const _ExpandableFeaturedComment({
+    required this.comment,
+  });
+
+  final String comment;
+
+  @override
+  State<_ExpandableFeaturedComment> createState() =>
+      _ExpandableFeaturedCommentState();
+}
+
+class _ExpandableFeaturedCommentState extends State<_ExpandableFeaturedComment> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const commentStyle = TextStyle(
+      color: Color(0xFFAAABAB),
+      fontSize: 14,
+      height: 1.65,
+      fontWeight: FontWeight.w500,
+      fontStyle: FontStyle.italic,
+    );
+
+    final commentText = '«${widget.comment}»';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: commentText,
+            style: commentStyle,
+          ),
+          maxLines: 4,
+          textDirection: Directionality.of(context),
+        )..layout(maxWidth: constraints.maxWidth);
+
+        final canExpand = textPainter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              commentText,
+              maxLines: isExpanded ? null : 4,
+              overflow: isExpanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
+              style: commentStyle,
+            ),
+            if (canExpand) ...[
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isExpanded = !isExpanded;
+                  });
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isExpanded ? 'СВЕРНУТЬ' : 'РАСКРЫТЬ',
+                      style: const TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFF75EEFD),
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
 
 class _FeaturedGameInfoBadges extends StatelessWidget {
   const _FeaturedGameInfoBadges({
@@ -1165,8 +1250,8 @@ class _FeaturedReviewDatePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF082326),
         borderRadius: BorderRadius.circular(999),
@@ -1176,43 +1261,48 @@ class _FeaturedReviewDatePill extends StatelessWidget {
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(
             Icons.event_available_rounded,
             color: Color(0xFF22D3EE),
-            size: 15,
+            size: 13,
           ),
-          const SizedBox(width: 9),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'ОЦЕНЕНО:',
-                maxLines: 1,
-                style: TextStyle(
-                  color: Color(0xFFA8A29E),
-                  fontSize: 10,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.45,
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'ОЦЕНЕНО:',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Color(0xFFA8A29E),
+                    fontSize: 8.5,
+                    height: 1.0,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.25,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                dateText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF22D3EE),
-                  fontSize: 12,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.2,
+                const SizedBox(height: 3),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    dateText,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(
+                      color: Color(0xFF22D3EE),
+                      fontSize: 10,
+                      height: 1.0,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.0,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
