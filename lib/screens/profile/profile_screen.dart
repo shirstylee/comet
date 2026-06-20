@@ -32,6 +32,15 @@ Color _ratingScaleColor(double rating) {
   return const Color(0xFFEF4444);
 }
 
+String _ratingVerdictText(double rating) {
+  if (rating >= 9) return 'ШЕДЕВР';
+  if (rating >= 8) return 'ОТЛИЧНО';
+  if (rating >= 6) return 'ХОРОШО';
+  if (rating >= 4) return 'СРЕДНЕ';
+
+  return 'СЛАБО';
+}
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -1740,6 +1749,29 @@ class _ReviewRatingBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _ratingScaleColor(rating);
+    final verdictText = _ratingVerdictText(rating);
+
+    final ratingContent = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          _formatRating(rating),
+          style: TextStyle(
+            color: color,
+            fontSize: fontSize,
+            height: 1.1,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Icon(
+          Icons.star_rounded,
+          color: color,
+          size: starSize,
+        ),
+      ],
+    );
 
     return Container(
       width: width,
@@ -1761,24 +1793,30 @@ class _ReviewRatingBadge extends StatelessWidget {
         ],
       ),
       alignment: Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: width == null ? MainAxisSize.min : MainAxisSize.max,
+      child: width == null
+          ? ratingContent
+          : Row(
         children: [
-          Text(
-            _formatRating(rating),
-            style: TextStyle(
-              color: color,
-              fontSize: fontSize,
-              height: 1.1,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
+          ratingContent,
+          const SizedBox(width: 14),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                verdictText,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            Icons.star_rounded,
-            color: color,
-            size: starSize,
           ),
         ],
       ),
