@@ -148,12 +148,10 @@ class TimelineItem extends StatelessWidget {
                             ),
                             const Spacer(),
                             if (onTap != null)
-                              Icon(
-                                Icons.more_horiz_rounded,
-                                color: isLocked
-                                    ? const Color(0xFF747675)
-                                    : mainColor,
-                                size: 22,
+                              _StageMoreButton(
+                                color: mainColor,
+                                isDone: isDone,
+                                isLocked: isLocked,
                               ),
                           ],
                         ),
@@ -201,6 +199,57 @@ class TimelineItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StageMoreButton extends StatelessWidget {
+  const _StageMoreButton({
+    required this.color,
+    required this.isDone,
+    required this.isLocked,
+  });
+
+  final Color color;
+  final bool isDone;
+  final bool isLocked;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentColor = isLocked ? const Color(0xFF747675) : color;
+
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: isLocked
+            ? const Color(0x331D2020)
+            : isDone
+            ? const Color(0x2237D67A)
+            : const Color(0xFF10262B),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isLocked
+              ? const Color(0x1A464848)
+              : isDone
+              ? const Color(0x66BBFFB3)
+              : const Color(0x5532B8C6),
+        ),
+        boxShadow: isLocked
+            ? null
+            : [
+          BoxShadow(
+            color: currentColor.withOpacity(isDone ? 0.14 : 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Icon(
+        Icons.more_horiz_rounded,
+        color: currentColor,
+        size: 22,
       ),
     );
   }
