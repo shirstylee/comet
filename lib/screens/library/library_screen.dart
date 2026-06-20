@@ -525,16 +525,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   letterSpacing: -0.9,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '${games.length} игр в вашей коллекции',
-                style: TextStyle(
-                  color: textSecondary,
-                  fontSize: hasGames ? 14 : 16,
-                  height: 1.4,
-                ),
+              const SizedBox(height: 14),
+              _LibraryCollectionBadge(
+                gamesCount: games.length,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 30),
               _LibrarySearchField(
                 controller: searchController,
               ),
@@ -732,6 +727,132 @@ class _ProfileAvatarButton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _LibraryCollectionBadge extends StatelessWidget {
+  const _LibraryCollectionBadge({
+    required this.gamesCount,
+  });
+
+  final int gamesCount;
+
+  String get gamesWord {
+    final lastTwoDigits = gamesCount % 100;
+    final lastDigit = gamesCount % 10;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return 'игр';
+    }
+
+    if (lastDigit == 1) {
+      return 'игра';
+    }
+
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'игры';
+    }
+
+    return 'игр';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 54,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.14),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0x1A75EEFD),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0x3375EEFD),
+              ),
+            ),
+            child: const Icon(
+              Icons.collections_bookmark_rounded,
+              color: Color(0xFF75EEFD),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '$gamesCount',
+            maxLines: 1,
+            style: const TextStyle(
+              color: Color(0xFF75EEFD),
+              fontSize: 26,
+              height: 1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              '$gamesWord в коллекции',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 15,
+                height: 1.2,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10262B),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: const Color(0x5532B8C6),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              'COMET',
+              maxLines: 1,
+              style: TextStyle(
+                color: Color(0xFF75EEFD),
+                fontSize: 10,
+                height: 1.2,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
