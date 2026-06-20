@@ -774,13 +774,20 @@ class _LibraryCollectionBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
-              width: 19,
-              height: 19,
-              child: Icon(
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: const Color(0x1475EEFD),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: const Color(0x3375EEFD),
+                ),
+              ),
+              child: const Icon(
                 Icons.sports_esports_rounded,
                 color: Color(0xFF75EEFD),
-                size: 16,
+                size: 15,
               ),
             ),
             const SizedBox(width: 6),
