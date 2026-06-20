@@ -383,56 +383,54 @@ class _GameSearchCardState extends State<GameSearchCard>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         _GameInfoBadges(
                           yearText: yearText,
                           genreText: genreText,
                           compact: true,
                         ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          height: 24,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF232626),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.star_rounded,
-                                color: green,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                game.rating.toStringAsFixed(1),
-                                style: const TextStyle(
-                                  color: green,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.access_time_rounded,
-                              color: textSecondary,
-                              size: 16,
+                            Container(
+                              height: 26,
+                              padding: const EdgeInsets.symmetric(horizontal: 9),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF232626),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: green.withOpacity(0.28),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    color: green,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    game.rating.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: green,
+                                      fontSize: 12,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              hoursText,
-                              style: const TextStyle(
-                                color: textSecondary,
-                                fontSize: 12,
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: _GameHoursPill(
+                                text: hoursText,
                               ),
                             ),
                           ],
@@ -495,7 +493,7 @@ class _GameInfoBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: compact ? 28 : 30,
+      height: compact ? 24 : 30,
       width: double.infinity,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -530,9 +528,9 @@ class _GameInfoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 28 : 30,
+      height: compact ? 24 : 30,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 11 : 13,
+        horizontal: compact ? 10 : 13,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFF081F23),
@@ -549,11 +547,70 @@ class _GameInfoBadge extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: const Color(0xFF75EEFD),
-          fontSize: compact ? 11 : 12,
+          fontSize: compact ? 10 : 12,
           height: 1.2,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.6,
         ),
+      ),
+    );
+  }
+}
+
+class _GameHoursPill extends StatelessWidget {
+  const _GameHoursPill({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 26,
+      padding: const EdgeInsets.symmetric(horizontal: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.access_time_rounded,
+            color: Color(0xFF75EEFD),
+            size: 13,
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                text,
+                maxLines: 1,
+                softWrap: false,
+                style: const TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontSize: 11,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

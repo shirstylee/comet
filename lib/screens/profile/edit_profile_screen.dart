@@ -455,6 +455,52 @@ class _EditProfileHeader extends StatelessWidget {
   }
 }
 
+class _InputCounterPill extends StatelessWidget {
+  const _InputCounterPill({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      constraints: const BoxConstraints(
+        minWidth: 54,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        style: const TextStyle(
+          color: Color(0xFF75EEFD),
+          fontSize: 12,
+          height: 1.1,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}
+
 class _LabeledInput extends StatelessWidget {
   const _LabeledInput({
     required this.label,
@@ -529,12 +575,8 @@ class _LabeledInput extends StatelessWidget {
                 ),
               ),
               if (showCounter)
-                Text(
-                  counterText ?? '',
-                  style: TextStyle(
-                    color: const Color(0xFFAAABAB).withOpacity(0.5),
-                    fontSize: 16,
-                  ),
+                _InputCounterPill(
+                  text: counterText ?? '',
                 ),
             ],
           ),
