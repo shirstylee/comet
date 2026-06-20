@@ -1649,33 +1649,117 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
 
   final TransformationController _controller = TransformationController();
 
+  ImageStream? _imageStream;
+  ImageStreamListener? _imageListener;
   TapDownDetails? _doubleTapDetails;
+
   bool _isZoomed = false;
+  bool _isClampingMatrix = false;
+  double? _imageAspectRatio;
+  Size _viewportSize = Size.zero;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller.addListener(_handleControllerChanged);
+    _resolveImageSize();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ZoomableScreenshot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _resetZoom();
+      _imageAspectRatio = null;
+      _resolveImageSize();
+    }
+  }
 
   @override
   void dispose() {
+    _removeImageListener();
+    _controller.removeListener(_handleControllerChanged);
     _controller.dispose();
 
     super.dispose();
+  }
+
+  void _resolveImageSize() {
+    _removeImageListener();
+
+    final imageStream = NetworkImage(widget.imageUrl).resolve(
+      const ImageConfiguration(),
+    );
+
+    final listener = ImageStreamListener((imageInfo, _) {
+      final image = imageInfo.image;
+      final width = image.width.toDouble();
+      final height = image.height.toDouble();
+
+      if (!mounted || width <= 0 || height <= 0) return;
+
+      setState(() {
+        _imageAspectRatio = width / height;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        _clampCurrentMatrix();
+      });
+    });
+
+    _imageStream = imageStream;
+    _imageListener = listener;
+    imageStream.addListener(listener);
+  }
+
+  void _removeImageListener() {
+    final imageStream = _imageStream;
+    final imageListener = _imageListener;
+
+    if (imageStream != null && imageListener != null) {
+      imageStream.removeListener(imageListener);
+    }
+
+    _imageStream = null;
+    _imageListener = null;
   }
 
   void _saveDoubleTapPosition(TapDownDetails details) {
     _doubleTapDetails = details;
   }
 
-  void _setZoomed(bool value) {
-    if (_isZoomed == value) return;
+  void _handleControllerChanged() {
+    if (_isClampingMatrix) return;
 
-    setState(() {
-      _isZoomed = value;
-    });
+    final isZoomed = _controller.value.getMaxScaleOnAxis() > 1.05;
 
-    widget.onZoomChanged(value);
+    if (_isZoomed != isZoomed && mounted) {
+      setState(() {
+        _isZoomed = isZoomed;
+      });
+
+      widget.onZoomChanged(isZoomed);
+    }
+
+    _clampCurrentMatrix();
   }
 
   void _resetZoom() {
+    _isClampingMatrix = true;
     _controller.value = Matrix4.identity();
-    _setZoomed(false);
+    _isClampingMatrix = false;
+
+    if (_isZoomed && mounted) {
+      setState(() {
+        _isZoomed = false;
+      });
+    }
+
+    widget.onZoomChanged(false);
   }
 
   void _toggleZoom() {
@@ -1686,7 +1770,12 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
       return;
     }
 
-    final tapPosition = _doubleTapDetails?.localPosition ?? Offset.zero;
+    final tapPosition = _doubleTapDetails?.localPosition ??
+        Offset(
+          _viewportSize.width / 2,
+          _viewportSize.height / 2,
+        );
+
     final nextMatrix = Matrix4.identity()
       ..translate(
         -tapPosition.dx * (_doubleTapScale - 1),
@@ -1694,14 +1783,17 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
       )
       ..scale(_doubleTapScale);
 
-    _controller.value = nextMatrix;
-    _setZoomed(true);
-  }
+    _isClampingMatrix = true;
+    _controller.value = _clampedMatrix(nextMatrix);
+    _isClampingMatrix = false;
 
-  void _handleInteractionUpdate(ScaleUpdateDetails details) {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
+    if (!_isZoomed && mounted) {
+      setState(() {
+        _isZoomed = true;
+      });
+    }
 
-    _setZoomed(currentScale > 1.05);
+    widget.onZoomChanged(true);
   }
 
   void _handleInteractionEnd(ScaleEndDetails details) {
@@ -1712,26 +1804,164 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
       return;
     }
 
-    _setZoomed(true);
+    _clampCurrentMatrix();
+  }
+
+  void _clampCurrentMatrix() {
+    if (_isClampingMatrix || _viewportSize == Size.zero) return;
+
+    final currentMatrix = _controller.value;
+    final clampedMatrix = _clampedMatrix(currentMatrix);
+
+    if (_isSameMatrix(currentMatrix, clampedMatrix)) return;
+
+    _isClampingMatrix = true;
+    _controller.value = clampedMatrix;
+    _isClampingMatrix = false;
+  }
+
+  Matrix4 _clampedMatrix(Matrix4 sourceMatrix) {
+    if (_viewportSize == Size.zero) return sourceMatrix;
+
+    final scale = sourceMatrix.getMaxScaleOnAxis();
+
+    if (scale <= 1.05) {
+      return Matrix4.identity();
+    }
+
+    final imageRect = _calculateImageRect(_viewportSize);
+
+    final scaledImageWidth = imageRect.width * scale;
+    final scaledImageHeight = imageRect.height * scale;
+
+    final matrix = Matrix4.copy(sourceMatrix);
+    final values = matrix.storage;
+
+    final currentDx = values[12];
+    final currentDy = values[13];
+
+    final minDx = _minOffset(
+      viewportLength: _viewportSize.width,
+      imageStart: imageRect.left,
+      imageEnd: imageRect.right,
+      scaledImageLength: scaledImageWidth,
+      scale: scale,
+    );
+    final maxDx = _maxOffset(
+      viewportLength: _viewportSize.width,
+      imageStart: imageRect.left,
+      imageEnd: imageRect.right,
+      scaledImageLength: scaledImageWidth,
+      scale: scale,
+    );
+    final minDy = _minOffset(
+      viewportLength: _viewportSize.height,
+      imageStart: imageRect.top,
+      imageEnd: imageRect.bottom,
+      scaledImageLength: scaledImageHeight,
+      scale: scale,
+    );
+    final maxDy = _maxOffset(
+      viewportLength: _viewportSize.height,
+      imageStart: imageRect.top,
+      imageEnd: imageRect.bottom,
+      scaledImageLength: scaledImageHeight,
+      scale: scale,
+    );
+
+    values[12] = currentDx.clamp(minDx, maxDx).toDouble();
+    values[13] = currentDy.clamp(minDy, maxDy).toDouble();
+
+    return matrix;
+  }
+
+  double _minOffset({
+    required double viewportLength,
+    required double imageStart,
+    required double imageEnd,
+    required double scaledImageLength,
+    required double scale,
+  }) {
+    if (scaledImageLength <= viewportLength) {
+      return (viewportLength - scaledImageLength) / 2 - imageStart * scale;
+    }
+
+    return viewportLength - imageEnd * scale;
+  }
+
+  double _maxOffset({
+    required double viewportLength,
+    required double imageStart,
+    required double imageEnd,
+    required double scaledImageLength,
+    required double scale,
+  }) {
+    if (scaledImageLength <= viewportLength) {
+      return (viewportLength - scaledImageLength) / 2 - imageStart * scale;
+    }
+
+    return -imageStart * scale;
+  }
+
+  bool _isSameMatrix(Matrix4 first, Matrix4 second) {
+    final firstValues = first.storage;
+    final secondValues = second.storage;
+
+    for (var index = 0; index < 16; index++) {
+      if ((firstValues[index] - secondValues[index]).abs() > 0.01) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Rect _calculateImageRect(Size viewportSize) {
+    final viewportWidth = viewportSize.width;
+    final viewportHeight = viewportSize.height;
+    final imageAspectRatio = _imageAspectRatio ?? (16 / 9);
+    final viewportAspectRatio = viewportWidth / viewportHeight;
+
+    late final double imageWidth;
+    late final double imageHeight;
+
+    if (imageAspectRatio > viewportAspectRatio) {
+      imageWidth = viewportWidth;
+      imageHeight = viewportWidth / imageAspectRatio;
+    } else {
+      imageHeight = viewportHeight;
+      imageWidth = viewportHeight * imageAspectRatio;
+    }
+
+    return Rect.fromLTWH(
+      (viewportWidth - imageWidth) / 2,
+      (viewportHeight - imageHeight) / 2,
+      imageWidth,
+      imageHeight,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onDoubleTapDown: _saveDoubleTapPosition,
       onDoubleTap: _toggleZoom,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          _viewportSize = Size(
+            constraints.maxWidth,
+            constraints.maxHeight,
+          );
+
           return InteractiveViewer(
             transformationController: _controller,
             minScale: 1,
             maxScale: 5,
             panEnabled: _isZoomed,
             scaleEnabled: true,
-            clipBehavior: Clip.none,
-            boundaryMargin:
-            _isZoomed ? const EdgeInsets.all(120) : EdgeInsets.zero,
-            onInteractionUpdate: _handleInteractionUpdate,
+            boundaryMargin: EdgeInsets.zero,
+            clipBehavior: Clip.hardEdge,
             onInteractionEnd: _handleInteractionEnd,
             child: SizedBox(
               width: constraints.maxWidth,

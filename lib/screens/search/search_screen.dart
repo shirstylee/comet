@@ -355,7 +355,7 @@ class _LoadingSearchState extends StatelessWidget {
           ),
           SizedBox(height: 24),
           Text(
-            'Ищем игры...',
+            'Ловим сигнал...',
             style: TextStyle(
               color: Color(0xFFF4F3F3),
               fontSize: 18,
@@ -364,7 +364,7 @@ class _LoadingSearchState extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'Получаем данные',
+            'Сканируем игровую вселенную',
             style: TextStyle(
               color: Color(0xFFAAABAB),
               fontSize: 14,
