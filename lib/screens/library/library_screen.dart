@@ -11,6 +11,7 @@ import '../notifications/notifications_screen.dart';
 import 'widgets/empty_library_state.dart';
 import 'widgets/library_filter_chip.dart';
 import 'widgets/library_game_card.dart';
+import 'widgets/library_grid_game_card.dart';
 
 enum LibrarySortType {
   latest,
@@ -19,6 +20,11 @@ enum LibrarySortType {
   ratingAsc,
   ratingDesc,
   favorites,
+}
+
+enum LibraryViewType {
+  list,
+  grid,
 }
 
 class LibraryScreen extends StatefulWidget {
@@ -45,6 +51,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   int selectedFilterIndex = 0;
 
   LibrarySortType selectedSortType = LibrarySortType.latest;
+  LibraryViewType selectedViewType = LibraryViewType.list;
 
   List<LibraryGameModel> games = [];
   bool isLoading = true;
@@ -113,6 +120,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return Icons.arrow_downward_rounded;
       case LibrarySortType.favorites:
         return Icons.favorite_rounded;
+    }
+  }
+
+  String get selectedViewTitle {
+    switch (selectedViewType) {
+      case LibraryViewType.list:
+        return 'Список';
+      case LibraryViewType.grid:
+        return '2 в строку';
+    }
+  }
+
+  IconData get selectedViewIcon {
+    switch (selectedViewType) {
+      case LibraryViewType.list:
+        return Icons.view_agenda_rounded;
+      case LibraryViewType.grid:
+        return Icons.grid_view_rounded;
     }
   }
 
@@ -305,6 +330,102 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         ),
       );
+  }
+
+  void _openViewSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.55),
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.46,
+          minChildSize: 0.34,
+          maxChildSize: 0.62,
+          expand: false,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111414),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.06),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withOpacity(0.16),
+                      blurRadius: 34,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _BottomSheetHandle(),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Вид библиотеки',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Выберите, как отображать игры',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        _SortMenuItem(
+                          icon: Icons.view_agenda_rounded,
+                          title: 'Обычный список',
+                          subtitle: 'Одна большая карточка игры в строку',
+                          isSelected: selectedViewType == LibraryViewType.list,
+                          onTap: () {
+                            Navigator.pop(bottomSheetContext);
+                            setState(() {
+                              selectedViewType = LibraryViewType.list;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _SortMenuItem(
+                          icon: Icons.grid_view_rounded,
+                          title: '2 игры в строку',
+                          subtitle: 'Компактная сетка с двумя карточками',
+                          isSelected: selectedViewType == LibraryViewType.grid,
+                          onTap: () {
+                            Navigator.pop(bottomSheetContext);
+                            setState(() {
+                              selectedViewType = LibraryViewType.grid;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _openSortSheet() {
@@ -554,10 +675,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              _SortButton(
-                title: selectedSortTitle,
-                icon: selectedSortIcon,
-                onTap: _openSortSheet,
+              Row(
+                children: [
+                  _ViewModeButton(
+                    title: selectedViewTitle,
+                    icon: selectedViewIcon,
+                    onTap: _openViewSheet,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: _SortButton(
+                        title: selectedSortTitle,
+                        icon: selectedSortIcon,
+                        onTap: _openSortSheet,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               if (isLoading)
@@ -567,25 +703,52 @@ class _LibraryScreenState extends State<LibraryScreen> {
               else if (visibleGames.isEmpty)
                   const _NothingFoundState()
                 else
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: visibleGames.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 28),
-                    itemBuilder: (context, index) {
-                      final game = visibleGames[index];
+                  if (selectedViewType == LibraryViewType.list)
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: visibleGames.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 28),
+                      itemBuilder: (context, index) {
+                        final game = visibleGames[index];
 
-                      return LibraryGameCard(
-                        key: ValueKey(game.id),
-                        game: game,
-                        imageIndex: index,
-                        onDelete: () {
-                          _deleteGameFromLibrary(game);
-                        },
-                        onGameChanged: _loadGames,
-                      );
-                    },
-                  ),
+                        return LibraryGameCard(
+                          key: ValueKey(game.id),
+                          game: game,
+                          imageIndex: index,
+                          onDelete: () {
+                            _deleteGameFromLibrary(game);
+                          },
+                          onGameChanged: _loadGames,
+                        );
+                      },
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: visibleGames.length,
+                      gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 18,
+                        childAspectRatio: 0.58,
+                      ),
+                      itemBuilder: (context, index) {
+                        final game = visibleGames[index];
+
+                        return LibraryGridGameCard(
+                          key: ValueKey('grid_${game.id}'),
+                          game: game,
+                          imageIndex: index,
+                          onDelete: () {
+                            _deleteGameFromLibrary(game);
+                          },
+                          onGameChanged: _loadGames,
+                        );
+                      },
+                    ),
             ],
           ),
         ),
@@ -762,8 +925,8 @@ class _LibraryCollectionBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        height: 33,
-        padding: const EdgeInsets.symmetric(horizontal: 9),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 13),
         decoration: BoxDecoration(
           color: const Color(0xFF101515),
           borderRadius: BorderRadius.circular(999),
@@ -775,8 +938,8 @@ class _LibraryCollectionBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 22,
-              height: 22,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
                 color: const Color(0x1475EEFD),
                 borderRadius: BorderRadius.circular(999),
@@ -790,7 +953,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                 size: 15,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 9),
             Text.rich(
               TextSpan(
                 children: [
@@ -798,7 +961,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '$gamesCount $gamesWord',
                     style: const TextStyle(
                       color: Color(0xFF75EEFD),
-                      fontSize: 12.8,
+                      fontSize: 15,
                       height: 1.1,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.05,
@@ -808,7 +971,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '  в коллекции',
                     style: TextStyle(
                       color: Color(0xFFAAABAB),
-                      fontSize: 12.8,
+                      fontSize: 15,
                       height: 1.1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.05,
@@ -879,6 +1042,75 @@ class _LibrarySearchField extends StatelessWidget {
   }
 }
 
+class _ViewModeButton extends StatelessWidget {
+  const _ViewModeButton({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          decoration: BoxDecoration(
+            color: const Color(0xFF081F23),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0x5532B8C6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFF75EEFD),
+                size: 18,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                title,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontSize: 12,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(width: 3),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF75EEFD),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SortButton extends StatelessWidget {
   const _SortButton({
     required this.title,
@@ -892,72 +1124,59 @@ class _SortButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(999),
-          child: Container(
-            height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D2020),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: const Color(0x2275EEFD),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D2020),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0x2275EEFD),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF75EEFD).withOpacity(0.08),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFF75EEFD),
+                size: 17,
+              ),
+              const SizedBox(width: 5),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 104,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'СОРТИРОВКА:',
-                  style: TextStyle(
-                    color: Color(0xFFAAABAB),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.9,
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(
-                  icon,
-                  color: const Color(0xFF75EEFD),
-                  size: 17,
-                ),
-                const SizedBox(width: 5),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 150,
-                  ),
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF75EEFD),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF75EEFD),
-                  size: 20,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF75EEFD),
+                size: 20,
+              ),
+            ],
           ),
         ),
       ),
