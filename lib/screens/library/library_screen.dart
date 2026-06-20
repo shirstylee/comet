@@ -762,46 +762,62 @@ class _LibraryCollectionBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 11),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 13),
         decoration: BoxDecoration(
           color: const Color(0xFF101515),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: const Color(0x33464848),
+            color: const Color(0x5532B8C6),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.auto_awesome_rounded,
-              color: Color(0xFF75EEFD),
-              size: 14,
-            ),
-            const SizedBox(width: 7),
-            Text(
-              '$gamesCount $gamesWord',
-              maxLines: 1,
-              style: const TextStyle(
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0x1475EEFD),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: const Color(0x3375EEFD),
+                ),
+              ),
+              child: const Icon(
+                Icons.sports_esports_rounded,
                 color: Color(0xFF75EEFD),
-                fontSize: 13,
-                height: 1.15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.1,
+                size: 15,
               ),
             ),
-            const SizedBox(width: 6),
-            const Text(
-              'в коллекции',
-              maxLines: 1,
-              style: TextStyle(
-                color: Color(0xFFAAABAB),
-                fontSize: 12,
-                height: 1.15,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.1,
+            const SizedBox(width: 9),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$gamesCount $gamesWord',
+                    style: const TextStyle(
+                      color: Color(0xFF75EEFD),
+                      fontSize: 15,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.05,
+                    ),
+                  ),
+                  const TextSpan(
+                    text: '  в коллекции',
+                    style: TextStyle(
+                      color: Color(0xFFAAABAB),
+                      fontSize: 15,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.05,
+                    ),
+                  ),
+                ],
               ),
+              maxLines: 1,
+              softWrap: false,
             ),
           ],
         ),
