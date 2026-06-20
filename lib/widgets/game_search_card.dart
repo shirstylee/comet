@@ -283,14 +283,15 @@ class _GameSearchCardState extends State<GameSearchCard>
                       const SizedBox(height: 20),
                       _BottomSheetActionButton(
                         text: isInLibrary
-                            ? 'Уже в коллекции'
+                            ? 'Открыть в коллекции'
                             : isLoading
                             ? 'Проверяем коллекцию...'
                             : 'Добавить в коллекцию',
                         icon: isInLibrary
-                            ? Icons.check_circle_rounded
+                            ? Icons.folder_open_rounded
                             : Icons.add_rounded,
-                        isDisabled: isInLibrary,
+                        isDisabled: isLoading,
+                        isLibraryAction: isInLibrary,
                         onTap: isLoading
                             ? null
                             : () async {
@@ -456,30 +457,48 @@ class _BottomSheetActionButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.isDisabled = false,
+    this.isLibraryAction = false,
   });
 
   final String text;
   final IconData icon;
   final VoidCallback? onTap;
   final bool isDisabled;
+  final bool isLibraryAction;
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor =
-    isDisabled ? const Color(0xFFAAABAB) : const Color(0xFF00575F);
+    final Color textColor = isDisabled
+        ? const Color(0xFFAAABAB)
+        : isLibraryAction
+        ? const Color(0xFF07370D)
+        : const Color(0xFF00575F);
 
     final List<Color> gradientColors = isDisabled
         ? const [
       Color(0xFF2B2F2F),
       Color(0xFF1D2020),
     ]
+        : isLibraryAction
+        ? const [
+      Color(0xFFBBFFB3),
+      Color(0xFF70E36C),
+    ]
         : const [
       Color(0xFF75EEFD),
       Color(0xFF25B0BE),
     ];
 
+    final Color borderColor = isDisabled
+        ? Colors.white.withOpacity(0.06)
+        : isLibraryAction
+        ? const Color(0xFFBBFFB3).withOpacity(0.28)
+        : Colors.transparent;
+
     final Color shadowColor = isDisabled
         ? Colors.black.withOpacity(0.16)
+        : isLibraryAction
+        ? const Color(0xFFBBFFB3).withOpacity(0.18)
         : const Color(0xFF75EEFD).withOpacity(0.2);
 
     return SizedBox(
@@ -492,9 +511,7 @@ class _BottomSheetActionButton extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDisabled
-                ? Colors.white.withOpacity(0.06)
-                : Colors.transparent,
+            color: borderColor,
           ),
           boxShadow: [
             BoxShadow(

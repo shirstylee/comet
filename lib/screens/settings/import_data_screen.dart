@@ -405,12 +405,10 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
 
     final profile = currentPreview.profile!;
     final rawProfile = currentPreview.rawMap['profile'];
-    final hasAvatarBackup = rawProfile is Map &&
-        rawProfile['avatarBackup'] is Map &&
-        rawProfile['avatarBackup']['base64'] is String &&
-        rawProfile['avatarBackup']['base64'].toString().trim().isNotEmpty;
-    final avatarPath = profile.avatarPath?.trim();
-    final hasAvatar = hasAvatarBackup || (avatarPath != null && avatarPath.isNotEmpty);
+    final avatarBackup = rawProfile is Map ? rawProfile['avatarBackup'] : null;
+    final avatarBackupBase64 = avatarBackup is Map ? avatarBackup['base64'] : null;
+    final hasRestorableAvatar = avatarBackupBase64 is String &&
+        avatarBackupBase64.trim().isNotEmpty;
     final hasPlatforms = profile.favoritePlatforms
         .where((platform) => platform.trim().isNotEmpty)
         .isNotEmpty;
@@ -418,7 +416,7 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
     return profile.name.trim().isEmpty ||
         profile.status.trim().isEmpty ||
         !hasPlatforms ||
-        !hasAvatar;
+        !hasRestorableAvatar;
   }
 
   Future<bool> _hasCompleteProfile() async {
