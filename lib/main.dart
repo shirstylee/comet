@@ -14,11 +14,11 @@ Future<void> main() async {
 
   await Hive.initFlutter();
 
-  final hasProfile = await ProfileStorage.hasProfile();
+  final hasCompleteProfile = await ProfileStorage.hasCompleteProfile();
 
   runApp(
     CometApp(
-      hasProfile: hasProfile,
+      hasCompleteProfile: hasCompleteProfile,
     ),
   );
 }

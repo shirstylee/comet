@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/user_profile_model.dart';
@@ -55,6 +57,47 @@ class ProfileStorage {
     final box = await _openBox();
 
     return box.containsKey(_profileKey);
+  }
+
+  static Future<bool> hasCompleteProfile() async {
+    final box = await _openBox();
+    final value = box.get(_profileKey);
+
+    if (value is! Map) {
+      return false;
+    }
+
+    final profile = UserProfileModel.fromMap(value);
+
+    return _isCompleteProfile(profile);
+  }
+
+  static Future<bool> _isCompleteProfile(UserProfileModel profile) async {
+    final avatarPath = profile.avatarPath?.trim();
+
+    if (profile.name.trim().isEmpty) {
+      return false;
+    }
+
+    if (profile.status.trim().isEmpty) {
+      return false;
+    }
+
+    if (profile.favoritePlatforms
+        .where((platform) => platform.trim().isNotEmpty)
+        .isEmpty) {
+      return false;
+    }
+
+    if (avatarPath == null || avatarPath.isEmpty) {
+      return false;
+    }
+
+    try {
+      return File(avatarPath).exists();
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> clearProfile() async {

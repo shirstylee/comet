@@ -7,10 +7,10 @@ import 'theme/app_theme.dart';
 class CometApp extends StatelessWidget {
   const CometApp({
     super.key,
-    required this.hasProfile,
+    required this.hasCompleteProfile,
   });
 
-  final bool hasProfile;
+  final bool hasCompleteProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class CometApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Comet',
       theme: AppTheme.darkTheme,
-      home: hasProfile ? const MainScreen() : const WelcomeScreen(),
+      home: hasCompleteProfile ? const MainScreen() : const WelcomeScreen(),
     );
   }
 }
