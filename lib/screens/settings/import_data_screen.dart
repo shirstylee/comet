@@ -315,7 +315,7 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
       if (widget.openMainAfterImport) {
         await _openScreenAfterOnboardingImport();
       } else {
-        Navigator.pop(context);
+        await _openScreenAfterSettingsImport();
       }
     } catch (_) {
       if (!mounted) return;
@@ -378,6 +378,27 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
       MaterialPageRoute(
         builder: (_) => const CreateProfileScreen(),
       ),
+    );
+  }
+
+  Future<void> _openScreenAfterSettingsImport() async {
+    final hasCompleteProfile = await _hasCompleteProfile();
+
+    if (!mounted) return;
+
+    if (hasCompleteProfile) {
+      Navigator.pop(context);
+      return;
+    }
+
+    _showMessage('Данные импортированы. Создайте профиль');
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreateProfileScreen(),
+      ),
+          (route) => false,
     );
   }
 
