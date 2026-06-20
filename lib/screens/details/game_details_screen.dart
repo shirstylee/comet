@@ -82,65 +82,71 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
   }
 
   Future<void> _addGameToLibrary() async {
-    final alreadyAdded = await LibraryStorage.containsGame(game.id);
+    try {
+      final alreadyAdded = await LibraryStorage.containsGame(game.id);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (alreadyAdded) {
+      if (alreadyAdded) {
+        setState(() {
+          isInLibrary = true;
+        });
+
+        await _openGameProgressScreen();
+        return;
+      }
+
+      _showMessage('Сохраняю ${game.title} в коллекцию...');
+
+      final localImagePath = await CoverCacheService.saveCompressedCover(
+        gameId: game.id,
+        imageUrl: game.imageUrl,
+      );
+
+      final libraryGame = LibraryGameModel(
+        id: game.id,
+        title: game.title,
+        status: 'Планирую',
+        addedAt: DateTime.now(),
+        imageUrl: game.imageUrl,
+        localImagePath: localImagePath,
+        year: game.year,
+        genre: game.genre,
+        platforms: game.platforms,
+        apiRating: game.rating,
+        apiHours: game.hours,
+        userHours: 0,
+        userMinutes: 0,
+        userRating: null,
+        comment: null,
+        isFavorite: false,
+        stages: const [
+          GameStageModel(
+            title: 'Начало игры',
+            subtitle: 'В процессе',
+            isDone: false,
+          ),
+        ],
+      );
+
+      await LibraryStorage.addGame(libraryGame);
+
+      if (!mounted) return;
+
       setState(() {
         isInLibrary = true;
       });
 
-      await _openGameProgressScreen();
-      return;
+      _showMessage(
+        localImagePath == null
+            ? 'Игра добавлена, но обложка не сохранилась'
+            : '${game.title} добавлена в коллекцию',
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      _showMessage('Не удалось добавить игру в коллекцию');
     }
-
-    _showMessage('Сохраняю ${game.title} в коллекцию...');
-
-    final localImagePath = await CoverCacheService.saveCompressedCover(
-      gameId: game.id,
-      imageUrl: game.imageUrl,
-    );
-
-    final libraryGame = LibraryGameModel(
-      id: game.id,
-      title: game.title,
-      status: 'Планирую',
-      addedAt: DateTime.now(),
-      imageUrl: game.imageUrl,
-      localImagePath: localImagePath,
-      year: game.year,
-      genre: game.genre,
-      platforms: game.platforms,
-      apiRating: game.rating,
-      apiHours: game.hours,
-      userHours: 0,
-      userMinutes: 0,
-      userRating: null,
-      comment: null,
-      isFavorite: false,
-      stages: const [
-        GameStageModel(
-          title: 'Начало игры',
-          subtitle: 'В процессе',
-          isDone: false,
-        ),
-      ],
-    );
-
-    await LibraryStorage.addGame(libraryGame);
-
-    if (!mounted) return;
-
-    setState(() {
-      isInLibrary = true;
-    });
-
-    _showMessage(
-      localImagePath == null
-          ? 'Игра добавлена, но обложка не сохранилась'
-          : '${game.title} добавлена в коллекцию',
-    );
   }
 
   Future<void> _openGameProgressScreen() async {
