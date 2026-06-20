@@ -724,7 +724,7 @@ class _AllGamesHeaderButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Ink(
-          height: 42,
+          height: 38,
           padding: const EdgeInsets.symmetric(horizontal: 13),
           decoration: BoxDecoration(
             color: const Color(0xFF081F23),
@@ -733,18 +733,6 @@ class _AllGamesHeaderButton extends StatelessWidget {
               color: const Color(0x6632B8C6),
               width: 1.1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF75EEFD).withOpacity(0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.16),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
@@ -797,7 +785,7 @@ class _ActivityInfoPill extends StatelessWidget {
     return Container(
       height: 28,
       constraints: const BoxConstraints(
-        maxWidth: 170,
+        maxWidth: 190,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
@@ -824,16 +812,20 @@ class _ActivityInfoPill extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                height: 1.15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.25,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                text,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.15,
+                ),
               ),
             ),
           ),
@@ -854,7 +846,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text(
           'Недавняя\nактивность',

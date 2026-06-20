@@ -214,8 +214,8 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
               ),
             ),
             Container(
-              height: 90,
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              height: 96,
+              padding: const EdgeInsets.fromLTRB(18, 11, 18, 11),
               child: Column(
                 children: [
                   Row(
@@ -272,7 +272,7 @@ class _LibraryGameCardState extends State<LibraryGameCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   Row(
                     children: [
                       Flexible(
@@ -341,8 +341,8 @@ class _LibraryInfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 24,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(999),
@@ -363,9 +363,9 @@ class _LibraryInfoPill extends StatelessWidget {
           Icon(
             icon,
             color: const Color(0xFF75EEFD),
-            size: 12,
+            size: 14,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -376,10 +376,10 @@ class _LibraryInfoPill extends StatelessWidget {
                 softWrap: false,
                 style: const TextStyle(
                   color: Color(0xFF75EEFD),
-                  fontSize: 10,
+                  fontSize: 12,
                   height: 1.1,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.1,
+                  letterSpacing: -0.15,
                 ),
               ),
             ),
