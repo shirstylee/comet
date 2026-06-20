@@ -1800,20 +1800,44 @@ class _ReviewRatingBadge extends StatelessWidget {
           ratingContent,
           const SizedBox(width: 14),
           Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
+            child: Align(
               alignment: Alignment.centerRight,
-              child: Text(
-                verdictText,
-                maxLines: 1,
-                softWrap: false,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 13,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
+              child: Container(
+                height: 30,
+                constraints: const BoxConstraints(
+                  maxWidth: 132,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: color.withOpacity(0.38),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.08),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    verdictText,
+                    maxLines: 1,
+                    softWrap: false,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 12,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.9,
+                    ),
+                  ),
                 ),
               ),
             ),
