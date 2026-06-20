@@ -1056,108 +1056,101 @@ class _EmptyProfileMainCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: _ImportDataScreenState.warning.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(18),
+        color: _ImportDataScreenState.surface,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: _ImportDataScreenState.warning.withOpacity(0.38),
+          color: _ImportDataScreenState.warning.withOpacity(0.42),
         ),
         boxShadow: [
           BoxShadow(
-            color: _ImportDataScreenState.warning.withOpacity(0.08),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: _ImportDataScreenState.warning.withOpacity(0.10),
+            blurRadius: 34,
+            offset: const Offset(0, 14),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.34),
+            blurRadius: 34,
+            offset: const Offset(0, 16),
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 66,
+            height: 66,
             decoration: BoxDecoration(
-              color: _ImportDataScreenState.warning.withOpacity(0.14),
+              color: _ImportDataScreenState.warning.withOpacity(0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                color: _ImportDataScreenState.warning.withOpacity(0.35),
+                color: _ImportDataScreenState.warning.withOpacity(0.38),
               ),
             ),
             child: const Icon(
               Icons.person_off_rounded,
               color: _ImportDataScreenState.warning,
-              size: 23,
+              size: 34,
             ),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
+          const SizedBox(height: 16),
+          const Text(
+            'Профиль не заполнен',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _ImportDataScreenState.textPrimary,
+              fontSize: 22,
+              height: 1.15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.45,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'В выбранном архиве профиль пустой или неполный. '
+                'После запуска импорта вам понадобится создать профиль заново.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _ImportDataScreenState.textSecondary,
+              fontSize: 14,
+              height: 1.45,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF081F23),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0x6632B8C6),
+              ),
+            ),
+            child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Профиль в архиве не заполнен',
-                  style: TextStyle(
-                    color: _ImportDataScreenState.warning,
-                    fontSize: 14,
-                    height: 1.25,
-                    fontWeight: FontWeight.w900,
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: _ImportDataScreenState.accent,
+                  size: 21,
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Библиотека и прогресс сохранятся. Нужно будет только заново указать аватар, никнейм, статус и платформы.',
+                    style: TextStyle(
+                      color: _ImportDataScreenState.textSecondary,
+                      fontSize: 12,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                SizedBox(height: 5),
-                Text(
-                  'В выбранном архиве профиль пустой или неполный. Библиотека и прогресс будут импортированы, но после запуска импорта придётся создать профиль заново.',
-                  style: TextStyle(
-                    color: _ImportDataScreenState.textSecondary,
-                    fontSize: 12,
-                    height: 1.38,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 12),
-                _EmptyProfileInfoPill(),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyProfileInfoPill extends StatelessWidget {
-  const _EmptyProfileInfoPill();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: const Color(0xFF10262B),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: const Color(0x3332B8C6),
-        ),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            color: _ImportDataScreenState.accent,
-            size: 18,
-          ),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Потребуется указать аватар, никнейм, статус и платформы.',
-              style: TextStyle(
-                color: _ImportDataScreenState.textSecondary,
-                fontSize: 11,
-                height: 1.3,
-                fontWeight: FontWeight.w700,
-              ),
             ),
           ),
         ],
