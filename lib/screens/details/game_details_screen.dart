@@ -359,12 +359,12 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                         ],
                         _PrimaryButton(
                           text: isInLibrary
-                              ? 'Уже в коллекции'
+                              ? 'Открыть в коллекции'
                               : 'Добавить в коллекцию',
                           icon: isInLibrary
-                              ? Icons.check_circle_rounded
+                              ? Icons.folder_open_rounded
                               : Icons.add_rounded,
-                          isDisabled: isInLibrary,
+                          isLibraryAction: isInLibrary,
                           onTap: isInLibrary
                               ? _openGameProgressScreen
                               : _addGameToLibrary,
@@ -670,30 +670,48 @@ class _PrimaryButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.isDisabled = false,
+    this.isLibraryAction = false,
   });
 
   final String text;
   final IconData icon;
   final VoidCallback? onTap;
   final bool isDisabled;
+  final bool isLibraryAction;
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor =
-    isDisabled ? const Color(0xFFAAABAB) : const Color(0xFF00575F);
+    final Color textColor = isDisabled
+        ? const Color(0xFFAAABAB)
+        : isLibraryAction
+        ? const Color(0xFF75EEFD)
+        : const Color(0xFF00575F);
 
     final List<Color> gradientColors = isDisabled
         ? const [
       Color(0xFF2B2F2F),
       Color(0xFF1D2020),
     ]
+        : isLibraryAction
+        ? const [
+      Color(0xFF1D3033),
+      Color(0xFF132224),
+    ]
         : const [
       Color(0xFF75EEFD),
       Color(0xFF25B0BE),
     ];
 
+    final Color borderColor = isDisabled
+        ? Colors.white.withOpacity(0.06)
+        : isLibraryAction
+        ? const Color(0x6632B8C6)
+        : Colors.transparent;
+
     final Color shadowColor = isDisabled
         ? Colors.black.withOpacity(0.16)
+        : isLibraryAction
+        ? Colors.black.withOpacity(0.22)
         : const Color(0xFF75EEFD).withOpacity(0.2);
 
     return SizedBox(
@@ -706,8 +724,7 @@ class _PrimaryButton extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color:
-            isDisabled ? Colors.white.withOpacity(0.06) : Colors.transparent,
+            color: borderColor,
           ),
           boxShadow: [
             BoxShadow(

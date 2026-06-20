@@ -471,7 +471,7 @@ class _BottomSheetActionButton extends StatelessWidget {
     final Color textColor = isDisabled
         ? const Color(0xFFAAABAB)
         : isLibraryAction
-        ? const Color(0xFF07370D)
+        ? const Color(0xFF75EEFD)
         : const Color(0xFF00575F);
 
     final List<Color> gradientColors = isDisabled
@@ -481,8 +481,8 @@ class _BottomSheetActionButton extends StatelessWidget {
     ]
         : isLibraryAction
         ? const [
-      Color(0xFFBBFFB3),
-      Color(0xFF70E36C),
+      Color(0xFF1D3033),
+      Color(0xFF132224),
     ]
         : const [
       Color(0xFF75EEFD),
@@ -492,13 +492,13 @@ class _BottomSheetActionButton extends StatelessWidget {
     final Color borderColor = isDisabled
         ? Colors.white.withOpacity(0.06)
         : isLibraryAction
-        ? const Color(0xFFBBFFB3).withOpacity(0.28)
+        ? const Color(0x6632B8C6)
         : Colors.transparent;
 
     final Color shadowColor = isDisabled
         ? Colors.black.withOpacity(0.16)
         : isLibraryAction
-        ? const Color(0xFFBBFFB3).withOpacity(0.18)
+        ? Colors.black.withOpacity(0.22)
         : const Color(0xFF75EEFD).withOpacity(0.2);
 
     return SizedBox(
