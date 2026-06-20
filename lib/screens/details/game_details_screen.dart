@@ -517,34 +517,53 @@ class _HeroSection extends StatelessWidget {
         padding: const EdgeInsets.only(top: 115),
         child: SizedBox(
           height: 320,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: _HeroBackground(game: game),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        background.withOpacity(0.05),
-                        background.withOpacity(0.35),
-                        background,
-                      ],
-                      stops: const [0.0, 0.55, 1.0],
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(28),
+              topRight: Radius.circular(28),
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: _HeroBackground(game: game),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          background.withOpacity(0.05),
+                          background.withOpacity(0.35),
+                          background,
+                        ],
+                        stops: const [0.0, 0.55, 1.0],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 4,
-                child: _GenreBadges(game: game),
-              ),
-            ],
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(28),
+                        topRight: Radius.circular(28),
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.07),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 4,
+                  child: _GenreBadges(game: game),
+                ),
+              ],
+            ),
           ),
         ),
       ),
