@@ -1258,6 +1258,140 @@ class _EmptyRatingsState extends StatelessWidget {
   }
 }
 
+class _DateInfoPill extends StatelessWidget {
+  const _DateInfoPill({
+    required this.label,
+    required this.dateText,
+    this.compact = false,
+  });
+
+  final String label;
+  final String dateText;
+  final bool compact;
+
+  bool get isAddedDate => label == 'ДОБАВЛЕНО';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 32 : 34,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 9 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAddedDate
+                ? Icons.add_rounded
+                : compact
+                ? Icons.calendar_month_rounded
+                : Icons.event_available_rounded,
+            color: const Color(0xFF75EEFD),
+            size: compact ? 13 : 14,
+          ),
+          SizedBox(width: compact ? 6 : 7),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                dateText,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: const Color(0xFF75EEFD),
+                  fontSize: compact ? 9.5 : 10.5,
+                  height: 1.2,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingSquareBadge extends StatelessWidget {
+  const _RatingSquareBadge({
+    required this.rating,
+    required this.color,
+    required this.size,
+    required this.fontSize,
+    required this.starSize,
+    required this.borderRadius,
+  });
+
+  final double rating;
+  final Color color;
+  final double size;
+  final double fontSize;
+  final double starSize;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: color.withOpacity(0.35),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _formatRating(rating),
+            style: TextStyle(
+              color: color,
+              fontSize: fontSize,
+              height: 1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.7,
+            ),
+          ),
+          const SizedBox(width: 3),
+          Icon(
+            Icons.star_rounded,
+            color: color,
+            size: starSize,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RecentlyRatedCard extends StatelessWidget {
   const _RecentlyRatedCard({
     required this.game,
@@ -1315,16 +1449,9 @@ class _RecentlyRatedCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      dateText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFAAABAB),
-                        fontSize: 12,
-                        height: 1.3,
-                        letterSpacing: 0.6,
-                      ),
+                    _DateInfoPill(
+                      label: 'ОЦЕНЕНО',
+                      dateText: dateText,
                     ),
                   ],
                 ),
@@ -1334,25 +1461,13 @@ class _RecentlyRatedCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        _formatRating(rating),
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 26,
-                          height: 1,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.2,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.star_border_rounded,
-                        color: color,
-                        size: 17,
-                      ),
-                    ],
+                  _RatingSquareBadge(
+                    rating: rating,
+                    color: color,
+                    size: 54,
+                    fontSize: 22,
+                    starSize: 15,
+                    borderRadius: 15,
                   ),
                   if (rating >= 9.5) ...[
                     const SizedBox(height: 8),
@@ -1766,23 +1881,16 @@ class _AllRatingCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        dateText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF78716C),
-                          fontSize: 11,
-                          height: 1.3,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
+                      _DateInfoPill(
+                        label: 'ОЦЕНЕНО',
+                        dateText: dateText,
+                        compact: true,
                       ),
                       const SizedBox(height: 10),
                       if (hasComment)
                         Expanded(
                           child: Text(
-                            '«$comment»',
+                            comment,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -1815,27 +1923,13 @@ class _AllRatingCard extends StatelessWidget {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: color.withOpacity(0.35),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _formatRating(rating),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 22,
-                        height: 1,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.8,
-                      ),
-                    ),
+                  _RatingSquareBadge(
+                    rating: rating,
+                    color: color,
+                    size: 58,
+                    fontSize: 21,
+                    starSize: 14,
+                    borderRadius: 18,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -2228,33 +2322,10 @@ class _AllGameForRatingCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            hasRating ? 'Оценено:' : 'Добавлено:',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF78716C),
-                              fontSize: 11,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            dateText,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFFAAABAB),
-                              fontSize: 11,
-                              height: 1.2,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                      _DateInfoPill(
+                        label: hasRating ? 'ОЦЕНЕНО' : 'ДОБАВЛЕНО',
+                        dateText: dateText,
+                        compact: true,
                       ),
                     ],
                   ),
@@ -2265,24 +2336,13 @@ class _AllGameForRatingCard extends StatelessWidget {
                   ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        _formatRating(rating),
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 24,
-                          height: 1,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.star_rounded,
-                        color: color,
-                        size: 16,
-                      ),
-                    ],
+                  _RatingSquareBadge(
+                    rating: rating,
+                    color: color,
+                    size: 54,
+                    fontSize: 20,
+                    starSize: 14,
+                    borderRadius: 16,
                   ),
                   const SizedBox(height: 7),
                   Text(

@@ -23,6 +23,15 @@ String _formatRating(double rating) {
   return roundedRating.toStringAsFixed(1);
 }
 
+Color _ratingScaleColor(double rating) {
+  if (rating <= 0) return const Color(0xFF78716C);
+  if (rating >= 8) return const Color(0xFF75EEFD);
+  if (rating >= 6) return const Color(0xFFFACC15);
+  if (rating >= 4) return const Color(0xFFF97316);
+
+  return const Color(0xFFEF4444);
+}
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -1109,7 +1118,7 @@ class _ExpandableFeaturedCommentState extends State<_ExpandableFeaturedComment> 
       fontStyle: FontStyle.italic,
     );
 
-    final commentText = '«${widget.comment}»';
+    final commentText = widget.comment;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1269,39 +1278,21 @@ class _FeaturedReviewDatePill extends StatelessWidget {
           ),
           const SizedBox(width: 9),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'ОЦЕНЕНО:',
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: Color(0xFFA8A29E),
-                    fontSize: 10,
-                    height: 1.1,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.45,
-                  ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                dateText,
+                maxLines: 1,
+                softWrap: false,
+                style: const TextStyle(
+                  color: Color(0xFF22D3EE),
+                  fontSize: 12,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
                 ),
-                const SizedBox(height: 3),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    dateText,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: const TextStyle(
-                      color: Color(0xFF22D3EE),
-                      fontSize: 12,
-                      height: 1.1,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -1712,20 +1703,22 @@ class _ReviewRatingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _ratingScaleColor(rating);
+
     return Container(
       width: width,
       height: height,
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       decoration: BoxDecoration(
-        color: const Color(0xFF082326),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: const Color(0x6632B8C6),
+          color: color.withOpacity(0.35),
           width: 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF22D3EE).withOpacity(0.08),
+            color: color.withOpacity(0.10),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -1738,7 +1731,7 @@ class _ReviewRatingBadge extends StatelessWidget {
           Text(
             _formatRating(rating),
             style: TextStyle(
-              color: const Color(0xFF22D3EE),
+              color: color,
               fontSize: fontSize,
               height: 1.1,
               fontWeight: FontWeight.w900,
@@ -1748,7 +1741,7 @@ class _ReviewRatingBadge extends StatelessWidget {
           const SizedBox(width: 8),
           Icon(
             Icons.star_rounded,
-            color: const Color(0xFF22D3EE),
+            color: color,
             size: starSize,
           ),
         ],
@@ -1766,14 +1759,16 @@ class _CompactRatingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _ratingScaleColor(rating);
+
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFF082326),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0x6632B8C6),
+          color: color.withOpacity(0.35),
         ),
       ),
       child: Row(
@@ -1781,17 +1776,17 @@ class _CompactRatingBadge extends StatelessWidget {
         children: [
           Text(
             _formatRating(rating),
-            style: const TextStyle(
-              color: Color(0xFF22D3EE),
+            style: TextStyle(
+              color: color,
               fontSize: 15,
               height: 1.1,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(
+          Icon(
             Icons.star_rounded,
-            color: Color(0xFF22D3EE),
+            color: color,
             size: 15,
           ),
         ],
