@@ -6,7 +6,7 @@ import '../../models/library_game_model.dart';
 import '../../models/user_profile_model.dart';
 import '../../storage/library_change_notifier.dart';
 import '../../storage/library_storage.dart';
-import '../../storage/library_view_storage.dart';
+import '../../storage/library_preferences_storage.dart';
 import '../../storage/profile_storage.dart';
 import '../notifications/notifications_screen.dart';
 import 'widgets/empty_library_state.dart';
@@ -62,23 +62,76 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.initState();
 
     _loadGames();
-    _loadSavedViewType();
+    _loadSavedLibraryPreferences();
 
     LibraryChangeNotifier.version.addListener(_onLibraryChanged);
     searchController.addListener(_onSearchChanged);
   }
 
-  Future<void> _loadSavedViewType() async {
-    final savedViewType = await LibraryViewStorage.getViewType();
+  Future<void> _loadSavedLibraryPreferences() async {
+    final savedViewType = await LibraryPreferencesStorage.getViewType();
+    final savedSortType = await LibraryPreferencesStorage.getSortType();
 
     if (!mounted) return;
 
     setState(() {
       selectedViewType =
-      savedViewType == LibraryViewStorage.gridViewType
+      savedViewType == LibraryPreferencesStorage.gridViewType
           ? LibraryViewType.grid
           : LibraryViewType.list;
+
+      selectedSortType = _sortTypeFromStorageValue(savedSortType);
     });
+  }
+
+  LibrarySortType _sortTypeFromStorageValue(String value) {
+    switch (value) {
+      case LibraryPreferencesStorage.titleAscSortType:
+        return LibrarySortType.titleAsc;
+      case LibraryPreferencesStorage.titleDescSortType:
+        return LibrarySortType.titleDesc;
+      case LibraryPreferencesStorage.ratingAscSortType:
+        return LibrarySortType.ratingAsc;
+      case LibraryPreferencesStorage.ratingDescSortType:
+        return LibrarySortType.ratingDesc;
+      case LibraryPreferencesStorage.favoritesSortType:
+        return LibrarySortType.favorites;
+      case LibraryPreferencesStorage.latestSortType:
+      default:
+        return LibrarySortType.latest;
+    }
+  }
+
+  String _sortTypeToStorageValue(LibrarySortType sortType) {
+    switch (sortType) {
+      case LibrarySortType.titleAsc:
+        return LibraryPreferencesStorage.titleAscSortType;
+      case LibrarySortType.titleDesc:
+        return LibraryPreferencesStorage.titleDescSortType;
+      case LibrarySortType.ratingAsc:
+        return LibraryPreferencesStorage.ratingAscSortType;
+      case LibrarySortType.ratingDesc:
+        return LibraryPreferencesStorage.ratingDescSortType;
+      case LibrarySortType.favorites:
+        return LibraryPreferencesStorage.favoritesSortType;
+      case LibrarySortType.latest:
+        return LibraryPreferencesStorage.latestSortType;
+    }
+  }
+
+  Future<void> _selectSortType(
+      BuildContext bottomSheetContext,
+      LibrarySortType sortType,
+      ) async {
+    Navigator.pop(bottomSheetContext);
+
+    setState(() {
+      selectedSortType = sortType;
+    });
+
+    await LibraryPreferencesStorage.saveSortType(
+      _sortTypeToStorageValue(sortType),
+    );
   }
 
   void _onLibraryChanged() {
@@ -418,8 +471,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               selectedViewType = LibraryViewType.list;
                             });
 
-                            await LibraryViewStorage.saveViewType(
-                              LibraryViewStorage.listViewType,
+                            await LibraryPreferencesStorage.saveViewType(
+                              LibraryPreferencesStorage.listViewType,
                             );
                           },
                         ),
@@ -436,8 +489,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               selectedViewType = LibraryViewType.grid;
                             });
 
-                            await LibraryViewStorage.saveViewType(
-                              LibraryViewStorage.gridViewType,
+                            await LibraryPreferencesStorage.saveViewType(
+                              LibraryPreferencesStorage.gridViewType,
                             );
                           },
                         ),
@@ -519,10 +572,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           isSelected:
                           selectedSortType == LibrarySortType.latest,
                           onTap: () {
-                            Navigator.pop(bottomSheetContext);
-                            setState(() {
-                              selectedSortType = LibrarySortType.latest;
-                            });
+                            _selectSortType(
+                              bottomSheetContext,
+                              LibrarySortType.latest,
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -533,10 +586,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           isSelected:
                           selectedSortType == LibrarySortType.titleAsc,
                           onTap: () {
-                            Navigator.pop(bottomSheetContext);
-                            setState(() {
-                              selectedSortType = LibrarySortType.titleAsc;
-                            });
+                            _selectSortType(
+                              bottomSheetContext,
+                              LibrarySortType.titleAsc,
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -547,10 +600,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           isSelected:
                           selectedSortType == LibrarySortType.titleDesc,
                           onTap: () {
-                            Navigator.pop(bottomSheetContext);
-                            setState(() {
-                              selectedSortType = LibrarySortType.titleDesc;
-                            });
+                            _selectSortType(
+                              bottomSheetContext,
+                              LibrarySortType.titleDesc,
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -561,10 +614,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           isSelected:
                           selectedSortType == LibrarySortType.ratingAsc,
                           onTap: () {
-                            Navigator.pop(bottomSheetContext);
-                            setState(() {
-                              selectedSortType = LibrarySortType.ratingAsc;
-                            });
+                            _selectSortType(
+                              bottomSheetContext,
+                              LibrarySortType.ratingAsc,
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -575,10 +628,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           isSelected:
                           selectedSortType == LibrarySortType.ratingDesc,
                           onTap: () {
-                            Navigator.pop(bottomSheetContext);
-                            setState(() {
-                              selectedSortType = LibrarySortType.ratingDesc;
-                            });
+                            _selectSortType(
+                              bottomSheetContext,
+                              LibrarySortType.ratingDesc,
+                            );
                           },
                         ),
                         const SizedBox(height: 12),
@@ -589,10 +642,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           isSelected:
                           selectedSortType == LibrarySortType.favorites,
                           onTap: () {
-                            Navigator.pop(bottomSheetContext);
-                            setState(() {
-                              selectedSortType = LibrarySortType.favorites;
-                            });
+                            _selectSortType(
+                              bottomSheetContext,
+                              LibrarySortType.favorites,
+                            );
                           },
                         ),
                       ],
