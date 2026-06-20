@@ -371,7 +371,9 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
       return;
     }
 
-    _showMessage('Данные импортированы. Создайте профиль');
+    await _showEmptyProfileWarningDialog();
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
@@ -391,7 +393,9 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
       return;
     }
 
-    _showMessage('Данные импортированы. Создайте профиль');
+    await _showEmptyProfileWarningDialog();
+
+    if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -399,6 +403,175 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
         builder: (_) => const CreateProfileScreen(),
       ),
           (route) => false,
+    );
+  }
+
+  bool _previewHasIncompleteProfile(BackupImportPreview currentPreview) {
+    if (!currentPreview.profileIncluded || currentPreview.profile == null) {
+      return true;
+    }
+
+    final profile = currentPreview.profile!;
+    final rawProfile = currentPreview.rawMap['profile'];
+    final hasAvatarBackup = rawProfile is Map &&
+        rawProfile['avatarBackup'] is Map &&
+        rawProfile['avatarBackup']['base64'] is String &&
+        rawProfile['avatarBackup']['base64'].toString().trim().isNotEmpty;
+    final avatarPath = profile.avatarPath?.trim();
+    final hasAvatar = hasAvatarBackup || (avatarPath != null && avatarPath.isNotEmpty);
+    final hasPlatforms = profile.favoritePlatforms
+        .where((platform) => platform.trim().isNotEmpty)
+        .isNotEmpty;
+
+    return profile.name.trim().isEmpty ||
+        profile.status.trim().isEmpty ||
+        !hasPlatforms ||
+        !hasAvatar;
+  }
+
+  Future<void> _showEmptyProfileWarningDialog() {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.72),
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: warning.withOpacity(0.42),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: warning.withOpacity(0.10),
+                  blurRadius: 34,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.42),
+                  blurRadius: 34,
+                  offset: const Offset(0, 16),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: warning.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: warning.withOpacity(0.38),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.person_off_rounded,
+                    color: warning,
+                    size: 34,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Профиль не заполнен',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 22,
+                    height: 1.15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.45,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Данные импортированы, но профиль в архиве пустой или неполный. '
+                      'Чтобы продолжить работу с приложением, нужно создать профиль заново.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 14,
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF081F23),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0x6632B8C6),
+                    ),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: accent,
+                        size: 21,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Библиотека и прогресс сохранятся. Нужно только заново указать аватар, никнейм, статус и платформы.',
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 12,
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    icon: const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: accentDark,
+                      size: 22,
+                    ),
+                    label: const Text(
+                      'СОЗДАТЬ ПРОФИЛЬ',
+                      style: TextStyle(
+                        color: accentDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      shadowColor: accent.withOpacity(0.28),
+                      elevation: 12,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -616,6 +789,10 @@ class _ImportDataScreenState extends State<ImportDataScreen> {
                         fileSizeText: _formatSize(preview!.sizeBytes),
                         onRemove: isImporting ? null : _removeSelectedFile,
                       ),
+                      if (_previewHasIncompleteProfile(preview!)) ...[
+                        const SizedBox(height: 14),
+                        const _EmptyProfileMainCard(),
+                      ],
                       if (preview!.hasSkippedGames) ...[
                         const SizedBox(height: 14),
                         _SkippedRecordsMainCard(
@@ -1025,6 +1202,123 @@ class _FileMetaPill extends StatelessWidget {
   }
 }
 
+
+class _EmptyProfileMainCard extends StatelessWidget {
+  const _EmptyProfileMainCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _ImportDataScreenState.warning.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _ImportDataScreenState.warning.withOpacity(0.38),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _ImportDataScreenState.warning.withOpacity(0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: _ImportDataScreenState.warning.withOpacity(0.14),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: _ImportDataScreenState.warning.withOpacity(0.35),
+              ),
+            ),
+            child: const Icon(
+              Icons.person_off_rounded,
+              color: _ImportDataScreenState.warning,
+              size: 23,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Профиль не заполнен',
+                  style: TextStyle(
+                    color: _ImportDataScreenState.warning,
+                    fontSize: 14,
+                    height: 1.25,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  'В выбранном архиве нет полного профиля. Библиотека и прогресс будут импортированы, но после импорта нужно будет создать профиль заново.',
+                  style: TextStyle(
+                    color: _ImportDataScreenState.textSecondary,
+                    fontSize: 12,
+                    height: 1.38,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _EmptyProfileInfoPill(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyProfileInfoPill extends StatelessWidget {
+  const _EmptyProfileInfoPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10262B),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: const Color(0x3332B8C6),
+        ),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: _ImportDataScreenState.accent,
+            size: 18,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Потребуется указать аватар, никнейм, статус и платформы.',
+              style: TextStyle(
+                color: _ImportDataScreenState.textSecondary,
+                fontSize: 11,
+                height: 1.3,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SkippedRecordsMainCard extends StatelessWidget {
   const _SkippedRecordsMainCard({
