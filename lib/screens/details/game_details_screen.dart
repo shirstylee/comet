@@ -1471,6 +1471,7 @@ class _ScreenshotViewerScreen extends StatefulWidget {
 class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
   late final PageController pageController;
   late int currentIndex;
+  bool isScreenshotZoomed = false;
 
   @override
   void initState() {
@@ -1497,42 +1498,28 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
         children: [
           PageView.builder(
             controller: pageController,
+            physics: isScreenshotZoomed
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(),
             itemCount: widget.screenshots.length,
             onPageChanged: (index) {
               setState(() {
                 currentIndex = index;
+                isScreenshotZoomed = false;
               });
             },
             itemBuilder: (context, index) {
               final screenshot = widget.screenshots[index];
 
-              return Center(
-                child: InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: Image.network(
-                    screenshot,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
+              return _ZoomableScreenshot(
+                imageUrl: screenshot,
+                onZoomChanged: (isZoomed) {
+                  if (isScreenshotZoomed == isZoomed) return;
 
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF75EEFD),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Color(0xFFAAABAB),
-                          size: 46,
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                  setState(() {
+                    isScreenshotZoomed = isZoomed;
+                  });
+                },
               );
             },
           ),
@@ -1639,6 +1626,143 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _ZoomableScreenshot extends StatefulWidget {
+  const _ZoomableScreenshot({
+    required this.imageUrl,
+    required this.onZoomChanged,
+  });
+
+  final String imageUrl;
+  final ValueChanged<bool> onZoomChanged;
+
+  @override
+  State<_ZoomableScreenshot> createState() => _ZoomableScreenshotState();
+}
+
+class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
+  static const double _doubleTapScale = 2.6;
+
+  final TransformationController _controller = TransformationController();
+
+  TapDownDetails? _doubleTapDetails;
+  bool _isZoomed = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+
+    super.dispose();
+  }
+
+  void _saveDoubleTapPosition(TapDownDetails details) {
+    _doubleTapDetails = details;
+  }
+
+  void _setZoomed(bool value) {
+    if (_isZoomed == value) return;
+
+    setState(() {
+      _isZoomed = value;
+    });
+
+    widget.onZoomChanged(value);
+  }
+
+  void _resetZoom() {
+    _controller.value = Matrix4.identity();
+    _setZoomed(false);
+  }
+
+  void _toggleZoom() {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+
+    if (currentScale > 1.05) {
+      _resetZoom();
+      return;
+    }
+
+    final tapPosition = _doubleTapDetails?.localPosition ?? Offset.zero;
+    final nextMatrix = Matrix4.identity()
+      ..translate(
+        -tapPosition.dx * (_doubleTapScale - 1),
+        -tapPosition.dy * (_doubleTapScale - 1),
+      )
+      ..scale(_doubleTapScale);
+
+    _controller.value = nextMatrix;
+    _setZoomed(true);
+  }
+
+  void _handleInteractionUpdate(ScaleUpdateDetails details) {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+
+    _setZoomed(currentScale > 1.05);
+  }
+
+  void _handleInteractionEnd(ScaleEndDetails details) {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+
+    if (currentScale <= 1.05) {
+      _resetZoom();
+      return;
+    }
+
+    _setZoomed(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onDoubleTapDown: _saveDoubleTapPosition,
+      onDoubleTap: _toggleZoom,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return InteractiveViewer(
+            transformationController: _controller,
+            minScale: 1,
+            maxScale: 5,
+            panEnabled: _isZoomed,
+            scaleEnabled: true,
+            clipBehavior: Clip.none,
+            boundaryMargin:
+            _isZoomed ? const EdgeInsets.all(120) : EdgeInsets.zero,
+            onInteractionUpdate: _handleInteractionUpdate,
+            onInteractionEnd: _handleInteractionEnd,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              child: Center(
+                child: Image.network(
+                  widget.imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF75EEFD),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Color(0xFFAAABAB),
+                        size: 46,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
