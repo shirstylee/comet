@@ -529,7 +529,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               _LibraryCollectionBadge(
                 gamesCount: games.length,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 14),
               _LibrarySearchField(
                 controller: searchController,
               ),
@@ -824,30 +824,6 @@ class _LibraryCollectionBadge extends StatelessWidget {
                 height: 1.2,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.1,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            height: 28,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF10262B),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: const Color(0x5532B8C6),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'COMET',
-              maxLines: 1,
-              style: TextStyle(
-                color: Color(0xFF75EEFD),
-                fontSize: 10,
-                height: 1.2,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1,
               ),
             ),
           ),
