@@ -21,6 +21,8 @@ class BackupExportResult {
     required this.gamesCount,
     required this.ratedCount,
     required this.stagesCount,
+    required this.missingCoversCount,
+    required this.isProfileAvatarMissing,
   });
   final Uint8List bytes;
   final String fileName;
@@ -28,6 +30,12 @@ class BackupExportResult {
   final int gamesCount;
   final int ratedCount;
   final int stagesCount;
+  final int missingCoversCount;
+  final bool isProfileAvatarMissing;
+
+  bool get hasWarnings {
+    return missingCoversCount > 0 || isProfileAvatarMissing;
+  }
 }
 
 class BackupImportPreview {
@@ -104,6 +112,10 @@ class BackupStorage {
     }
 
     final profileMap = await _buildProfileExportMap(profile);
+    final missingCoversCount = _missingCoversCount(exportedGames);
+    final isProfileAvatarMissing = _hasText(profile.avatarPath) &&
+        profileMap['avatarBackup'] is! Map;
+
     final jsonText = _buildJsonText(
       games: exportedGames,
       profileMap: profileMap,
@@ -117,6 +129,8 @@ class BackupStorage {
       gamesCount: games.length,
       ratedCount: _ratedCount(games),
       stagesCount: _stagesCount(games),
+      missingCoversCount: missingCoversCount,
+      isProfileAvatarMissing: isProfileAvatarMissing,
     );
   }
 
@@ -584,6 +598,18 @@ class BackupStorage {
 
     const encoder = JsonEncoder.withIndent('  ');
     return encoder.convert(exportMap);
+  }
+
+  static int _missingCoversCount(List<Map<String, dynamic>> games) {
+    return games.where((game) {
+      final localImagePath = game['localImagePath'];
+
+      return _hasText(localImagePath) && game['coverBackup'] is! Map;
+    }).length;
+  }
+
+  static bool _hasText(dynamic value) {
+    return value is String && value.trim().isNotEmpty;
   }
 
   static Future<Directory> _getCoversDirectory() async {

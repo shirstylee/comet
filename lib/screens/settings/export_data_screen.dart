@@ -110,9 +110,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         gamesCount: result.gamesCount,
       );
 
-      _showMessage(
-        'Архив сохранён: ${result.fileName}',
-      );
+      _showMessage(_exportResultMessage(result));
     } catch (_) {
       if (!mounted) return;
 
@@ -128,6 +126,46 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
     }
   }
 
+  String _exportResultMessage(BackupExportResult result) {
+    final warnings = <String>[];
+
+    if (result.missingCoversCount > 0) {
+      warnings.add(
+        '${result.missingCoversCount} ${_coverWord(result.missingCoversCount)} не удалось добавить',
+      );
+    }
+
+    if (result.isProfileAvatarMissing) {
+      warnings.add('аватар профиля не удалось добавить');
+    }
+
+    if (warnings.isEmpty) {
+      return 'Архив сохранён: ${result.fileName}';
+    }
+
+    return 'Архив создан, но ${warnings.join(', ')}';
+  }
+
+  String _coverWord(int count) {
+    final lastTwoDigits = count % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return 'обложек';
+    }
+
+    final lastDigit = count % 10;
+
+    if (lastDigit == 1) {
+      return 'обложку';
+    }
+
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'обложки';
+    }
+
+    return 'обложек';
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +179,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         ),
         behavior: SnackBarBehavior.floating,
         backgroundColor: surfaceLight,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),

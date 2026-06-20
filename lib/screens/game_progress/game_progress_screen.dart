@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/game_stage_model.dart';
+import '../../models/library_game_model.dart';
 import '../../storage/library_storage.dart';
 import '../../widgets/game_cover.dart';
 import 'widgets/progress_card.dart';
@@ -253,102 +254,140 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     });
 
     if (game.stages.isEmpty) {
-      await _saveStages();
+      await _saveStages(
+        List<_GameStage>.from(stages),
+        showErrorMessage: false,
+      );
     }
   }
 
-  Future<void> _saveStages() async {
-    final game = await LibraryStorage.getGameById(widget.gameId);
+  Future<bool> _updateSavedGame({
+    required LibraryGameModel Function(LibraryGameModel game) buildUpdatedGame,
+    required String errorMessage,
+    bool showErrorMessage = true,
+  }) async {
+    try {
+      final game = await LibraryStorage.getGameById(widget.gameId);
 
-    if (game == null) {
-      return;
+      if (game == null) {
+        if (mounted && showErrorMessage) {
+          _showTemporaryMessage('Игра не найдена в библиотеке');
+        }
+
+        return false;
+      }
+
+      final updatedGame = buildUpdatedGame(game);
+
+      await LibraryStorage.updateGame(updatedGame);
+
+      return true;
+    } catch (_) {
+      if (mounted && showErrorMessage) {
+        _showTemporaryMessage(errorMessage);
+      }
+
+      return false;
     }
+  }
 
-    final updatedGame = game.copyWith(
-      stages: stages.map((stage) => stage.toModel()).toList(),
+  Future<bool> _saveStages(
+      List<_GameStage> nextStages, {
+        bool showErrorMessage = true,
+      }) {
+    return _updateSavedGame(
+      errorMessage: 'Не удалось сохранить этапы прохождения',
+      showErrorMessage: showErrorMessage,
+      buildUpdatedGame: (game) {
+        return game.copyWith(
+          stages: nextStages.map((stage) => stage.toModel()).toList(),
+        );
+      },
     );
-
-    await LibraryStorage.updateGame(updatedGame);
   }
 
-  Future<void> _saveStatus(String newStatus) async {
-    final game = await LibraryStorage.getGameById(widget.gameId);
-
-    if (game == null) {
-      return;
-    }
-
-    final updatedGame = game.copyWith(
-      status: newStatus,
+  Future<bool> _saveStatus(String newStatus) {
+    return _updateSavedGame(
+      errorMessage: 'Не удалось сохранить статус',
+      buildUpdatedGame: (game) {
+        return game.copyWith(
+          status: newStatus,
+        );
+      },
     );
-
-    await LibraryStorage.updateGame(updatedGame);
   }
 
-  Future<void> _saveTime({
+  Future<bool> _saveTime({
     required int hours,
     required int minutes,
-  }) async {
-    final game = await LibraryStorage.getGameById(widget.gameId);
-
-    if (game == null) {
-      return;
-    }
-
-    final updatedGame = game.copyWith(
-      userHours: hours,
-      userMinutes: minutes,
+  }) {
+    return _updateSavedGame(
+      errorMessage: 'Не удалось сохранить время',
+      buildUpdatedGame: (game) {
+        return game.copyWith(
+          userHours: hours,
+          userMinutes: minutes,
+        );
+      },
     );
-
-    await LibraryStorage.updateGame(updatedGame);
   }
 
-  Future<void> _saveReview({
+  Future<bool> _saveReview({
     required int rating,
     required String review,
     bool deleteReview = false,
-  }) async {
-    final game = await LibraryStorage.getGameById(widget.gameId);
+  }) {
+    return _updateSavedGame(
+      errorMessage: deleteReview
+          ? 'Не удалось удалить отзыв'
+          : 'Не удалось сохранить отзыв',
+      buildUpdatedGame: (game) {
+        if (deleteReview) {
+          return game.copyWith(
+            clearUserRating: true,
+            clearComment: true,
+            clearRatedAt: true,
+          );
+        }
 
-    if (game == null) {
-      return;
-    }
-
-    final updatedGame = deleteReview
-        ? game.copyWith(
-      clearUserRating: true,
-      clearComment: true,
-      clearRatedAt: true,
-    )
-        : game.copyWith(
-      userRating: rating.toDouble(),
-      comment: review.trim().isEmpty ? null : review.trim(),
-      ratedAt: DateTime.now(),
+        return game.copyWith(
+          userRating: rating.toDouble(),
+          comment: review.trim().isEmpty ? null : review.trim(),
+          ratedAt: DateTime.now(),
+        );
+      },
     );
+  }
 
-    await LibraryStorage.updateGame(updatedGame);
+  Future<bool> _saveFavorite(bool value) {
+    return _updateSavedGame(
+      errorMessage: 'Не удалось сохранить избранное',
+      buildUpdatedGame: (game) {
+        return game.copyWith(
+          isFavorite: value,
+        );
+      },
+    );
   }
 
   Future<void> _toggleFavorite() async {
-    final game = await LibraryStorage.getGameById(widget.gameId);
-
-    if (game == null) {
-      return;
-    }
-
-    final newFavoriteValue = !isFavorite;
+    final oldFavoriteValue = isFavorite;
+    final newFavoriteValue = !oldFavoriteValue;
 
     setState(() {
       isFavorite = newFavoriteValue;
     });
 
-    final updatedGame = game.copyWith(
-      isFavorite: newFavoriteValue,
-    );
-
-    await LibraryStorage.updateGame(updatedGame);
+    final isSaved = await _saveFavorite(newFavoriteValue);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        isFavorite = oldFavoriteValue;
+      });
+      return;
+    }
 
     _showTemporaryMessage(
       newFavoriteValue ? 'Добавлено в избранное' : 'Удалено из избранного',
@@ -363,7 +402,14 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       return;
     }
 
-    await LibraryStorage.deleteGame(widget.gameId);
+    try {
+      await LibraryStorage.deleteGame(widget.gameId);
+    } catch (_) {
+      if (!mounted) return;
+
+      _showTemporaryMessage('Не удалось удалить игру');
+      return;
+    }
 
     if (!mounted) return;
 
@@ -471,13 +517,22 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   }
 
   Future<void> _changeStatus(String newStatus) async {
+    final oldStatus = currentStatus;
+
     setState(() {
       currentStatus = newStatus;
     });
 
-    await _saveStatus(newStatus);
+    final isSaved = await _saveStatus(newStatus);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        currentStatus = oldStatus;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Статус изменён: $newStatus');
   }
@@ -486,17 +541,28 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     required int hours,
     required int minutes,
   }) async {
+    final oldHours = userHours;
+    final oldMinutes = userMinutes;
+
     setState(() {
       userHours = hours;
       userMinutes = minutes;
     });
 
-    await _saveTime(
+    final isSaved = await _saveTime(
       hours: hours,
       minutes: minutes,
     );
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        userHours = oldHours;
+        userMinutes = oldMinutes;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Время сохранено');
   }
@@ -517,19 +583,30 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
     if (result == null) return;
 
+    final oldRating = currentRating;
+    final oldReview = currentReview;
+
     if (result.deleteReview) {
       setState(() {
         currentRating = 0;
         currentReview = '';
       });
 
-      await _saveReview(
+      final isSaved = await _saveReview(
         rating: 0,
         review: '',
         deleteReview: true,
       );
 
       if (!mounted) return;
+
+      if (!isSaved) {
+        setState(() {
+          currentRating = oldRating;
+          currentReview = oldReview;
+        });
+        return;
+      }
 
       _showTemporaryMessage('Отзыв удалён');
       return;
@@ -540,12 +617,20 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       currentReview = result.review;
     });
 
-    await _saveReview(
+    final isSaved = await _saveReview(
       rating: result.rating,
       review: result.review,
     );
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        currentRating = oldRating;
+        currentReview = oldReview;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Отзыв сохранён');
   }
@@ -561,19 +646,30 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   Future<void> _completeStage(int index) async {
     if (index < 0 || index >= stages.length) return;
 
-    final stage = stages[index];
+    final oldStages = List<_GameStage>.from(stages);
+    final nextStages = List<_GameStage>.from(stages);
+    final stage = nextStages[index];
+
+    nextStages[index] = stage.copyWith(
+      type: TimelineItemType.done,
+      subtitle: todayText,
+      completedAt: DateTime.now(),
+    );
 
     setState(() {
-      stages[index] = stage.copyWith(
-        type: TimelineItemType.done,
-        subtitle: todayText,
-        completedAt: DateTime.now(),
-      );
+      stages = nextStages;
     });
 
-    await _saveStages();
+    final isSaved = await _saveStages(nextStages);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        stages = oldStages;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Этап завершён');
   }
@@ -586,19 +682,30 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       return;
     }
 
-    final stage = stages[index];
+    final oldStages = List<_GameStage>.from(stages);
+    final nextStages = List<_GameStage>.from(stages);
+    final stage = nextStages[index];
+
+    nextStages[index] = stage.copyWith(
+      type: TimelineItemType.current,
+      subtitle: 'В процессе',
+      clearCompletedAt: true,
+    );
 
     setState(() {
-      stages[index] = stage.copyWith(
-        type: TimelineItemType.current,
-        subtitle: 'В процессе',
-        clearCompletedAt: true,
-      );
+      stages = nextStages;
     });
 
-    await _saveStages();
+    final isSaved = await _saveStages(nextStages);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        stages = oldStages;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Этап возобновлён');
   }
@@ -616,21 +723,31 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
     if (index < 0 || index >= stages.length) return;
 
-    setState(() {
-      stages.removeAt(index);
+    final oldStages = List<_GameStage>.from(stages);
+    final nextStages = List<_GameStage>.from(stages)..removeAt(index);
 
-      if (stages.length == 1 && stages.first.title == 'Начало игры') {
-        stages[0] = stages.first.copyWith(
-          type: TimelineItemType.current,
-          subtitle: 'В процессе',
-          clearCompletedAt: true,
-        );
-      }
+    if (nextStages.length == 1 && nextStages.first.title == 'Начало игры') {
+      nextStages[0] = nextStages.first.copyWith(
+        type: TimelineItemType.current,
+        subtitle: 'В процессе',
+        clearCompletedAt: true,
+      );
+    }
+
+    setState(() {
+      stages = nextStages;
     });
 
-    await _saveStages();
+    final isSaved = await _saveStages(nextStages);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        stages = oldStages;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Этап удалён');
   }
@@ -656,23 +773,34 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       return;
     }
 
-    final stage = stages[index];
+    final oldStages = List<_GameStage>.from(stages);
+    final nextStages = List<_GameStage>.from(stages);
+    final stage = nextStages[index];
+
+    nextStages[index] = stage.copyWith(
+      title: cleanTitle,
+      description: cleanDescription,
+      subtitle: stage.type == TimelineItemType.done
+          ? stage.completedAt == null
+          ? stage.subtitle
+          : _formatStageDate(stage.completedAt!)
+          : 'В процессе',
+    );
 
     setState(() {
-      stages[index] = stage.copyWith(
-        title: cleanTitle,
-        description: cleanDescription,
-        subtitle: stage.type == TimelineItemType.done
-            ? stage.completedAt == null
-            ? stage.subtitle
-            : _formatStageDate(stage.completedAt!)
-            : 'В процессе',
-      );
+      stages = nextStages;
     });
 
-    await _saveStages();
+    final isSaved = await _saveStages(nextStages);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        stages = oldStages;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Этап сохранён');
   }
@@ -823,34 +951,17 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
       return;
     }
 
-    setState(() {
-      if (stages.isEmpty) {
-        stages = [
-          _GameStage(
-            title: 'Начало игры',
-            subtitle: todayText,
-            type: TimelineItemType.done,
-            completedAt: DateTime.now(),
-          ),
-          _GameStage(
-            title: cleanTitle,
-            subtitle: 'В процессе',
-            description: cleanDescription,
-            type: TimelineItemType.current,
-          ),
-        ];
+    final oldStages = List<_GameStage>.from(stages);
+    late final List<_GameStage> nextStages;
 
-        return;
-      }
-
-      stages[lastStageIndex] = stages.last.copyWith(
-        type: TimelineItemType.done,
-        subtitle: todayText,
-        completedAt: DateTime.now(),
-      );
-
-      stages = [
-        ...stages,
+    if (stages.isEmpty) {
+      nextStages = [
+        _GameStage(
+          title: 'Начало игры',
+          subtitle: todayText,
+          type: TimelineItemType.done,
+          completedAt: DateTime.now(),
+        ),
         _GameStage(
           title: cleanTitle,
           subtitle: 'В процессе',
@@ -858,11 +969,39 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           type: TimelineItemType.current,
         ),
       ];
+    } else {
+      final updatedStages = List<_GameStage>.from(stages);
+      updatedStages[lastStageIndex] = stages.last.copyWith(
+        type: TimelineItemType.done,
+        subtitle: todayText,
+        completedAt: DateTime.now(),
+      );
+
+      nextStages = [
+        ...updatedStages,
+        _GameStage(
+          title: cleanTitle,
+          subtitle: 'В процессе',
+          description: cleanDescription,
+          type: TimelineItemType.current,
+        ),
+      ];
+    }
+
+    setState(() {
+      stages = nextStages;
     });
 
-    await _saveStages();
+    final isSaved = await _saveStages(nextStages);
 
     if (!mounted) return;
+
+    if (!isSaved) {
+      setState(() {
+        stages = oldStages;
+      });
+      return;
+    }
 
     _showTemporaryMessage('Новый этап добавлен');
   }
