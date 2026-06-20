@@ -1383,7 +1383,7 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(bottomSheetContext).size.height * 0.82,
+              maxHeight: MediaQuery.of(bottomSheetContext).size.height * 0.86,
             ),
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -1403,64 +1403,68 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
               ),
               child: SafeArea(
                 top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const _BottomSheetHandle(),
-                    const SizedBox(height: 20),
-                    _StageTitlePreview(
-                      title: stage.title,
-                    ),
-                    if (stage.description.trim().isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _StageDescriptionPreview(
-                        description: stage.description,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const _BottomSheetHandle(),
+                      const SizedBox(height: 20),
+                      _StageTitlePreview(
+                        title: stage.title,
                       ),
-                    ],
-                    const SizedBox(height: 12),
-                    _StageMenuItem(
-                      icon: Icons.edit_rounded,
-                      title: 'Переименовать',
-                      onTap: () {
-                        Navigator.pop(bottomSheetContext);
-
-                        _openStageNameEditor(
-                          index: index,
-                          title: stage.title,
+                      if (stage.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _StageDescriptionPreview(
                           description: stage.description,
-                        );
-                      },
-                    ),
-                    if (canCompleteStage || canResumeStage) ...[
-                      const SizedBox(height: 8),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
                       _StageMenuItem(
-                        icon: canResumeStage
-                            ? Icons.restart_alt_rounded
-                            : Icons.check_circle_outline_rounded,
-                        title: canResumeStage ? 'Возобновить' : 'Завершить',
-                        onTap: () async {
+                        icon: Icons.edit_rounded,
+                        title: 'Переименовать',
+                        onTap: () {
                           Navigator.pop(bottomSheetContext);
 
-                          if (canResumeStage) {
-                            await _resumeStage(index);
-                            return;
-                          }
-
-                          await _completeStage(index);
+                          _openStageNameEditor(
+                            index: index,
+                            title: stage.title,
+                            description: stage.description,
+                          );
                         },
                       ),
+                      if (canCompleteStage || canResumeStage) ...[
+                        const SizedBox(height: 8),
+                        _StageMenuItem(
+                          icon: canResumeStage
+                              ? Icons.restart_alt_rounded
+                              : Icons.check_circle_outline_rounded,
+                          title: canResumeStage ? 'Возобновить' : 'Завершить',
+                          onTap: () async {
+                            Navigator.pop(bottomSheetContext);
+
+                            if (canResumeStage) {
+                              await _resumeStage(index);
+                              return;
+                            }
+
+                            await _completeStage(index);
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      _StageMenuItem(
+                        icon: Icons.delete_outline_rounded,
+                        title: 'Удалить',
+                        danger: true,
+                        onTap: () async {
+                          Navigator.pop(bottomSheetContext);
+                          await _deleteStage(index);
+                        },
+                      ),
+                      const SizedBox(height: 2),
                     ],
-                    const SizedBox(height: 8),
-                    _StageMenuItem(
-                      icon: Icons.delete_outline_rounded,
-                      title: 'Удалить',
-                      danger: true,
-                      onTap: () async {
-                        Navigator.pop(bottomSheetContext);
-                        await _deleteStage(index);
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
