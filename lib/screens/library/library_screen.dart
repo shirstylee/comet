@@ -1062,18 +1062,18 @@ class _ViewModeButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         child: Container(
           height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFF081F23),
+            color: const Color(0xFF1D2020),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: const Color(0x5532B8C6),
+              color: const Color(0x2275EEFD),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF75EEFD).withOpacity(0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -1083,25 +1083,29 @@ class _ViewModeButton extends StatelessWidget {
               Icon(
                 icon,
                 color: const Color(0xFF75EEFD),
-                size: 18,
+                size: 17,
               ),
-              const SizedBox(width: 7),
-              Text(
-                title,
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Color(0xFF75EEFD),
-                  fontSize: 12,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.2,
+              const SizedBox(width: 5),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 104,
+                ),
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-              const SizedBox(width: 3),
+              const SizedBox(width: 4),
               const Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: Color(0xFF75EEFD),
-                size: 18,
+                size: 20,
               ),
             ],
           ),
