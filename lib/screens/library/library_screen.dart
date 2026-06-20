@@ -128,7 +128,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       case LibraryViewType.list:
         return 'Список';
       case LibraryViewType.grid:
-        return '2 в строку';
+        return 'Сетка';
     }
   }
 
@@ -393,7 +393,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         const SizedBox(height: 22),
                         _SortMenuItem(
                           icon: Icons.view_agenda_rounded,
-                          title: 'Обычный список',
+                          title: 'Список',
                           subtitle: 'Одна большая карточка игры в строку',
                           isSelected: selectedViewType == LibraryViewType.list,
                           onTap: () {
@@ -406,7 +406,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         const SizedBox(height: 12),
                         _SortMenuItem(
                           icon: Icons.grid_view_rounded,
-                          title: '2 игры в строку',
+                          title: 'Сетка',
                           subtitle: 'Компактная сетка с двумя карточками',
                           isSelected: selectedViewType == LibraryViewType.grid,
                           onTap: () {
@@ -925,8 +925,8 @@ class _LibraryCollectionBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 13),
+        height: 33,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
         decoration: BoxDecoration(
           color: const Color(0xFF101515),
           borderRadius: BorderRadius.circular(999),
@@ -938,8 +938,8 @@ class _LibraryCollectionBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 color: const Color(0x1475EEFD),
                 borderRadius: BorderRadius.circular(999),
@@ -953,7 +953,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                 size: 15,
               ),
             ),
-            const SizedBox(width: 9),
+            const SizedBox(width: 6),
             Text.rich(
               TextSpan(
                 children: [
@@ -961,7 +961,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '$gamesCount $gamesWord',
                     style: const TextStyle(
                       color: Color(0xFF75EEFD),
-                      fontSize: 15,
+                      fontSize: 12.8,
                       height: 1.1,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.05,
@@ -971,7 +971,7 @@ class _LibraryCollectionBadge extends StatelessWidget {
                     text: '  в коллекции',
                     style: TextStyle(
                       color: Color(0xFFAAABAB),
-                      fontSize: 15,
+                      fontSize: 12.8,
                       height: 1.1,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.05,
