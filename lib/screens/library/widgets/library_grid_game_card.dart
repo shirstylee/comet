@@ -476,13 +476,13 @@ class _GridMenuController {
 }
 
 class _GridMenuButtonState extends State<_GridMenuButton> {
-  static const double _menuWidth = 210;
+  static const double _menuWidth = 244;
   static const double _screenEdgePadding = 12;
 
   final LayerLink _layerLink = LayerLink();
 
   OverlayEntry? _menuEntry;
-  bool _openToLeft = true;
+  double _menuDx = 0;
   Offset? _pointerDownPosition;
   int? _trackedPointer;
   bool _isPointerRouteAdded = false;
@@ -511,12 +511,12 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
       );
 
       final screenWidth = overlayBox.size.width;
-      final buttonRight = buttonPosition.dx + buttonBox.size.width;
-      final hasSpaceOnRight = buttonPosition.dx + _menuWidth <=
-          screenWidth - _screenEdgePadding;
-      final hasSpaceOnLeft = buttonRight - _menuWidth >= _screenEdgePadding;
+      final minX = _screenEdgePadding;
+      final maxX = screenWidth - _menuWidth - _screenEdgePadding;
+      final safeMaxX = maxX < minX ? minX : maxX;
+      final menuX = buttonPosition.dx.clamp(minX, safeMaxX).toDouble();
 
-      _openToLeft = hasSpaceOnLeft && !hasSpaceOnRight;
+      _menuDx = menuX - buttonPosition.dx;
     }
 
     final overlay = Overlay.of(context);
@@ -530,13 +530,9 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
               CompositedTransformFollower(
                 link: _layerLink,
                 showWhenUnlinked: false,
-                targetAnchor: _openToLeft
-                    ? Alignment.bottomRight
-                    : Alignment.bottomLeft,
-                followerAnchor: _openToLeft
-                    ? Alignment.topRight
-                    : Alignment.topLeft,
-                offset: const Offset(0, 7),
+                targetAnchor: Alignment.bottomLeft,
+                followerAnchor: Alignment.topLeft,
+                offset: Offset(_menuDx, 7),
                 child: _GridFloatingMenu(
                   isFavorite: widget.isFavorite,
                   onSelected: _handleSelected,
@@ -718,7 +714,7 @@ class _GridFloatingMenu extends StatelessWidget {
               borderColor: const Color(0x5532B8C6),
               onTap: () => onSelected('favorite'),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 6),
             _GridMenuActionTile(
               icon: Icons.delete_outline_rounded,
               title: 'Удалить из библиотеки',
@@ -755,16 +751,16 @@ class _GridMenuActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(11),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          width: 198,
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 11),
+          width: 232,
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: borderColor,
             ),
@@ -774,9 +770,9 @@ class _GridMenuActionTile extends StatelessWidget {
               Icon(
                 icon,
                 color: color,
-                size: 18,
+                size: 19,
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
@@ -784,7 +780,7 @@ class _GridMenuActionTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: color,
-                    fontSize: 13,
+                    fontSize: 13.2,
                     height: 1.1,
                     fontWeight: FontWeight.w800,
                   ),
