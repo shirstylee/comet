@@ -783,22 +783,22 @@ class _ActivityInfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 28,
+      height: 24,
       constraints: const BoxConstraints(
-        maxWidth: 190,
+        maxWidth: 140,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.10),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: color.withOpacity(0.30),
+          color: color.withOpacity(0.28),
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: color.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -808,9 +808,9 @@ class _ActivityInfoPill extends StatelessWidget {
           Icon(
             icon,
             color: color,
-            size: 13,
+            size: 11,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -821,10 +821,10 @@ class _ActivityInfoPill extends StatelessWidget {
                 softWrap: false,
                 style: TextStyle(
                   color: color,
-                  fontSize: 12,
-                  height: 1.15,
+                  fontSize: 10.5,
+                  height: 1.1,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.15,
+                  letterSpacing: 0.1,
                 ),
               ),
             ),
@@ -1012,35 +1012,37 @@ class _GameActivityCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F3F3),
-                        fontSize: 18,
-                        height: 1.22,
-                        fontWeight: FontWeight.w800,
+                child: SizedBox(
+                  height: 80,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 18,
+                          height: 1.22,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _ActivityInfoPill(
-                        icon: isCompleted
-                            ? Icons.check_circle_rounded
-                            : Icons.access_time_rounded,
-                        text: subtitle,
-                        color: isCompleted
-                            ? const Color(0xFFBBFFB3)
-                            : const Color(0xFF75EEFD),
+                      Align(
+                        alignment: Alignment.bottomLeft,
+                        child: _ActivityInfoPill(
+                          icon: isCompleted
+                              ? Icons.check_circle_rounded
+                              : Icons.access_time_rounded,
+                          text: subtitle,
+                          color: isCompleted
+                              ? const Color(0xFFBBFFB3)
+                              : const Color(0xFF75EEFD),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
