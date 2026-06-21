@@ -476,9 +476,13 @@ class _GridMenuController {
 }
 
 class _GridMenuButtonState extends State<_GridMenuButton> {
+  static const double _menuWidth = 210;
+  static const double _screenEdgePadding = 12;
+
   final LayerLink _layerLink = LayerLink();
 
   OverlayEntry? _menuEntry;
+  bool _openToLeft = true;
   Offset? _pointerDownPosition;
   int? _trackedPointer;
   bool _isPointerRouteAdded = false;
@@ -497,6 +501,24 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
   void _showMenu() {
     _GridMenuController.open(this);
 
+    final buttonBox = context.findRenderObject() as RenderBox?;
+    final overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox?;
+
+    if (buttonBox != null && overlayBox != null) {
+      final buttonPosition = buttonBox.localToGlobal(
+        Offset.zero,
+        ancestor: overlayBox,
+      );
+
+      final screenWidth = overlayBox.size.width;
+      final buttonRight = buttonPosition.dx + buttonBox.size.width;
+      final hasSpaceOnRight = buttonPosition.dx + _menuWidth <=
+          screenWidth - _screenEdgePadding;
+      final hasSpaceOnLeft = buttonRight - _menuWidth >= _screenEdgePadding;
+
+      _openToLeft = hasSpaceOnLeft && !hasSpaceOnRight;
+    }
+
     final overlay = Overlay.of(context);
 
     _menuEntry = OverlayEntry(
@@ -508,9 +530,13 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
               CompositedTransformFollower(
                 link: _layerLink,
                 showWhenUnlinked: false,
-                targetAnchor: Alignment.bottomRight,
-                followerAnchor: Alignment.topRight,
-                offset: const Offset(0, 6),
+                targetAnchor: _openToLeft
+                    ? Alignment.bottomRight
+                    : Alignment.bottomLeft,
+                followerAnchor: _openToLeft
+                    ? Alignment.topRight
+                    : Alignment.topLeft,
+                offset: const Offset(0, 7),
                 child: _GridFloatingMenu(
                   isFavorite: widget.isFavorite,
                   onSelected: _handleSelected,
@@ -657,10 +683,10 @@ class _GridFloatingMenu extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.all(5),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: const Color(0xFF111414),
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: const Color(0x2932B8C6),
           ),
@@ -692,7 +718,7 @@ class _GridFloatingMenu extends StatelessWidget {
               borderColor: const Color(0x5532B8C6),
               onTap: () => onSelected('favorite'),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             _GridMenuActionTile(
               icon: Icons.delete_outline_rounded,
               title: 'Удалить из библиотеки',
@@ -729,16 +755,16 @@ class _GridMenuActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(11),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(11),
         child: Container(
-          width: 190,
-          height: 34,
-          padding: const EdgeInsets.symmetric(horizontal: 9),
+          width: 198,
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 11),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(11),
             border: Border.all(
               color: borderColor,
             ),
@@ -748,9 +774,9 @@ class _GridMenuActionTile extends StatelessWidget {
               Icon(
                 icon,
                 color: color,
-                size: 17,
+                size: 18,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 9),
               Expanded(
                 child: Text(
                   title,
@@ -758,7 +784,7 @@ class _GridMenuActionTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: color,
-                    fontSize: 12.5,
+                    fontSize: 13,
                     height: 1.1,
                     fontWeight: FontWeight.w800,
                   ),
