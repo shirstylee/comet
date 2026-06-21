@@ -453,10 +453,12 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
 
   OverlayEntry? _menuEntry;
   double _menuDx = 0;
+  double _menuDy = _menuVerticalOffset;
   Rect? _menuRect;
   Rect? _buttonRect;
   Offset? _pointerDownPosition;
   int? _trackedPointer;
+  bool _pointerStartedInsideMenu = false;
   bool _isPointerRouteAdded = false;
 
   bool get _isMenuOpen => _menuEntry != null;
@@ -485,14 +487,25 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
       final overlayGlobalPosition = overlayBox.localToGlobal(Offset.zero);
 
       final screenWidth = overlayBox.size.width;
+      final screenHeight = overlayBox.size.height;
       final minX = _screenEdgePadding;
       final maxX = screenWidth - _menuWidth - _screenEdgePadding;
       final safeMaxX = maxX < minX ? minX : maxX;
       final menuX = buttonOverlayPosition.dx.clamp(minX, safeMaxX).toDouble();
-      final menuY =
+      final menuBelowY =
           buttonOverlayPosition.dy + buttonBox.size.height + _menuVerticalOffset;
+      final menuAboveY =
+          buttonOverlayPosition.dy - _menuHeight - _menuVerticalOffset;
+      final hasSpaceBelow =
+          menuBelowY + _menuHeight <= screenHeight - _screenEdgePadding;
+      final hasSpaceAbove = menuAboveY >= _screenEdgePadding;
+      final shouldOpenUp = hasSpaceAbove && !hasSpaceBelow;
+      final menuY = shouldOpenUp ? menuAboveY : menuBelowY;
 
       _menuDx = menuX - buttonOverlayPosition.dx;
+      _menuDy = shouldOpenUp
+          ? -buttonBox.size.height - _menuHeight - _menuVerticalOffset
+          : _menuVerticalOffset;
       _buttonRect = Rect.fromLTWH(
         buttonGlobalPosition.dx,
         buttonGlobalPosition.dy,
@@ -507,6 +520,7 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
       );
     } else {
       _menuDx = 0;
+      _menuDy = _menuVerticalOffset;
       _buttonRect = null;
       _menuRect = null;
     }
@@ -524,7 +538,7 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
                 showWhenUnlinked: false,
                 targetAnchor: Alignment.bottomLeft,
                 followerAnchor: Alignment.topLeft,
-                offset: Offset(_menuDx, _menuVerticalOffset),
+                offset: Offset(_menuDx, _menuDy),
                 child: _CardFloatingMenu(
                   isFavorite: widget.isFavorite,
                   onSelected: _handleSelected,
@@ -548,10 +562,12 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
     _menuEntry?.remove();
     _menuEntry = null;
     _menuDx = 0;
+    _menuDy = _menuVerticalOffset;
     _menuRect = null;
     _buttonRect = null;
     _pointerDownPosition = null;
     _trackedPointer = null;
+    _pointerStartedInsideMenu = false;
     _removeGlobalPointerRoute();
     _CardMenuController.close(this);
 
@@ -594,10 +610,13 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
 
       _trackedPointer = event.pointer;
       _pointerDownPosition = event.position;
+      _pointerStartedInsideMenu = isInsideMenu;
       return;
     }
 
     if (event is PointerMoveEvent && event.pointer == _trackedPointer) {
+      if (_pointerStartedInsideMenu) return;
+
       final startPosition = _pointerDownPosition;
 
       if (startPosition == null) return;
@@ -615,6 +634,7 @@ class _CardMenuButtonState extends State<_CardMenuButton> {
         event.pointer == _trackedPointer) {
       _trackedPointer = null;
       _pointerDownPosition = null;
+      _pointerStartedInsideMenu = false;
     }
   }
 
