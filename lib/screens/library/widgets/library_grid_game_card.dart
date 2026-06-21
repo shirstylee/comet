@@ -476,7 +476,7 @@ class _GridMenuController {
 }
 
 class _GridMenuButtonState extends State<_GridMenuButton> {
-  static const double _menuWidth = 264;
+  static const double _menuWidth = 220;
   static const double _menuHeight = 110;
   static const double _screenEdgePadding = 12;
   static const double _menuVerticalOffset = 7;
@@ -736,31 +736,34 @@ class _GridFloatingMenu extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _GridMenuActionTile(
-              icon: isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              title: isFavorite
-                  ? 'Убрать из избранного'
-                  : 'Добавить в избранное',
-              color: const Color(0xFF75EEFD),
-              backgroundColor: const Color(0xFF081F23),
-              borderColor: const Color(0x5532B8C6),
-              onTap: () => onSelected('favorite'),
-            ),
-            const SizedBox(height: 6),
-            _GridMenuActionTile(
-              icon: Icons.delete_outline_rounded,
-              title: 'Удалить из библиотеки',
-              color: const Color(0xFFFF7A7A),
-              backgroundColor: const Color(0xFF251818),
-              borderColor: const Color(0x55FF7A7A),
-              onTap: () => onSelected('delete'),
-            ),
-          ],
+        child: IntrinsicWidth(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _GridMenuActionTile(
+                icon: isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                title: isFavorite
+                    ? 'Убрать из избранного'
+                    : 'Добавить в избранное',
+                color: const Color(0xFF75EEFD),
+                backgroundColor: const Color(0xFF081F23),
+                borderColor: const Color(0x5532B8C6),
+                onTap: () => onSelected('favorite'),
+              ),
+              const SizedBox(height: 6),
+              _GridMenuActionTile(
+                icon: Icons.delete_outline_rounded,
+                title: 'Удалить из библиотеки',
+                color: const Color(0xFFFF7A7A),
+                backgroundColor: const Color(0xFF251818),
+                borderColor: const Color(0x55FF7A7A),
+                onTap: () => onSelected('delete'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -793,7 +796,6 @@ class _GridMenuActionTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          width: 252,
           height: 46,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
@@ -803,6 +805,7 @@ class _GridMenuActionTile extends StatelessWidget {
             ),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
@@ -810,17 +813,16 @@ class _GridMenuActionTile extends StatelessWidget {
                 size: 19,
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 13.2,
-                    height: 1.1,
-                    fontWeight: FontWeight.w800,
-                  ),
+              Text(
+                title,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.visible,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13.2,
+                  height: 1.1,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
