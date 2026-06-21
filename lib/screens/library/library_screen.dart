@@ -407,100 +407,91 @@ class _LibraryScreenState extends State<LibraryScreen> {
       barrierColor: Colors.black.withOpacity(0.55),
       isScrollControlled: true,
       builder: (bottomSheetContext) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.46,
-          minChildSize: 0.34,
-          maxChildSize: 0.62,
-          expand: false,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111414),
-                  borderRadius: BorderRadius.circular(26),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.06),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withOpacity(0.16),
-                      blurRadius: 34,
-                      offset: const Offset(0, 12),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF111414),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withOpacity(0.16),
+                  blurRadius: 34,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _BottomSheetHandle(),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Вид библиотеки',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Выберите, как отображать игры',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    _SortMenuItem(
+                      icon: Icons.view_agenda_rounded,
+                      title: 'Список',
+                      subtitle: 'Одна большая карточка игры в строку',
+                      isSelected: selectedViewType == LibraryViewType.list,
+                      onTap: () async {
+                        Navigator.pop(bottomSheetContext);
+
+                        setState(() {
+                          selectedViewType = LibraryViewType.list;
+                        });
+
+                        await LibraryPreferencesStorage.saveViewType(
+                          LibraryPreferencesStorage.listViewType,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _SortMenuItem(
+                      icon: Icons.grid_view_rounded,
+                      title: 'Сетка',
+                      subtitle: 'Компактная сетка с двумя карточками',
+                      isSelected: selectedViewType == LibraryViewType.grid,
+                      onTap: () async {
+                        Navigator.pop(bottomSheetContext);
+
+                        setState(() {
+                          selectedViewType = LibraryViewType.grid;
+                        });
+
+                        await LibraryPreferencesStorage.saveViewType(
+                          LibraryPreferencesStorage.gridViewType,
+                        );
+                      },
                     ),
                   ],
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const _BottomSheetHandle(),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Вид библиотеки',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: textPrimary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Выберите, как отображать игры',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: textSecondary,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-                        _SortMenuItem(
-                          icon: Icons.view_agenda_rounded,
-                          title: 'Список',
-                          subtitle: 'Одна большая карточка игры в строку',
-                          isSelected: selectedViewType == LibraryViewType.list,
-                          onTap: () async {
-                            Navigator.pop(bottomSheetContext);
-
-                            setState(() {
-                              selectedViewType = LibraryViewType.list;
-                            });
-
-                            await LibraryPreferencesStorage.saveViewType(
-                              LibraryPreferencesStorage.listViewType,
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _SortMenuItem(
-                          icon: Icons.grid_view_rounded,
-                          title: 'Сетка',
-                          subtitle: 'Компактная сетка с двумя карточками',
-                          isSelected: selectedViewType == LibraryViewType.grid,
-                          onTap: () async {
-                            Navigator.pop(bottomSheetContext);
-
-                            setState(() {
-                              selectedViewType = LibraryViewType.grid;
-                            });
-
-                            await LibraryPreferencesStorage.saveViewType(
-                              LibraryPreferencesStorage.gridViewType,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );
