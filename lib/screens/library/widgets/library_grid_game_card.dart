@@ -96,7 +96,28 @@ class _LibraryGridGameCardState extends State<LibraryGridGameCard> {
     widget.onGameChanged();
   }
 
+  Future<void> _toggleFavorite() async {
+    final updatedGame = currentGame.copyWith(
+      isFavorite: !currentGame.isFavorite,
+    );
+
+    await LibraryStorage.updateGame(updatedGame);
+
+    if (!mounted) return;
+
+    setState(() {
+      currentGame = updatedGame;
+    });
+
+    widget.onGameChanged();
+  }
+
   void _handleMenuAction(String value) {
+    if (value == 'favorite') {
+      _toggleFavorite();
+      return;
+    }
+
     if (value == 'delete') {
       widget.onDelete();
     }
@@ -171,6 +192,7 @@ class _LibraryGridGameCardState extends State<LibraryGridGameCard> {
                     right: 7,
                     top: 7,
                     child: _GridMenuButton(
+                      isFavorite: currentGame.isFavorite,
                       onSelected: _handleMenuAction,
                     ),
                   ),
@@ -424,45 +446,55 @@ class _GridFavoriteBadge extends StatelessWidget {
 
 class _GridMenuButton extends StatelessWidget {
   const _GridMenuButton({
+    required this.isFavorite,
     required this.onSelected,
   });
 
+  final bool isFavorite;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      color: const Color(0xFF1D2020),
-      elevation: 12,
+      color: const Color(0xFF111414),
+      elevation: 14,
       offset: const Offset(0, 32),
+      constraints: const BoxConstraints(
+        minWidth: 220,
+      ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         side: const BorderSide(
-          color: Color(0x1AFFFFFF),
+          color: Color(0x2932B8C6),
         ),
       ),
       onSelected: onSelected,
       itemBuilder: (context) {
         return [
+          PopupMenuItem<String>(
+            value: 'favorite',
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+            child: _GridMenuActionTile(
+              icon: isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              title: isFavorite
+                  ? 'Убрать из избранного'
+                  : 'Добавить в избранное',
+              color: const Color(0xFF75EEFD),
+              backgroundColor: const Color(0xFF081F23),
+              borderColor: const Color(0x5532B8C6),
+            ),
+          ),
           const PopupMenuItem<String>(
             value: 'delete',
-            child: Row(
-              children: [
-                Icon(
-                  Icons.delete_outline_rounded,
-                  color: Color(0xFFFF7A7A),
-                  size: 20,
-                ),
-                SizedBox(width: 10),
-                Text(
-                  'Удалить из библиотеки',
-                  style: TextStyle(
-                    color: Color(0xFFFF7A7A),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            padding: EdgeInsets.fromLTRB(8, 4, 8, 8),
+            child: _GridMenuActionTile(
+              icon: Icons.delete_outline_rounded,
+              title: 'Удалить из библиотеки',
+              color: Color(0xFFFF7A7A),
+              backgroundColor: Color(0xFF251818),
+              borderColor: Color(0x55FF7A7A),
             ),
           ),
         ];
@@ -482,6 +514,60 @@ class _GridMenuButton extends StatelessWidget {
           color: Color(0xFFF4F3F3),
           size: 20,
         ),
+      ),
+    );
+  }
+}
+
+class _GridMenuActionTile extends StatelessWidget {
+  const _GridMenuActionTile({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.backgroundColor,
+    required this.borderColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+  final Color backgroundColor;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: borderColor,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
