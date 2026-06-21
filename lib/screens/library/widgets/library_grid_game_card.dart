@@ -476,13 +476,17 @@ class _GridMenuController {
 }
 
 class _GridMenuButtonState extends State<_GridMenuButton> {
-  static const double _menuWidth = 244;
+  static const double _menuWidth = 264;
+  static const double _menuHeight = 110;
   static const double _screenEdgePadding = 12;
+  static const double _menuVerticalOffset = 7;
 
   final LayerLink _layerLink = LayerLink();
 
   OverlayEntry? _menuEntry;
   double _menuDx = 0;
+  Rect? _menuRect;
+  Rect? _buttonRect;
   Offset? _pointerDownPosition;
   int? _trackedPointer;
   bool _isPointerRouteAdded = false;
@@ -505,18 +509,38 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
     final overlayBox = Overlay.of(context).context.findRenderObject() as RenderBox?;
 
     if (buttonBox != null && overlayBox != null) {
-      final buttonPosition = buttonBox.localToGlobal(
+      final buttonOverlayPosition = buttonBox.localToGlobal(
         Offset.zero,
         ancestor: overlayBox,
       );
+      final buttonGlobalPosition = buttonBox.localToGlobal(Offset.zero);
+      final overlayGlobalPosition = overlayBox.localToGlobal(Offset.zero);
 
       final screenWidth = overlayBox.size.width;
       final minX = _screenEdgePadding;
       final maxX = screenWidth - _menuWidth - _screenEdgePadding;
       final safeMaxX = maxX < minX ? minX : maxX;
-      final menuX = buttonPosition.dx.clamp(minX, safeMaxX).toDouble();
+      final menuX = buttonOverlayPosition.dx.clamp(minX, safeMaxX).toDouble();
+      final menuY =
+          buttonOverlayPosition.dy + buttonBox.size.height + _menuVerticalOffset;
 
-      _menuDx = menuX - buttonPosition.dx;
+      _menuDx = menuX - buttonOverlayPosition.dx;
+      _buttonRect = Rect.fromLTWH(
+        buttonGlobalPosition.dx,
+        buttonGlobalPosition.dy,
+        buttonBox.size.width,
+        buttonBox.size.height,
+      );
+      _menuRect = Rect.fromLTWH(
+        overlayGlobalPosition.dx + menuX,
+        overlayGlobalPosition.dy + menuY,
+        _menuWidth,
+        _menuHeight,
+      );
+    } else {
+      _menuDx = 0;
+      _buttonRect = null;
+      _menuRect = null;
     }
 
     final overlay = Overlay.of(context);
@@ -532,7 +556,7 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
                 showWhenUnlinked: false,
                 targetAnchor: Alignment.bottomLeft,
                 followerAnchor: Alignment.topLeft,
-                offset: Offset(_menuDx, 7),
+                offset: Offset(_menuDx, _menuVerticalOffset),
                 child: _GridFloatingMenu(
                   isFavorite: widget.isFavorite,
                   onSelected: _handleSelected,
@@ -555,6 +579,9 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
   void _hideMenu({bool updateState = true}) {
     _menuEntry?.remove();
     _menuEntry = null;
+    _menuDx = 0;
+    _menuRect = null;
+    _buttonRect = null;
     _pointerDownPosition = null;
     _trackedPointer = null;
     _removeGlobalPointerRoute();
@@ -587,6 +614,16 @@ class _GridMenuButtonState extends State<_GridMenuButton> {
     if (!_isMenuOpen) return;
 
     if (event is PointerDownEvent) {
+      final menuRect = _menuRect;
+      final buttonRect = _buttonRect;
+      final isInsideMenu = menuRect?.contains(event.position) ?? false;
+      final isInsideButton = buttonRect?.contains(event.position) ?? false;
+
+      if (!isInsideMenu && !isInsideButton) {
+        _hideMenu();
+        return;
+      }
+
       _trackedPointer = event.pointer;
       _pointerDownPosition = event.position;
       return;
@@ -756,7 +793,7 @@ class _GridMenuActionTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          width: 232,
+          width: 252,
           height: 46,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
