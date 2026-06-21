@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/library_game_model.dart';
@@ -412,7 +413,7 @@ class _LibraryInfoPill extends StatelessWidget {
   }
 }
 
-class _CardMenuButton extends StatelessWidget {
+class _CardMenuButton extends StatefulWidget {
   const _CardMenuButton({
     required this.isFavorite,
     required this.onSelected,
@@ -422,27 +423,232 @@ class _CardMenuButton extends StatelessWidget {
   final ValueChanged<String> onSelected;
 
   @override
+  State<_CardMenuButton> createState() => _CardMenuButtonState();
+}
+
+class _CardMenuController {
+  static _CardMenuButtonState? _activeMenu;
+
+  static void open(_CardMenuButtonState menu) {
+    if (_activeMenu == menu) return;
+
+    _activeMenu?._hideMenu();
+    _activeMenu = menu;
+  }
+
+  static void close(_CardMenuButtonState menu) {
+    if (_activeMenu == menu) {
+      _activeMenu = null;
+    }
+  }
+}
+
+class _CardMenuButtonState extends State<_CardMenuButton> {
+  final LayerLink _layerLink = LayerLink();
+
+  OverlayEntry? _menuEntry;
+  Offset? _pointerDownPosition;
+  int? _trackedPointer;
+  bool _isPointerRouteAdded = false;
+
+  bool get _isMenuOpen => _menuEntry != null;
+
+  void _toggleMenu() {
+    if (_isMenuOpen) {
+      _hideMenu();
+      return;
+    }
+
+    _showMenu();
+  }
+
+  void _showMenu() {
+    _CardMenuController.open(this);
+
+    final overlay = Overlay.of(context);
+
+    _menuEntry = OverlayEntry(
+      builder: (context) {
+        return Positioned.fill(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CompositedTransformFollower(
+                link: _layerLink,
+                showWhenUnlinked: false,
+                targetAnchor: Alignment.bottomRight,
+                followerAnchor: Alignment.topRight,
+                offset: const Offset(0, 6),
+                child: _CardFloatingMenu(
+                  isFavorite: widget.isFavorite,
+                  onSelected: _handleSelected,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    overlay.insert(_menuEntry!);
+    _addGlobalPointerRoute();
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _hideMenu({bool updateState = true}) {
+    _menuEntry?.remove();
+    _menuEntry = null;
+    _pointerDownPosition = null;
+    _trackedPointer = null;
+    _removeGlobalPointerRoute();
+    _CardMenuController.close(this);
+
+    if (updateState && mounted) {
+      setState(() {});
+    }
+  }
+
+  void _addGlobalPointerRoute() {
+    if (_isPointerRouteAdded) return;
+
+    GestureBinding.instance.pointerRouter.addGlobalRoute(
+      _handleGlobalPointerEvent,
+    );
+    _isPointerRouteAdded = true;
+  }
+
+  void _removeGlobalPointerRoute() {
+    if (!_isPointerRouteAdded) return;
+
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(
+      _handleGlobalPointerEvent,
+    );
+    _isPointerRouteAdded = false;
+  }
+
+  void _handleGlobalPointerEvent(PointerEvent event) {
+    if (!_isMenuOpen) return;
+
+    if (event is PointerDownEvent) {
+      _trackedPointer = event.pointer;
+      _pointerDownPosition = event.position;
+      return;
+    }
+
+    if (event is PointerMoveEvent && event.pointer == _trackedPointer) {
+      final startPosition = _pointerDownPosition;
+
+      if (startPosition == null) return;
+
+      final distance = (event.position - startPosition).distance;
+
+      if (distance >= 7) {
+        _hideMenu();
+      }
+
+      return;
+    }
+
+    if ((event is PointerUpEvent || event is PointerCancelEvent) &&
+        event.pointer == _trackedPointer) {
+      _trackedPointer = null;
+      _pointerDownPosition = null;
+    }
+  }
+
+  void _handleSelected(String value) {
+    _hideMenu();
+    widget.onSelected(value);
+  }
+
+  @override
+  void didUpdateWidget(covariant _CardMenuButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.isFavorite != widget.isFavorite) {
+      _menuEntry?.markNeedsBuild();
+    }
+  }
+
+  @override
+  void dispose() {
+    _hideMenu(updateState: false);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      color: const Color(0xFF111414),
-      elevation: 14,
-      offset: const Offset(0, 38),
-      constraints: const BoxConstraints(
-        minWidth: 228,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(
-          color: Color(0x2932B8C6),
+    final Color borderColor = _isMenuOpen
+        ? const Color(0x6675EEFD)
+        : Colors.white.withOpacity(0.08);
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggleMenu,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: const Color(0x99111414),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: borderColor,
+            ),
+          ),
+          child: const Icon(
+            Icons.more_horiz_rounded,
+            color: Color(0xFFF4F3F3),
+            size: 22,
+          ),
         ),
       ),
-      onSelected: onSelected,
-      itemBuilder: (context) {
-        return [
-          PopupMenuItem<String>(
-            value: 'favorite',
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-            child: _CardMenuActionTile(
+    );
+  }
+}
+
+class _CardFloatingMenu extends StatelessWidget {
+  const _CardFloatingMenu({
+    required this.isFavorite,
+    required this.onSelected,
+  });
+
+  final bool isFavorite;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111414),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: const Color(0x2932B8C6),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.32),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _CardMenuActionTile(
               icon: isFavorite
                   ? Icons.favorite_rounded
                   : Icons.favorite_border_rounded,
@@ -452,35 +658,18 @@ class _CardMenuButton extends StatelessWidget {
               color: const Color(0xFF75EEFD),
               backgroundColor: const Color(0xFF081F23),
               borderColor: const Color(0x5532B8C6),
+              onTap: () => onSelected('favorite'),
             ),
-          ),
-          const PopupMenuItem<String>(
-            value: 'delete',
-            padding: EdgeInsets.fromLTRB(8, 4, 8, 8),
-            child: _CardMenuActionTile(
+            const SizedBox(height: 4),
+            _CardMenuActionTile(
               icon: Icons.delete_outline_rounded,
               title: 'Удалить из библиотеки',
-              color: Color(0xFFFF7A7A),
-              backgroundColor: Color(0xFF251818),
-              borderColor: Color(0x55FF7A7A),
+              color: const Color(0xFFFF7A7A),
+              backgroundColor: const Color(0xFF251818),
+              borderColor: const Color(0x55FF7A7A),
+              onTap: () => onSelected('delete'),
             ),
-          ),
-        ];
-      },
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: const Color(0x99111414),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withOpacity(0.08),
-          ),
-        ),
-        child: const Icon(
-          Icons.more_horiz_rounded,
-          color: Color(0xFFF4F3F3),
-          size: 22,
+          ],
         ),
       ),
     );
@@ -494,6 +683,7 @@ class _CardMenuActionTile extends StatelessWidget {
     required this.color,
     required this.backgroundColor,
     required this.borderColor,
+    required this.onTap,
   });
 
   final IconData icon;
@@ -501,41 +691,50 @@ class _CardMenuActionTile extends StatelessWidget {
   final Color color;
   final Color backgroundColor;
   final Color borderColor;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 42,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: borderColor,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
+    return Material(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 192,
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: borderColor,
             ),
           ),
-        ],
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 17,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12.5,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
