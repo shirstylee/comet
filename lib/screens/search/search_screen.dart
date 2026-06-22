@@ -560,32 +560,44 @@ class _NoResultsState extends StatelessWidget {
           const _ResultsTitle(
             count: 0,
           ),
-          const SizedBox(height: 96),
-          Icon(
-            Icons.manage_search_rounded,
-            color: const Color(0xFFAAABAB).withOpacity(0.3),
-            size: 76,
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Ничего не найдено',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFFF4F3F3),
-              fontSize: 24,
-              height: 1.25,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'По запросу "$query" ничего не найдено.\nПопробуйте изменить название игры.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 16,
-              height: 1.5,
-              fontWeight: FontWeight.w400,
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.manage_search_rounded,
+                      color: const Color(0xFFAAABAB).withOpacity(0.3),
+                      size: 76,
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      'Ничего не найдено',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFF4F3F3),
+                        fontSize: 24,
+                        height: 1.25,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'По запросу "$query" ничего не найдено.\n'
+                          'Попробуйте изменить название игры.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFFAAABAB),
+                        fontSize: 16,
+                        height: 1.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
