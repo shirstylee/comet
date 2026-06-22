@@ -181,7 +181,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-class _SearchHeader extends StatelessWidget {
+class _SearchHeader extends StatefulWidget {
   const _SearchHeader({
     required this.controller,
     required this.onBack,
@@ -192,14 +192,70 @@ class _SearchHeader extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onClear;
 
+  @override
+  State<_SearchHeader> createState() => _SearchHeaderState();
+}
+
+class _SearchHeaderState extends State<_SearchHeader> {
+  final FocusNode focusNode = FocusNode();
+
   static const Color headerColor = Color(0xCC0C0F0F);
-  static const Color fieldColor = Color(0xFF1D2020);
   static const Color borderColor = Color(0xFF232626);
   static const Color textPrimary = Color(0xFFF4F3F3);
   static const Color textSecondary = Color(0xFFAAABAB);
 
   @override
+  void initState() {
+    super.initState();
+
+    focusNode.addListener(_onFocusChanged);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _SearchHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+    }
+  }
+
+  void _onFocusChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  void _onTextChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  void _focusSearch() {
+    focusNode.requestFocus();
+  }
+
+  void _clearSearch() {
+    widget.onClear();
+    focusNode.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    focusNode.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isFocused = focusNode.hasFocus;
+    final hasText = widget.controller.text.isNotEmpty;
+
     return SafeArea(
       bottom: false,
       child: Container(
@@ -217,7 +273,7 @@ class _SearchHeader extends StatelessWidget {
         child: Row(
           children: [
             GestureDetector(
-              onTap: onBack,
+              onTap: widget.onBack,
               child: Container(
                 width: 38,
                 height: 38,
@@ -237,52 +293,163 @@ class _SearchHeader extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: fieldColor,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search_rounded,
-                      color: textSecondary,
-                      size: 24,
+              child: TextFieldTapRegion(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  height: 42,
+                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isFocused
+                          ? const [
+                        Color(0xFF111C1D),
+                        Color(0xFF1B2424),
+                        Color(0xFF102B2F),
+                      ]
+                          : const [
+                        Color(0xFF151A1A),
+                        Color(0xFF202424),
+                        Color(0xFF141A1A),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        autofocus: true,
-                        cursorColor: const Color(0xFF75EEFD),
-                        textInputAction: TextInputAction.search,
-                        style: const TextStyle(
-                          color: textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: isFocused
+                          ? const Color(0x8875EEFD)
+                          : const Color(0x5532B8C6),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.30),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFF75EEFD).withOpacity(
+                          isFocused ? 0.12 : 0.055,
                         ),
-                        decoration: const InputDecoration(
-                          hintText: 'Начните вводить название',
-                          border: InputBorder.none,
-                          isCollapsed: true,
-                          hintStyle: TextStyle(
-                            color: textSecondary,
-                            fontSize: 16,
+                        blurRadius: isFocused ? 22 : 16,
+                        spreadRadius: isFocused ? 0.4 : 0,
+                        offset: const Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _focusSearch,
+                        behavior: HitTestBehavior.opaque,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: isFocused
+                                ? const Color(0x2275EEFD)
+                                : const Color(0x1022D3EE),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: isFocused
+                                  ? const Color(0x7775EEFD)
+                                  : const Color(0x4432B8C6),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: isFocused
+                                ? const Color(0xFF75EEFD)
+                                : const Color(0xFFAAABAB),
+                            size: 20,
                           ),
                         ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: onClear,
-                      child: const Icon(
-                        Icons.close_rounded,
-                        color: textSecondary,
-                        size: 26,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          focusNode: focusNode,
+                          controller: widget.controller,
+                          autofocus: true,
+                          cursorColor: const Color(0xFF75EEFD),
+                          textInputAction: TextInputAction.search,
+                          onTapOutside: (_) {
+                            focusNode.unfocus();
+                          },
+                          style: const TextStyle(
+                            color: textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.1,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Начните вводить название',
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            hintStyle: TextStyle(
+                              color: textSecondary.withOpacity(0.72),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 160),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: hasText
+                            ? Padding(
+                          key: const ValueKey('clear_search_screen_button'),
+                          padding: const EdgeInsets.only(left: 8),
+                          child: GestureDetector(
+                            onTap: _clearSearch,
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: const Color(0x1A75EEFD),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: const Color(0x5575EEFD),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF75EEFD)
+                                        .withOpacity(0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Color(0xFF75EEFD),
+                                size: 17,
+                              ),
+                            ),
+                          ),
+                        )
+                            : const SizedBox.shrink(
+                          key: ValueKey('empty_clear_search_screen_button'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
