@@ -284,13 +284,26 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text(
-                'Отмена',
-                style: TextStyle(
-                  color: Color(0xFFAAABAB),
-                  fontWeight: FontWeight.w800,
+            SizedBox(
+              height: 40,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFF081F23),
+                  side: const BorderSide(
+                    color: Color(0x6632B8C6),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                ),
+                child: const Text(
+                  'Отмена',
+                  style: TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ),
@@ -845,10 +858,10 @@ class _RatingSection extends StatelessWidget {
 
   final GameModel game;
 
-  static const Color excellentColor = Color(0xFF7ED321);
-  static const Color recommendedColor = Color(0xFF4F7BDB);
-  static const Color normalColor = Color(0xFFFFA33A);
-  static const Color terribleColor = Color(0xFFFF3048);
+  static const Color excellentColor = Color(0xFF75EEFD);
+  static const Color recommendedColor = Color(0xFFFACC15);
+  static const Color normalColor = Color(0xFFF97316);
+  static const Color terribleColor = Color(0xFFEF4444);
 
   List<_RawgRatingItem> get ratingItems {
     final source = game.ratings;
@@ -1073,10 +1086,10 @@ class _RatingSection extends StatelessWidget {
     final items = ratingItems;
     final infoPills = [
       game.genre.trim().isEmpty ? 'Не указан' : game.genre,
-      featureText,
-      playTypeText,
       franchiseText,
+      playTypeText,
       rawgRatingText,
+      featureText,
       topChipText,
     ];
 
@@ -1210,29 +1223,31 @@ class _RawgColorScale extends StatelessWidget {
 
     final useCount = segments.any((item) => item.count > 0);
 
-    return Container(
-      width: double.infinity,
-      height: 20,
-      decoration: BoxDecoration(
-        color: const Color(0xFF081F23),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
-      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
       clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: segments.map((item) {
-          return Flexible(
-            flex: _flexOf(item, useCount),
-            fit: FlexFit.tight,
-            child: SizedBox.expand(
-              child: ColoredBox(
-                color: item.color,
+      child: Container(
+        width: double.infinity,
+        height: 20,
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.05),
+          ),
+        ),
+        child: Row(
+          children: segments.map((item) {
+            return Flexible(
+              flex: _flexOf(item, useCount),
+              fit: FlexFit.tight,
+              child: SizedBox.expand(
+                child: ColoredBox(
+                  color: item.color,
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
