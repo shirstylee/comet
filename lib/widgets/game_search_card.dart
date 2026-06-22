@@ -493,7 +493,7 @@ class _GameInfoBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: compact ? 24 : 30,
+      height: compact ? 26 : 30,
       width: double.infinity,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -528,9 +528,9 @@ class _GameInfoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 24 : 30,
+      height: compact ? 26 : 30,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 13,
+        horizontal: compact ? 9 : 13,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFF081F23),
@@ -547,10 +547,10 @@ class _GameInfoBadge extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: const Color(0xFF75EEFD),
-          fontSize: compact ? 10 : 12,
-          height: 1.2,
+          fontSize: compact ? 11 : 12,
+          height: compact ? 1.15 : 1.2,
           fontWeight: FontWeight.w900,
-          letterSpacing: 0.6,
+          letterSpacing: compact ? -0.1 : 0.6,
         ),
       ),
     );
