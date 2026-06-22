@@ -1491,7 +1491,7 @@ class _MetaCard extends StatelessWidget {
   }
 
   bool _isValueOverflowing(BuildContext context, TextStyle style) {
-    final maxWidth = _cardWidth - (_horizontalPadding * 2);
+    final maxWidth = _cardWidth - (_horizontalPadding * 2) - 6;
 
     final painter = TextPainter(
       text: TextSpan(
@@ -1499,17 +1499,25 @@ class _MetaCard extends StatelessWidget {
         style: style,
       ),
       maxLines: _valueMaxLines,
-      ellipsis: '…',
       textDirection: Directionality.of(context),
     )..layout(maxWidth: maxWidth);
 
     return painter.didExceedMaxLines || painter.height > _valueBoxHeight;
   }
 
+  bool _looksLongForExpandableCard() {
+    if (!_hasExpandableValue()) return false;
+
+    final cleanValue = value.trim();
+
+    return cleanValue.length > 20 ||
+        (cleanValue.contains(',') && cleanValue.length > 14);
+  }
+
   bool _canShowFullInfo(bool isOverflowing) {
     if (!_hasExpandableValue()) return false;
 
-    return isOverflowing;
+    return isOverflowing || _looksLongForExpandableCard();
   }
 
   void _showFullInfo(BuildContext context) {
@@ -1666,8 +1674,8 @@ class _MetaCard extends StatelessWidget {
             Positioned(
               left: _horizontalPadding,
               right: _horizontalPadding,
-              top: 51,
-              height: 18,
+              top: 49,
+              height: 22,
               child: Center(
                 child: Text(
                   title,
@@ -1676,10 +1684,10 @@ class _MetaCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFFAAABAB),
-                    fontSize: 13.2,
-                    height: 1.1,
+                    fontSize: 14.4,
+                    height: 1.05,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.2,
+                    letterSpacing: 0.05,
                   ),
                 ),
               ),
