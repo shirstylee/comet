@@ -1390,7 +1390,7 @@ class _MetaCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 132,
+      height: 136,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -1458,29 +1458,66 @@ class _MetaCard extends StatelessWidget {
   final bool wide;
   final bool showFullOnTap;
 
-  bool _isFullInfoAllowed(bool isOverflowing) {
+  double get _cardWidth => wide ? 152 : 118;
+  double get _cardHeight => 136;
+  double get _horizontalPadding => 12;
+  double get _valueBoxHeight => 42;
+  int get _valueMaxLines => showFullOnTap ? 2 : 1;
+
+  TextStyle _valueStyle(Color color) {
+    final fontSize = showFullOnTap
+        ? 14.0
+        : highlighted
+        ? 22.0
+        : 16.0;
+
+    return TextStyle(
+      color: color,
+      fontSize: fontSize,
+      height: 1.08,
+      fontWeight: FontWeight.w900,
+    );
+  }
+
+  bool _hasExpandableValue() {
     if (!showFullOnTap) return false;
-    if (!isOverflowing) return false;
-    if (value.trim().isEmpty) return false;
-    if (value == 'Не указан' || value == 'Не указаны') return false;
+
+    final cleanValue = value.trim();
+
+    if (cleanValue.isEmpty) return false;
+    if (cleanValue == 'Не указан' || cleanValue == 'Не указаны') return false;
 
     return true;
   }
 
   bool _isValueOverflowing(BuildContext context, TextStyle style) {
-    final maxWidth = (wide ? 152.0 : 118.0) - 24;
-    final maxLines = wide ? 2 : 1;
+    final maxWidth = _cardWidth - (_horizontalPadding * 2) - 6;
 
     final painter = TextPainter(
       text: TextSpan(
         text: value,
         style: style,
       ),
-      maxLines: maxLines,
+      maxLines: _valueMaxLines,
       textDirection: Directionality.of(context),
     )..layout(maxWidth: maxWidth);
 
-    return painter.didExceedMaxLines;
+    return painter.didExceedMaxLines || painter.height > _valueBoxHeight;
+  }
+
+  bool _looksLongForExpandableCard() {
+    if (!_hasExpandableValue()) return false;
+
+    final cleanValue = value.trim();
+
+    return cleanValue.length > 20 ||
+        (cleanValue.contains(',') && cleanValue.length > 14);
+  }
+
+  bool _canShowFullInfo(bool isOverflowing) {
+    if (!_hasExpandableValue()) return false;
+
+    return isOverflowing || _looksLongForExpandableCard();
   }
 
   void _showFullInfo(BuildContext context) {
@@ -1538,6 +1575,9 @@ class _MetaCard extends StatelessWidget {
           ),
           content: Container(
             width: double.maxFinite,
+            constraints: const BoxConstraints(
+              maxHeight: 240,
+            ),
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             decoration: BoxDecoration(
               color: const Color(0xFF081F23),
@@ -1594,76 +1634,102 @@ class _MetaCard extends StatelessWidget {
     final Color valueColor =
     highlighted ? const Color(0xFFBBFFB3) : const Color(0xFF75EEFD);
 
-    final valueStyle = TextStyle(
-      color: valueColor,
-      fontSize: highlighted ? 20 : 13,
-      height: 1.15,
-      fontWeight: FontWeight.w900,
-    );
-
+    final valueStyle = _valueStyle(valueColor);
     final isOverflowing = _isValueOverflowing(context, valueStyle);
-    final canShowFullInfo = _isFullInfoAllowed(isOverflowing);
+    final canShowFullInfo = _canShowFullInfo(isOverflowing);
 
-    final card = Container(
-      width: wide ? 152 : 118,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF081F23),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0x6632B8C6),
+    final card = SizedBox(
+      width: _cardWidth,
+      height: _cardHeight,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF081F23),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0x6632B8C6),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(0.05),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF75EEFD).withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              color: valueColor,
-              size: 22,
+        child: Stack(
+          children: [
+            Positioned(
+              left: _horizontalPadding,
+              right: _horizontalPadding,
+              top: 15,
+              height: 28,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: valueColor,
+                  size: 25,
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            Positioned(
+              left: _horizontalPadding,
+              right: _horizontalPadding,
+              top: 51,
+              height: 18,
+              child: Center(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFAAABAB),
+                    fontSize: 13.2,
+                    height: 1.1,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: _horizontalPadding,
+              right: _horizontalPadding,
+              top: 76,
+              height: _valueBoxHeight,
+              child: Center(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  maxLines: _valueMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: valueStyle,
+                ),
+              ),
+            ),
+            if (canShowFullInfo)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xCC0C0F0F),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0x6632B8C6),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Color(0xFF75EEFD),
+                    size: 18,
+                  ),
+                ),
+              ),
           ],
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 11,
-              height: 1.1,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.center,
-              maxLines: wide ? 2 : 1,
-              overflow: TextOverflow.ellipsis,
-              style: valueStyle,
-            ),
-          ),
-          if (canShowFullInfo) ...[
-            const SizedBox(height: 4),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Color(0xCC75EEFD),
-              size: 18,
-            ),
-          ],
-        ],
+        ),
       ),
     );
 
