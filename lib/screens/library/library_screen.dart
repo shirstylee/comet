@@ -1141,7 +1141,7 @@ class _LibrarySearchFieldState extends State<_LibrarySearchField> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
         height: 48,
-        padding: const EdgeInsets.fromLTRB(8, 0, 14, 0),
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
