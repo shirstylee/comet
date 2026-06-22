@@ -1041,7 +1041,7 @@ class _RatingSection extends StatelessWidget {
       return 'TOP $yearText';
     }
 
-    return '#$ratingTop TOP $yearText';
+    return '№$ratingTop TOP $yearText';
   }
 
   String _translateTag(String tag) {
@@ -1215,7 +1215,7 @@ class _RawgColorScale extends StatelessWidget {
       height: 20,
       decoration: BoxDecoration(
         color: const Color(0xFF081F23),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: Colors.white.withOpacity(0.05),
         ),
