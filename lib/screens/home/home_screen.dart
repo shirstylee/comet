@@ -432,6 +432,44 @@ class _StatsSection extends StatelessWidget {
   final int playingCount;
   final String averageRating;
 
+  String _gamesWord(int count) {
+    final lastTwoDigits = count % 100;
+    final lastDigit = count % 10;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return 'игр';
+    }
+
+    if (lastDigit == 1) {
+      return 'игра';
+    }
+
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'игры';
+    }
+
+    return 'игр';
+  }
+
+  String _activeWord(int count) {
+    final lastTwoDigits = count % 100;
+    final lastDigit = count % 10;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return 'активных';
+    }
+
+    if (lastDigit == 1) {
+      return 'активная';
+    }
+
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'активные';
+    }
+
+    return 'активных';
+  }
+
   @override
   Widget build(BuildContext context) {
     final averageRatingValue = double.tryParse(averageRating) ?? 0;
@@ -445,7 +483,7 @@ class _StatsSection extends StatelessWidget {
               child: _StatCard(
                 title: 'ПРОЙДЕНО',
                 value: '$completedCount',
-                subtitle: 'игры',
+                subtitle: _gamesWord(completedCount),
                 color: const Color(0xFFBBFFB3),
               ),
             ),
@@ -454,7 +492,7 @@ class _StatsSection extends StatelessWidget {
               child: _StatCard(
                 title: 'ИГРАЮ',
                 value: '$playingCount',
-                subtitle: 'активных',
+                subtitle: _activeWord(playingCount),
                 color: const Color(0xFF61ACFE),
               ),
             ),
@@ -578,19 +616,14 @@ class _StatCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Padding(
-                padding: EdgeInsets.only(
-                  bottom: subtitle == '★' ? 0.0 : 5.0,
-                ),
-                child: Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: subtitle == '★'
-                        ? color
-                        : const Color(0xFFAAABAB),
-                    fontSize: subtitle == '★' ? 24 : 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: subtitle == '★'
+                      ? color
+                      : const Color(0xFFAAABAB),
+                  fontSize: subtitle == '★' ? 24 : 14,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
