@@ -1,3 +1,17 @@
+class GameRatingModel {
+  const GameRatingModel({
+    required this.id,
+    required this.title,
+    required this.count,
+    required this.percent,
+  });
+
+  final int id;
+  final String title;
+  final int count;
+  final double percent;
+}
+
 class GameModel {
   const GameModel({
     required this.id,
@@ -18,6 +32,10 @@ class GameModel {
     this.website,
     this.trailerUrl,
     this.screenshots = const [],
+    this.ratings = const [],
+    this.tags = const [],
+    this.franchise,
+    this.ratingTop,
   });
 
   final int id;
@@ -39,6 +57,10 @@ class GameModel {
   final String? website;
   final String? trailerUrl;
   final List<String> screenshots;
+  final List<GameRatingModel> ratings;
+  final List<String> tags;
+  final String? franchise;
+  final int? ratingTop;
 
   GameModel copyWith({
     int? id,
@@ -59,6 +81,10 @@ class GameModel {
     String? website,
     String? trailerUrl,
     List<String>? screenshots,
+    List<GameRatingModel>? ratings,
+    List<String>? tags,
+    String? franchise,
+    int? ratingTop,
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -79,6 +105,10 @@ class GameModel {
       website: website ?? this.website,
       trailerUrl: trailerUrl ?? this.trailerUrl,
       screenshots: screenshots ?? this.screenshots,
+      ratings: ratings ?? this.ratings,
+      tags: tags ?? this.tags,
+      franchise: franchise ?? this.franchise,
+      ratingTop: ratingTop ?? this.ratingTop,
     );
   }
 }

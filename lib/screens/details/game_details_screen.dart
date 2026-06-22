@@ -369,7 +369,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                               ? _openGameProgressScreen
                               : _addGameToLibrary,
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
                         _TrailerButton(
                           hasTrailer: hasTrailer,
                           onTap: hasTrailer ? _openTrailer : null,
@@ -512,9 +512,11 @@ class _HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topHeaderHeight = MediaQuery.paddingOf(context).top + 64;
+
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.only(top: 115),
+        padding: EdgeInsets.only(top: topHeaderHeight),
         child: SizedBox(
           height: 320,
           child: ClipRRect(
@@ -585,13 +587,26 @@ class _GenreBadges extends StatelessWidget {
 
   final GameModel game;
 
+  String _localizedAge(String text) {
+    final normalized = text.trim().toLowerCase();
+
+    if (normalized == 'everyone') return 'Для всех';
+    if (normalized == 'everyone 10+') return '10+';
+    if (normalized == 'teen') return '13+';
+    if (normalized == 'mature') return '17+';
+    if (normalized == 'adults only') return '18+';
+    if (normalized == 'rating pending') return 'Ожидается';
+
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
     final badges = <String>[
       game.genre,
       ...game.platforms.take(3),
       if (game.esrbRating != null && game.esrbRating!.trim().isNotEmpty)
-        game.esrbRating!,
+        _localizedAge(game.esrbRating!),
     ].where((badge) => badge.trim().isNotEmpty).toList();
 
     return SingleChildScrollView(
@@ -830,12 +845,71 @@ class _RatingSection extends StatelessWidget {
 
   final GameModel game;
 
-  String get ratingLabel {
-    if (game.rating >= 4.6) return 'Исключительно';
-    if (game.rating >= 4.0) return 'Отлично';
-    if (game.rating >= 3.5) return 'Хорошо';
-    if (game.rating > 0) return 'Средне';
-    return 'Нет оценки';
+  static const Color excellentColor = Color(0xFF7ED321);
+  static const Color recommendedColor = Color(0xFF4F7BDB);
+  static const Color normalColor = Color(0xFFFFA33A);
+  static const Color terribleColor = Color(0xFFFF3048);
+
+  List<_RawgRatingItem> get ratingItems {
+    final source = game.ratings;
+
+    if (source.isEmpty) {
+      final excellentPercent = game.rating <= 0
+          ? 0.0
+          : (game.rating / 5 * 100).clamp(0.0, 100.0).toDouble();
+      final otherPercent = (100 - excellentPercent).clamp(0.0, 100.0).toDouble();
+
+      return [
+        _RawgRatingItem(
+          title: 'Отлично',
+          count: game.ratingsCount ?? 0,
+          percent: excellentPercent,
+          color: excellentColor,
+        ),
+        _RawgRatingItem(
+          title: 'Рекомендуют',
+          count: 0,
+          percent: otherPercent,
+          color: recommendedColor,
+        ),
+        const _RawgRatingItem(
+          title: 'Нормально',
+          count: 0,
+          percent: 0,
+          color: normalColor,
+        ),
+        const _RawgRatingItem(
+          title: 'Ужасно',
+          count: 0,
+          percent: 0,
+          color: terribleColor,
+        ),
+      ];
+    }
+
+    final rawMap = {
+      for (final item in source) item.title.trim().toLowerCase(): item,
+    };
+
+    return [
+      _itemFromRawg(rawMap['exceptional'], 'Отлично', excellentColor),
+      _itemFromRawg(rawMap['recommended'], 'Рекомендуют', recommendedColor),
+      _itemFromRawg(rawMap['meh'], 'Нормально', normalColor),
+      _itemFromRawg(rawMap['skip'], 'Ужасно', terribleColor),
+    ];
+  }
+
+  _RawgRatingItem _itemFromRawg(
+      GameRatingModel? raw,
+      String title,
+      Color color,
+      ) {
+    return _RawgRatingItem(
+      title: title,
+      count: raw?.count ?? 0,
+      percent: raw?.percent ?? 0,
+      color: color,
+    );
   }
 
   String get ratingsText {
@@ -845,24 +919,166 @@ class _RatingSection extends StatelessWidget {
       return 'Оценок пока нет';
     }
 
-    return '$count оценок';
+    return '$count ${_ratingsWord(count)}';
   }
 
-  int get positiveFlex {
-    if (game.rating <= 0) return 25;
+  String _ratingsWord(int count) {
+    final lastTwoDigits = count % 100;
+    final lastDigit = count % 10;
 
-    final calculated = (game.rating / 5 * 100).round();
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return 'оценок';
+    }
 
-    if (calculated < 15) return 15;
-    if (calculated > 90) return 90;
+    if (lastDigit == 1) {
+      return 'оценка';
+    }
 
-    return calculated;
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'оценки';
+    }
+
+    return 'оценок';
+  }
+
+  String get mainRatingTitle {
+    final items = ratingItems;
+    final best = items.reduce((a, b) {
+      if (b.count > a.count) return b;
+      if (b.count == a.count && b.percent > a.percent) return b;
+      return a;
+    });
+
+    if (best.count <= 0 && best.percent <= 0) {
+      return 'Нет оценки';
+    }
+
+    return best.title;
+  }
+
+  String get featureText {
+    final tags = game.tags.map((tag) => tag.trim()).where((tag) {
+      return tag.isNotEmpty;
+    }).toList();
+
+    final priority = [
+      'Open World',
+      'Story Rich',
+      'Atmospheric',
+      'Difficult',
+      'Great Soundtrack',
+      'Choices Matter',
+      'Souls-like',
+      'Horror',
+      'Fantasy',
+      'Sci-fi',
+      'Exploration',
+    ];
+
+    for (final preferred in priority) {
+      final found = tags.where((tag) {
+        return tag.toLowerCase() == preferred.toLowerCase();
+      }).toList();
+
+      if (found.isNotEmpty) {
+        return _translateTag(found.first);
+      }
+    }
+
+    if (tags.isNotEmpty) {
+      return _translateTag(tags.first);
+    }
+
+    return 'Особенность не указана';
+  }
+
+  String get playTypeText {
+    final tags = game.tags.map((tag) => tag.trim().toLowerCase()).toList();
+
+    if (tags.any((tag) => tag.contains('singleplayer'))) {
+      return 'Одиночная';
+    }
+
+    if (tags.any((tag) => tag.contains('co-op') || tag.contains('coop'))) {
+      return 'Кооператив';
+    }
+
+    if (tags.any((tag) => tag.contains('multiplayer'))) {
+      return 'Мультиплеер';
+    }
+
+    if (tags.any((tag) => tag == 'pvp')) {
+      return 'PvP';
+    }
+
+    return 'Тип не указан';
+  }
+
+  String get franchiseText {
+    final franchise = game.franchise;
+
+    if (franchise != null && franchise.trim().isNotEmpty) {
+      return franchise;
+    }
+
+    return 'Отдельная игра';
+  }
+
+  String get rawgRatingText {
+    if (game.rating <= 0) {
+      return 'RAWG —';
+    }
+
+    return 'RAWG ${game.rating.toStringAsFixed(1)}';
+  }
+
+  String get topChipText {
+    final year = game.year;
+    final ratingTop = game.ratingTop;
+    final yearText = year == null || year <= 0 ? 'RAWG' : year.toString();
+
+    if (ratingTop == null || ratingTop <= 0) {
+      return 'TOP $yearText';
+    }
+
+    return '#$ratingTop TOP $yearText';
+  }
+
+  String _translateTag(String tag) {
+    final normalized = tag.trim().toLowerCase();
+
+    const translations = {
+      'open world': 'Открытый мир',
+      'story rich': 'Сюжетная',
+      'atmospheric': 'Атмосферная',
+      'difficult': 'Сложная',
+      'great soundtrack': 'Сильный саундтрек',
+      'choices matter': 'Выборы важны',
+      'souls-like': 'Souls-like',
+      'horror': 'Хоррор',
+      'fantasy': 'Фэнтези',
+      'sci-fi': 'Фантастика',
+      'exploration': 'Исследование',
+      'singleplayer': 'Одиночная',
+      'multiplayer': 'Мультиплеер',
+      'co-op': 'Кооператив',
+      'pvp': 'PvP',
+    };
+
+    return translations[normalized] ?? tag;
   }
 
   @override
   Widget build(BuildContext context) {
-    final goodFlex = positiveFlex;
-    final otherFlex = 100 - goodFlex;
+    final items = ratingItems;
+    final infoPills = [
+      game.genre.trim().isEmpty ? 'Не указан' : game.genre,
+      featureText,
+      playTypeText,
+      franchiseText,
+      rawgRatingText,
+      topChipText,
+    ];
 
     return Container(
       width: double.infinity,
@@ -887,7 +1103,7 @@ class _RatingSection extends StatelessWidget {
           Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: ratingLabel),
+                TextSpan(text: mainRatingTitle),
                 const TextSpan(text: '  🎯'),
               ],
             ),
@@ -906,39 +1122,158 @@ class _RatingSection extends StatelessWidget {
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 26),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: goodFlex,
-                  child: const ColoredBox(
-                    color: Color(0xFFBBFFB3),
-                    child: SizedBox(height: 8),
-                  ),
-                ),
-                Expanded(
-                  flex: otherFlex,
-                  child: const ColoredBox(
-                    color: Color(0xFF25B0BE),
-                    child: SizedBox(height: 8),
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: 10),
+          _RawgColorScale(
+            items: items,
           ),
-          const SizedBox(height: 26),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _SmallBadge(text: game.genre),
-              _SmallBadge(text: 'RAWG ${game.rating.toStringAsFixed(1)}'),
-              if (game.year != null) _SmallBadge(text: 'TOP ${game.year}'),
-            ],
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final pillWidth = (constraints.maxWidth - 10) / 2;
+
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: infoPills.map((text) {
+                  return SizedBox(
+                    width: pillWidth,
+                    child: _RatingInfoTile(
+                      value: text,
+                    ),
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RawgRatingItem {
+  const _RawgRatingItem({
+    required this.title,
+    required this.count,
+    required this.percent,
+    required this.color,
+  });
+
+  final String title;
+  final int count;
+  final double percent;
+  final Color color;
+}
+
+class _RawgColorScale extends StatelessWidget {
+  const _RawgColorScale({
+    required this.items,
+  });
+
+  final List<_RawgRatingItem> items;
+
+  List<_RawgRatingItem> get _segments {
+    if (items.isEmpty) {
+      return const [];
+    }
+
+    final countBasedItems = items.where((item) => item.count > 0).toList();
+
+    if (countBasedItems.isNotEmpty) {
+      return countBasedItems;
+    }
+
+    final percentBasedItems = items.where((item) => item.percent > 0).toList();
+
+    if (percentBasedItems.isNotEmpty) {
+      return percentBasedItems;
+    }
+
+    return items;
+  }
+
+  int _flexOf(_RawgRatingItem item, bool useCount) {
+    if (useCount) {
+      return item.count.clamp(1, 10000).toInt();
+    }
+
+    return item.percent.round().clamp(1, 100).toInt();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final segments = _segments;
+
+    if (segments.isEmpty) {
+      return const SizedBox(height: 18);
+    }
+
+    final useCount = segments.any((item) => item.count > 0);
+
+    return Container(
+      width: double.infinity,
+      height: 20,
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: segments.map((item) {
+          return Flexible(
+            flex: _flexOf(item, useCount),
+            fit: FlexFit.tight,
+            child: SizedBox.expand(
+              child: ColoredBox(
+                color: item.color,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _RatingInfoTile extends StatelessWidget {
+  const _RatingInfoTile({
+    required this.value,
+  });
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x6632B8C6),
+          width: 1.1,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          value,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF75EEFD),
+            fontSize: 12,
+            height: 1.2,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.2,
+          ),
+        ),
       ),
     );
   }
@@ -962,6 +1297,21 @@ class _MetaCards extends StatelessWidget {
       }
 
       return year.toString();
+    }
+
+    final parts = released.split('-');
+
+    if (parts.length >= 3) {
+      final year = int.tryParse(parts[0]);
+      final month = int.tryParse(parts[1]);
+      final day = int.tryParse(parts[2]);
+
+      if (year != null && month != null && day != null) {
+        final dayText = day.toString().padLeft(2, '0');
+        final monthText = month.toString().padLeft(2, '0');
+
+        return '$dayText.$monthText.$year';
+      }
     }
 
     return released;
@@ -1003,6 +1353,25 @@ class _MetaCards extends StatelessWidget {
     return '${game.hours} ч.';
   }
 
+  String get ageText {
+    final esrbRating = game.esrbRating;
+
+    if (esrbRating == null || esrbRating.trim().isEmpty) {
+      return 'Не указан';
+    }
+
+    final normalized = esrbRating.trim().toLowerCase();
+
+    if (normalized == 'everyone') return 'Для всех';
+    if (normalized == 'everyone 10+') return '10+';
+    if (normalized == 'teen') return '13+';
+    if (normalized == 'mature') return '17+';
+    if (normalized == 'adults only') return '18+';
+    if (normalized == 'rating pending') return 'Ожидается';
+
+    return esrbRating;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -1034,6 +1403,7 @@ class _MetaCards extends StatelessWidget {
             value: developerText,
             icon: Icons.code_rounded,
             wide: true,
+            showFullOnTap: true,
           ),
           const SizedBox(width: 8),
           _MetaCard(
@@ -1041,11 +1411,12 @@ class _MetaCards extends StatelessWidget {
             value: platformsText,
             icon: Icons.sports_esports_rounded,
             wide: true,
+            showFullOnTap: true,
           ),
           const SizedBox(width: 8),
           _MetaCard(
             title: 'Возраст',
-            value: game.esrbRating ?? 'Не указан',
+            value: ageText,
             icon: Icons.verified_user_outlined,
             wide: true,
           ),
@@ -1062,6 +1433,7 @@ class _MetaCard extends StatelessWidget {
     required this.icon,
     this.highlighted = false,
     this.wide = false,
+    this.showFullOnTap = false,
   });
 
   final String title;
@@ -1069,13 +1441,155 @@ class _MetaCard extends StatelessWidget {
   final IconData? icon;
   final bool highlighted;
   final bool wide;
+  final bool showFullOnTap;
+
+  bool _isFullInfoAllowed(bool isOverflowing) {
+    if (!showFullOnTap) return false;
+    if (!isOverflowing) return false;
+    if (value.trim().isEmpty) return false;
+    if (value == 'Не указан' || value == 'Не указаны') return false;
+
+    return true;
+  }
+
+  bool _isValueOverflowing(BuildContext context, TextStyle style) {
+    final maxWidth = (wide ? 152.0 : 118.0) - 24;
+    final maxLines = wide ? 2 : 1;
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: value,
+        style: style,
+      ),
+      maxLines: maxLines,
+      textDirection: Directionality.of(context),
+    )..layout(maxWidth: maxWidth);
+
+    return painter.didExceedMaxLines;
+  }
+
+  void _showFullInfo(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.72),
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF111414),
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 22),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(
+              color: Color(0x6632B8C6),
+              width: 1.1,
+            ),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+          title: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0x1A75EEFD),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0x3375EEFD),
+                  ),
+                ),
+                child: Icon(
+                  icon ?? Icons.info_outline_rounded,
+                  color: const Color(0xFF75EEFD),
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF4F3F3),
+                    fontSize: 20,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Container(
+            width: double.maxFinite,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF081F23),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: const Color(0x5532B8C6),
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Color(0xFFF4F3F3),
+                  fontSize: 15,
+                  height: 1.45,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF081F23),
+                foregroundColor: const Color(0xFF75EEFD),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 11,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  side: const BorderSide(
+                    color: Color(0x6632B8C6),
+                  ),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Закрыть',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final Color valueColor =
     highlighted ? const Color(0xFFBBFFB3) : const Color(0xFF75EEFD);
 
-    return Container(
+    final valueStyle = TextStyle(
+      color: valueColor,
+      fontSize: highlighted ? 20 : 13,
+      height: 1.15,
+      fontWeight: FontWeight.w900,
+    );
+
+    final isOverflowing = _isValueOverflowing(context, valueStyle);
+    final canShowFullInfo = _isFullInfoAllowed(isOverflowing);
+
+    final card = Container(
       width: wide ? 152 : 118,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
@@ -1123,16 +1637,28 @@ class _MetaCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: wide ? 2 : 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: valueColor,
-                fontSize: highlighted ? 20 : 13,
-                height: 1.15,
-                fontWeight: FontWeight.w900,
-              ),
+              style: valueStyle,
             ),
           ),
+          if (canShowFullInfo) ...[
+            const SizedBox(height: 4),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xCC75EEFD),
+              size: 18,
+            ),
+          ],
         ],
       ),
+    );
+
+    if (!canShowFullInfo) {
+      return card;
+    }
+
+    return GestureDetector(
+      onTap: () => _showFullInfo(context),
+      child: card,
     );
   }
 }
@@ -1341,15 +1867,6 @@ class _ScreenshotsSection extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Нажмите на скриншот, чтобы открыть просмотр',
-          style: TextStyle(
-            color: Color(0xFFAAABAB),
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
         const SizedBox(height: 16),
         if (screenshots.isEmpty)
           Container(
@@ -1494,7 +2011,6 @@ class _ScreenshotViewerScreen extends StatefulWidget {
 class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
   late final PageController pageController;
   late int currentIndex;
-  bool isScreenshotZoomed = false;
 
   @override
   void initState() {
@@ -1521,28 +2037,42 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
         children: [
           PageView.builder(
             controller: pageController,
-            physics: isScreenshotZoomed
-                ? const NeverScrollableScrollPhysics()
-                : const BouncingScrollPhysics(),
             itemCount: widget.screenshots.length,
             onPageChanged: (index) {
               setState(() {
                 currentIndex = index;
-                isScreenshotZoomed = false;
               });
             },
             itemBuilder: (context, index) {
               final screenshot = widget.screenshots[index];
 
-              return _ZoomableScreenshot(
-                imageUrl: screenshot,
-                onZoomChanged: (isZoomed) {
-                  if (isScreenshotZoomed == isZoomed) return;
+              return InteractiveViewer(
+                minScale: 1,
+                maxScale: 5,
+                child: Center(
+                  child: Image.network(
+                    screenshot,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
 
-                  setState(() {
-                    isScreenshotZoomed = isZoomed;
-                  });
-                },
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF75EEFD),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Color(0xFFAAABAB),
+                          size: 46,
+                        ),
+                      );
+                    },
+                  ),
+                ),
               );
             },
           ),
@@ -1620,455 +2150,7 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
               ),
             ),
           ),
-          if (widget.screenshots.length > 1)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 28,
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(widget.screenshots.length, (index) {
-                    final bool isActive = index == currentIndex;
-
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isActive ? 18 : 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? const Color(0xFF75EEFD)
-                            : Colors.white.withOpacity(0.28),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
         ],
-      ),
-    );
-  }
-}
-
-class _ZoomableScreenshot extends StatefulWidget {
-  const _ZoomableScreenshot({
-    required this.imageUrl,
-    required this.onZoomChanged,
-  });
-
-  final String imageUrl;
-  final ValueChanged<bool> onZoomChanged;
-
-  @override
-  State<_ZoomableScreenshot> createState() => _ZoomableScreenshotState();
-}
-
-class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
-  static const double _doubleTapScale = 2.6;
-
-  final TransformationController _controller = TransformationController();
-
-  ImageStream? _imageStream;
-  ImageStreamListener? _imageListener;
-  TapDownDetails? _doubleTapDetails;
-
-  bool _isZoomed = false;
-  bool _isClampingMatrix = false;
-  double? _imageAspectRatio;
-  Size _viewportSize = Size.zero;
-  int _activePointers = 0;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller.addListener(_handleControllerChanged);
-    _resolveImageSize();
-  }
-
-  @override
-  void didUpdateWidget(covariant _ZoomableScreenshot oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.imageUrl != widget.imageUrl) {
-      _resetZoom();
-      _imageAspectRatio = null;
-      _activePointers = 0;
-      _resolveImageSize();
-    }
-  }
-
-  @override
-  void dispose() {
-    _removeImageListener();
-    _controller.removeListener(_handleControllerChanged);
-    _controller.dispose();
-
-    super.dispose();
-  }
-
-  void _resolveImageSize() {
-    _removeImageListener();
-
-    final imageStream = NetworkImage(widget.imageUrl).resolve(
-      const ImageConfiguration(),
-    );
-
-    final listener = ImageStreamListener((imageInfo, _) {
-      final image = imageInfo.image;
-      final width = image.width.toDouble();
-      final height = image.height.toDouble();
-
-      if (!mounted || width <= 0 || height <= 0) return;
-
-      setState(() {
-        _imageAspectRatio = width / height;
-      });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-
-        _clampCurrentMatrix();
-      });
-    });
-
-    _imageStream = imageStream;
-    _imageListener = listener;
-    imageStream.addListener(listener);
-  }
-
-  void _removeImageListener() {
-    final imageStream = _imageStream;
-    final imageListener = _imageListener;
-
-    if (imageStream != null && imageListener != null) {
-      imageStream.removeListener(imageListener);
-    }
-
-    _imageStream = null;
-    _imageListener = null;
-  }
-
-  void _handlePointerDown(PointerDownEvent event) {
-    _activePointers++;
-
-    if (_activePointers >= 2) {
-      widget.onZoomChanged(true);
-    }
-  }
-
-  void _handlePointerUp(PointerUpEvent event) {
-    _activePointers = (_activePointers - 1).clamp(0, 10).toInt();
-    _syncParentSwipeState();
-  }
-
-  void _handlePointerCancel(PointerCancelEvent event) {
-    _activePointers = (_activePointers - 1).clamp(0, 10).toInt();
-    _syncParentSwipeState();
-  }
-
-  void _syncParentSwipeState() {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
-    final shouldLockPageView = currentScale > 1.05 || _activePointers >= 2;
-
-    widget.onZoomChanged(shouldLockPageView);
-  }
-
-  void _saveDoubleTapPosition(TapDownDetails details) {
-    _doubleTapDetails = details;
-  }
-
-  void _handleControllerChanged() {
-    if (_isClampingMatrix) return;
-
-    final isZoomed = _controller.value.getMaxScaleOnAxis() > 1.05;
-
-    if (_isZoomed != isZoomed && mounted) {
-      setState(() {
-        _isZoomed = isZoomed;
-      });
-    }
-
-    widget.onZoomChanged(isZoomed || _activePointers >= 2);
-
-    _clampCurrentMatrix();
-  }
-
-  void _resetZoom() {
-    _isClampingMatrix = true;
-    _controller.value = Matrix4.identity();
-    _isClampingMatrix = false;
-
-    if (_isZoomed && mounted) {
-      setState(() {
-        _isZoomed = false;
-      });
-    }
-
-    widget.onZoomChanged(_activePointers >= 2);
-  }
-
-  void _toggleZoom() {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
-
-    if (currentScale > 1.05) {
-      _resetZoom();
-      return;
-    }
-
-    final tapPosition = _doubleTapDetails?.localPosition ??
-        Offset(
-          _viewportSize.width / 2,
-          _viewportSize.height / 2,
-        );
-
-    final nextMatrix = Matrix4.identity()
-      ..translate(
-        -tapPosition.dx * (_doubleTapScale - 1),
-        -tapPosition.dy * (_doubleTapScale - 1),
-      )
-      ..scale(_doubleTapScale);
-
-    _isClampingMatrix = true;
-    _controller.value = _clampedMatrix(nextMatrix);
-    _isClampingMatrix = false;
-
-    if (!_isZoomed && mounted) {
-      setState(() {
-        _isZoomed = true;
-      });
-    }
-
-    widget.onZoomChanged(true);
-  }
-
-  void _handleInteractionStart(ScaleStartDetails details) {
-    if (_activePointers >= 2) {
-      widget.onZoomChanged(true);
-    }
-  }
-
-  void _handleInteractionUpdate(ScaleUpdateDetails details) {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
-
-    if (currentScale > 1.05 && !_isZoomed && mounted) {
-      setState(() {
-        _isZoomed = true;
-      });
-    }
-
-    widget.onZoomChanged(currentScale > 1.05 || _activePointers >= 2);
-  }
-
-  void _handleInteractionEnd(ScaleEndDetails details) {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
-
-    if (currentScale <= 1.05) {
-      _resetZoom();
-      return;
-    }
-
-    _clampCurrentMatrix();
-    widget.onZoomChanged(true);
-  }
-
-  void _clampCurrentMatrix() {
-    if (_isClampingMatrix || _viewportSize == Size.zero) return;
-
-    final currentMatrix = _controller.value;
-    final clampedMatrix = _clampedMatrix(currentMatrix);
-
-    if (_isSameMatrix(currentMatrix, clampedMatrix)) return;
-
-    _isClampingMatrix = true;
-    _controller.value = clampedMatrix;
-    _isClampingMatrix = false;
-  }
-
-  Matrix4 _clampedMatrix(Matrix4 sourceMatrix) {
-    if (_viewportSize == Size.zero) return sourceMatrix;
-
-    final scale = sourceMatrix.getMaxScaleOnAxis();
-
-    if (scale <= 1.05) {
-      return Matrix4.identity();
-    }
-
-    final imageRect = _calculateImageRect(_viewportSize);
-
-    final scaledImageWidth = imageRect.width * scale;
-    final scaledImageHeight = imageRect.height * scale;
-
-    final matrix = Matrix4.copy(sourceMatrix);
-    final values = matrix.storage;
-
-    final currentDx = values[12];
-    final currentDy = values[13];
-
-    final minDx = _minOffset(
-      viewportLength: _viewportSize.width,
-      imageStart: imageRect.left,
-      imageEnd: imageRect.right,
-      scaledImageLength: scaledImageWidth,
-      scale: scale,
-    );
-    final maxDx = _maxOffset(
-      viewportLength: _viewportSize.width,
-      imageStart: imageRect.left,
-      imageEnd: imageRect.right,
-      scaledImageLength: scaledImageWidth,
-      scale: scale,
-    );
-    final minDy = _minOffset(
-      viewportLength: _viewportSize.height,
-      imageStart: imageRect.top,
-      imageEnd: imageRect.bottom,
-      scaledImageLength: scaledImageHeight,
-      scale: scale,
-    );
-    final maxDy = _maxOffset(
-      viewportLength: _viewportSize.height,
-      imageStart: imageRect.top,
-      imageEnd: imageRect.bottom,
-      scaledImageLength: scaledImageHeight,
-      scale: scale,
-    );
-
-    values[12] = currentDx.clamp(minDx, maxDx).toDouble();
-    values[13] = currentDy.clamp(minDy, maxDy).toDouble();
-
-    return matrix;
-  }
-
-  double _minOffset({
-    required double viewportLength,
-    required double imageStart,
-    required double imageEnd,
-    required double scaledImageLength,
-    required double scale,
-  }) {
-    if (scaledImageLength <= viewportLength) {
-      return (viewportLength - scaledImageLength) / 2 - imageStart * scale;
-    }
-
-    return viewportLength - imageEnd * scale;
-  }
-
-  double _maxOffset({
-    required double viewportLength,
-    required double imageStart,
-    required double imageEnd,
-    required double scaledImageLength,
-    required double scale,
-  }) {
-    if (scaledImageLength <= viewportLength) {
-      return (viewportLength - scaledImageLength) / 2 - imageStart * scale;
-    }
-
-    return -imageStart * scale;
-  }
-
-  bool _isSameMatrix(Matrix4 first, Matrix4 second) {
-    final firstValues = first.storage;
-    final secondValues = second.storage;
-
-    for (var index = 0; index < 16; index++) {
-      if ((firstValues[index] - secondValues[index]).abs() > 0.01) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  Rect _calculateImageRect(Size viewportSize) {
-    final viewportWidth = viewportSize.width;
-    final viewportHeight = viewportSize.height;
-    final imageAspectRatio = _imageAspectRatio ?? (16 / 9);
-    final viewportAspectRatio = viewportWidth / viewportHeight;
-
-    late final double imageWidth;
-    late final double imageHeight;
-
-    if (imageAspectRatio > viewportAspectRatio) {
-      imageWidth = viewportWidth;
-      imageHeight = viewportWidth / imageAspectRatio;
-    } else {
-      imageHeight = viewportHeight;
-      imageWidth = viewportHeight * imageAspectRatio;
-    }
-
-    return Rect.fromLTWH(
-      (viewportWidth - imageWidth) / 2,
-      (viewportHeight - imageHeight) / 2,
-      imageWidth,
-      imageHeight,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: _handlePointerDown,
-      onPointerUp: _handlePointerUp,
-      onPointerCancel: _handlePointerCancel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onDoubleTapDown: _saveDoubleTapPosition,
-        onDoubleTap: _toggleZoom,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            _viewportSize = Size(
-              constraints.maxWidth,
-              constraints.maxHeight,
-            );
-
-            return InteractiveViewer(
-              transformationController: _controller,
-              minScale: 1,
-              maxScale: 5,
-              panEnabled: _isZoomed,
-              scaleEnabled: true,
-              boundaryMargin: EdgeInsets.zero,
-              clipBehavior: Clip.hardEdge,
-              onInteractionStart: _handleInteractionStart,
-              onInteractionUpdate: _handleInteractionUpdate,
-              onInteractionEnd: _handleInteractionEnd,
-              child: SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: Center(
-                  child: Image.network(
-                    widget.imageUrl,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF75EEFD),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Color(0xFFAAABAB),
-                          size: 46,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
       ),
     );
   }

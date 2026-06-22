@@ -79,10 +79,19 @@ class RawgApiService {
       },
     );
 
+    final gameSeriesUri = Uri.https(
+      _baseUrl,
+      '/api/games/${game.id}/game-series',
+      {
+        'key': ApiKeys.rawgApiKey,
+      },
+    );
+
     final responses = await Future.wait<http.Response?>([
       _get(detailsUri),
       _safeGet(moviesUri),
       _safeGet(screenshotsUri),
+      _safeGet(gameSeriesUri),
     ]);
 
     final detailsResponse = responses[0];
@@ -100,9 +109,11 @@ class RawgApiService {
 
     final moviesResponse = responses[1];
     final screenshotsResponse = responses[2];
+    final gameSeriesResponse = responses[3];
 
     String? trailerUrl;
     List<String> screenshots = [];
+    String? franchise;
 
     if (moviesResponse != null && moviesResponse.statusCode == 200) {
       final moviesDecoded = _tryDecodeJsonMap(moviesResponse.body);
@@ -120,11 +131,23 @@ class RawgApiService {
       }
     }
 
+    if (gameSeriesResponse != null && gameSeriesResponse.statusCode == 200) {
+      final gameSeriesDecoded = _tryDecodeJsonMap(gameSeriesResponse.body);
+
+      if (gameSeriesDecoded != null) {
+        franchise = _franchiseFromGameSeriesJson(
+          gameSeriesDecoded,
+          fallbackTitle: game.title,
+        );
+      }
+    }
+
     return _gameFromDetailsJson(
       detailsDecoded,
       fallbackGame: game,
       trailerUrl: trailerUrl,
       screenshots: screenshots,
+      franchise: franchise,
     );
   }
 
@@ -209,6 +232,9 @@ class RawgApiService {
       released: released,
       metacritic: _readNullableInt(json['metacritic']),
       ratingsCount: _readNullableInt(json['ratings_count']),
+      ratingTop: _readNullableInt(json['rating_top']),
+      ratings: _ratingsFromJson(json),
+      tags: _tagsFromJson(json),
     );
   }
 
@@ -217,6 +243,7 @@ class RawgApiService {
         required GameModel fallbackGame,
         required String? trailerUrl,
         required List<String> screenshots,
+        required String? franchise,
       }) {
     final released = _readString(json['released']) ?? fallbackGame.released;
     final year = _yearFromReleasedDate(released);
@@ -248,6 +275,10 @@ class RawgApiService {
       website: _readString(json['website']) ?? fallbackGame.website,
       trailerUrl: trailerUrl ?? fallbackGame.trailerUrl,
       screenshots: screenshots.isEmpty ? fallbackGame.screenshots : screenshots,
+      ratings: _ratingsFromJson(json, fallback: fallbackGame.ratings),
+      tags: _tagsFromJson(json, fallback: fallbackGame.tags),
+      franchise: franchise ?? fallbackGame.franchise,
+      ratingTop: _readNullableInt(json['rating_top']) ?? fallbackGame.ratingTop,
     );
   }
 
@@ -395,6 +426,110 @@ class RawgApiService {
         .where((imageUrl) => imageUrl.trim().isNotEmpty)
         .take(10)
         .toList();
+  }
+
+  List<GameRatingModel> _ratingsFromJson(
+      Map<String, dynamic> json, {
+        List<GameRatingModel> fallback = const [],
+      }) {
+    final rawRatings = json['ratings'];
+
+    if (rawRatings is! List) {
+      return fallback;
+    }
+
+    final ratings = rawRatings.whereType<Map>().map(_mapFromDynamic).map((item) {
+      return GameRatingModel(
+        id: _readInt(item['id']),
+        title: _readString(item['title']) ?? '',
+        count: _readInt(item['count']),
+        percent: _readDouble(item['percent']),
+      );
+    }).where((rating) {
+      return rating.title.trim().isNotEmpty &&
+          (rating.count > 0 || rating.percent > 0);
+    }).toList();
+
+    if (ratings.isEmpty) {
+      return fallback;
+    }
+
+    return ratings;
+  }
+
+  List<String> _tagsFromJson(
+      Map<String, dynamic> json, {
+        List<String> fallback = const [],
+      }) {
+    final rawTags = json['tags'];
+
+    if (rawTags is! List) {
+      return fallback;
+    }
+
+    final tags = rawTags
+        .whereType<Map>()
+        .map(_mapFromDynamic)
+        .map((tag) => _readString(tag['name']) ?? '')
+        .where((name) => name.trim().isNotEmpty)
+        .take(24)
+        .toList();
+
+    if (tags.isEmpty) {
+      return fallback;
+    }
+
+    return tags;
+  }
+
+  String? _franchiseFromGameSeriesJson(
+      Map<String, dynamic> json, {
+        required String fallbackTitle,
+      }) {
+    final results = json['results'];
+
+    if (results is! List || results.isEmpty) {
+      return null;
+    }
+
+    final relatedGames = results
+        .whereType<Map>()
+        .map(_mapFromDynamic)
+        .map((item) => _readString(item['name']) ?? '')
+        .where((name) => name.trim().isNotEmpty)
+        .where((name) => name.trim().toLowerCase() != fallbackTitle.trim().toLowerCase())
+        .toList();
+
+    if (relatedGames.isEmpty) {
+      return null;
+    }
+
+    return _franchiseNameFromTitle(fallbackTitle);
+  }
+
+  String? _franchiseNameFromTitle(String title) {
+    var text = title.trim();
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    text = text.split(RegExp(r'[:–—-]')).first.trim();
+    text = text.replaceAll(
+      RegExp(
+        r'\s+(Remastered|Remake|Definitive Edition|Complete Edition|Game of the Year Edition|GOTY|Enhanced Edition).*$',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    text = text.replaceAll(
+      RegExp(r'\s+(I|II|III|IV|V|VI|VII|VIII|IX|X|\d+)$'),
+      '',
+    );
+
+    text = text.trim();
+
+    return text.isEmpty ? null : text;
   }
 
   String? _cleanDescription(String? description) {
