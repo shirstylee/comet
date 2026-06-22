@@ -599,14 +599,11 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
                   style: TextStyle(
                     color: color,
                     fontSize: 36,
@@ -614,19 +611,22 @@ class _StatCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: subtitle == '★'
-                      ? color
-                      : const Color(0xFFAAABAB),
-                  fontSize: subtitle == '★' ? 24 : 14,
-                  fontWeight: FontWeight.w700,
+                TextSpan(
+                  text: ' $subtitle',
+                  style: TextStyle(
+                    color: subtitle == '★'
+                        ? color
+                        : const Color(0xFFAAABAB),
+                    fontSize: subtitle == '★' ? 24 : 14,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.left,
           ),
         ],
       ),
