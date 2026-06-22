@@ -1491,7 +1491,7 @@ class _MetaCard extends StatelessWidget {
   }
 
   bool _isValueOverflowing(BuildContext context, TextStyle style) {
-    final maxWidth = _cardWidth - (_horizontalPadding * 2) - 6;
+    final maxWidth = _cardWidth - (_horizontalPadding * 2);
 
     final painter = TextPainter(
       text: TextSpan(
@@ -1499,25 +1499,17 @@ class _MetaCard extends StatelessWidget {
         style: style,
       ),
       maxLines: _valueMaxLines,
+      ellipsis: '…',
       textDirection: Directionality.of(context),
     )..layout(maxWidth: maxWidth);
 
     return painter.didExceedMaxLines || painter.height > _valueBoxHeight;
   }
 
-  bool _looksLongForExpandableCard() {
-    if (!_hasExpandableValue()) return false;
-
-    final cleanValue = value.trim();
-
-    return cleanValue.length > 20 ||
-        (cleanValue.contains(',') && cleanValue.length > 14);
-  }
-
   bool _canShowFullInfo(bool isOverflowing) {
     if (!_hasExpandableValue()) return false;
 
-    return isOverflowing || _looksLongForExpandableCard();
+    return isOverflowing;
   }
 
   void _showFullInfo(BuildContext context) {
