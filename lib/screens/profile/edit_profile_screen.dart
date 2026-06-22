@@ -501,7 +501,7 @@ class _InputCounterPill extends StatelessWidget {
   }
 }
 
-class _LabeledInput extends StatelessWidget {
+class _LabeledInput extends StatefulWidget {
   const _LabeledInput({
     required this.label,
     required this.controller,
@@ -521,14 +521,68 @@ class _LabeledInput extends StatelessWidget {
   final String? counterText;
 
   @override
+  State<_LabeledInput> createState() => _LabeledInputState();
+}
+
+class _LabeledInputState extends State<_LabeledInput> {
+  final FocusNode focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+
+    focusNode.addListener(_onFocusChanged);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LabeledInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+    }
+  }
+
+  void _onFocusChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  void _onTextChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  void _clearText() {
+    widget.controller.clear();
+    widget.onChanged('');
+    focusNode.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    focusNode.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isFocused = focusNode.hasFocus;
+    final hasText = widget.controller.text.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(
-            label,
+            widget.label,
             style: const TextStyle(
               color: Color(0xFFAAABAB),
               fontSize: 12,
@@ -539,46 +593,142 @@ class _LabeledInput extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          height: 55,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF232626),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  maxLength: maxLength,
-                  onChanged: onChanged,
-                  onTapOutside: (_) {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                  },
-                  cursorColor: const Color(0xFF75EEFD),
-                  scrollPadding: EdgeInsets.zero,
-                  style: const TextStyle(
-                    color: Color(0xFFF4F3F3),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+        TextFieldTapRegion(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            height: 55,
+            padding: const EdgeInsets.fromLTRB(18, 0, 8, 0),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isFocused
+                    ? const [
+                  Color(0xFF111C1D),
+                  Color(0xFF1B2424),
+                  Color(0xFF102B2F),
+                ]
+                    : const [
+                  Color(0xFF151A1A),
+                  Color(0xFF202424),
+                  Color(0xFF141A1A),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isFocused
+                    ? const Color(0x8875EEFD)
+                    : const Color(0x5532B8C6),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.34),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF75EEFD).withOpacity(
+                    isFocused ? 0.12 : 0.055,
                   ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    counterText: '',
-                    border: InputBorder.none,
-                    hintStyle: TextStyle(
-                      color: const Color(0xFFAAABAB).withOpacity(0.5),
+                  blurRadius: isFocused ? 26 : 18,
+                  spreadRadius: isFocused ? 0.6 : 0,
+                  offset: const Offset(0, 0),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    focusNode: focusNode,
+                    controller: widget.controller,
+                    maxLength: widget.maxLength,
+                    onChanged: widget.onChanged,
+                    onTapOutside: (_) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
+                    cursorColor: const Color(0xFF75EEFD),
+                    scrollPadding: EdgeInsets.zero,
+                    style: const TextStyle(
+                      color: Color(0xFFF4F3F3),
                       fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.1,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: widget.hint,
+                      counterText: '',
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                      hintStyle: TextStyle(
+                        color: const Color(0xFFAAABAB).withOpacity(0.72),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.1,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              if (showCounter)
-                _InputCounterPill(
-                  text: counterText ?? '',
+                if (widget.showCounter) ...[
+                  const SizedBox(width: 8),
+                  _InputCounterPill(
+                    text: widget.counterText ?? '',
+                  ),
+                ],
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 160),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: animation,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: hasText
+                      ? Padding(
+                    key: const ValueKey('clear_profile_input_button'),
+                    padding: const EdgeInsets.only(left: 10),
+                    child: GestureDetector(
+                      onTap: _clearText,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0x1A75EEFD),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: const Color(0x5575EEFD),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF75EEFD)
+                                  .withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF75EEFD),
+                          size: 19,
+                        ),
+                      ),
+                    ),
+                  )
+                      : const SizedBox.shrink(
+                    key: ValueKey('empty_clear_profile_input_button'),
+                  ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
