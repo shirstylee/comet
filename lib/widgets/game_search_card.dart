@@ -217,6 +217,7 @@ class _GameSearchCardState extends State<GameSearchCard>
     FocusManager.instance.primaryFocus?.unfocus();
 
     final pageContext = context;
+    final containsGameFuture = LibraryStorage.containsGame(game.id);
 
     showModalBottomSheet(
       context: pageContext,
@@ -224,7 +225,7 @@ class _GameSearchCardState extends State<GameSearchCard>
       barrierColor: Colors.black.withOpacity(0.55),
       builder: (bottomSheetContext) {
         return FutureBuilder<bool>(
-          future: LibraryStorage.containsGame(game.id),
+          future: containsGameFuture,
           builder: (sheetContext, snapshot) {
             final bool isInLibrary = snapshot.data ?? false;
             final bool isLoading =
@@ -235,16 +236,30 @@ class _GameSearchCardState extends State<GameSearchCard>
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111414),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF151A1A),
+                      Color(0xFF202424),
+                      Color(0xFF141A1A),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.06),
+                    color: const Color(0x5532B8C6),
+                    width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: accent.withOpacity(0.16),
-                      blurRadius: 32,
-                      offset: const Offset(0, 12),
+                      color: Colors.black.withOpacity(0.32),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: accent.withOpacity(0.075),
+                      blurRadius: 22,
+                      offset: const Offset(0, 0),
                     ),
                   ],
                 ),
@@ -257,38 +272,50 @@ class _GameSearchCardState extends State<GameSearchCard>
                         width: 44,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: textSecondary.withOpacity(0.35),
+                          color: const Color(0xFF75EEFD).withOpacity(0.28),
                           borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accent.withOpacity(0.12),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           _SmallCover(
                             imageUrl: game.imageUrl,
                           ),
                           const SizedBox(width: 14),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  game.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: textPrimary,
-                                    fontSize: 18,
-                                    height: 1.2,
-                                    fontWeight: FontWeight.w800,
+                            child: SizedBox(
+                              height: 70,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    game.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: textPrimary,
+                                      fontSize: 18,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 6),
-                                _GameInfoBadges(
-                                  yearText: yearText,
-                                  genreText: genreText,
-                                ),
-                              ],
+                                  _GameInfoBadges(
+                                    yearText: yearText,
+                                    genreText: genreText,
+                                    compact: true,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -297,8 +324,6 @@ class _GameSearchCardState extends State<GameSearchCard>
                       _BottomSheetActionButton(
                         text: isInLibrary
                             ? 'Открыть в коллекции'
-                            : isLoading
-                            ? 'Проверяем коллекцию...'
                             : 'Добавить в коллекцию',
                         icon: isInLibrary
                             ? Icons.folder_open_rounded
