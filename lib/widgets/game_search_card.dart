@@ -342,8 +342,22 @@ class _GameSearchCardState extends State<GameSearchCard>
       child: Container(
         height: 160,
         decoration: BoxDecoration(
-          color: cardColor,
+          color: const Color(0xFF081F23),
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withOpacity(0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0x5532B8C6),
+            width: 1.1,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Row(
