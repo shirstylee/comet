@@ -1614,18 +1614,39 @@ class _AllRatingsScreen extends StatefulWidget {
 class _AllRatingsScreenState extends State<_AllRatingsScreen> {
   late List<LibraryGameModel> games;
 
+  final TextEditingController searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
 
     games = [...widget.games];
     LibraryChangeNotifier.version.addListener(_onLibraryChanged);
+    searchController.addListener(_onSearchChanged);
   }
 
   void _onLibraryChanged() {
     if (!mounted) return;
 
     _loadRatedGames();
+  }
+
+  void _onSearchChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  List<LibraryGameModel> get filteredGames {
+    final query = searchController.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return games;
+    }
+
+    return games.where((game) {
+      return game.title.trim().toLowerCase().contains(query);
+    }).toList();
   }
 
   Future<void> _loadRatedGames() async {
@@ -1667,11 +1688,15 @@ class _AllRatingsScreenState extends State<_AllRatingsScreen> {
   @override
   void dispose() {
     LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
+    searchController.removeListener(_onSearchChanged);
+    searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final visibleGames = filteredGames;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0C0F0F),
       body: SafeArea(
@@ -1680,33 +1705,49 @@ class _AllRatingsScreenState extends State<_AllRatingsScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: _AllRatingsHero(
-                  count: games.length,
-                  averageRating: averageRating,
-                  onBack: () => Navigator.pop(context),
+                child: Column(
+                  children: [
+                    _AllRatingsHero(
+                      count: games.length,
+                      averageRating: averageRating,
+                      onBack: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(height: 18),
+                    _RatingsSearchField(
+                      controller: searchController,
+                    ),
+                  ],
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
-              sliver: SliverList.separated(
-                itemCount: games.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, index) {
-                  final game = games[index];
-                  final rating = widget.ratingOutOfTen(game.userRating);
+            if (visibleGames.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(24, 56, 24, 120),
+                  child: _RatingsNothingFoundState(),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+                sliver: SliverList.separated(
+                  itemCount: visibleGames.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final game = visibleGames[index];
+                    final rating = widget.ratingOutOfTen(game.userRating);
 
-                  return _AllRatingCard(
-                    game: game,
-                    rating: rating,
-                    dateText: widget.formattedDate(widget.ratingDate(game)),
-                    color: widget.ratingColor(rating),
-                    quality: widget.ratingQuality(rating),
-                    onTap: () => _openGame(game),
-                  );
-                },
+                    return _AllRatingCard(
+                      game: game,
+                      rating: rating,
+                      dateText: widget.formattedDate(widget.ratingDate(game)),
+                      color: widget.ratingColor(rating),
+                      quality: widget.ratingQuality(rating),
+                      onTap: () => _openGame(game),
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1853,6 +1894,254 @@ class _AllRatingsHero extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+class _RatingsSearchField extends StatefulWidget {
+  const _RatingsSearchField({
+    required this.controller,
+  });
+
+  final TextEditingController controller;
+
+  @override
+  State<_RatingsSearchField> createState() => _RatingsSearchFieldState();
+}
+
+class _RatingsSearchFieldState extends State<_RatingsSearchField> {
+  final FocusNode focusNode = FocusNode();
+
+  static const Color textPrimary = Color(0xFFF4F3F3);
+  static const Color textSecondary = Color(0xFFAAABAB);
+
+  @override
+  void initState() {
+    super.initState();
+
+    focusNode.addListener(_onFocusChanged);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _RatingsSearchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+    }
+  }
+
+  void _onFocusChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  void _onTextChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  void _focusSearch() {
+    focusNode.requestFocus();
+  }
+
+  void _clearSearch() {
+    widget.controller.clear();
+    focusNode.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    focusNode.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isFocused = focusNode.hasFocus;
+    final hasText = widget.controller.text.isNotEmpty;
+
+    return TextFieldTapRegion(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        height: 48,
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isFocused
+                ? const [
+              Color(0xFF111C1D),
+              Color(0xFF1B2424),
+              Color(0xFF102B2F),
+            ]
+                : const [
+              Color(0xFF151A1A),
+              Color(0xFF202424),
+              Color(0xFF141A1A),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: isFocused
+                ? const Color(0x8875EEFD)
+                : const Color(0x5532B8C6),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.34),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(
+                isFocused ? 0.12 : 0.055,
+              ),
+              blurRadius: isFocused ? 26 : 18,
+              spreadRadius: isFocused ? 0.6 : 0,
+              offset: const Offset(0, 0),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: _focusSearch,
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isFocused
+                      ? const Color(0x2275EEFD)
+                      : const Color(0x1022D3EE),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: isFocused
+                        ? const Color(0x7775EEFD)
+                        : const Color(0x4432B8C6),
+                  ),
+                ),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: isFocused
+                      ? const Color(0xFF75EEFD)
+                      : const Color(0xFFAAABAB),
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: TextField(
+                focusNode: focusNode,
+                controller: widget.controller,
+                cursorColor: const Color(0xFF75EEFD),
+                onTapOutside: (_) {
+                  focusNode.unfocus();
+                },
+                style: const TextStyle(
+                  color: textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.1,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Поиск игр...',
+                  border: InputBorder.none,
+                  isCollapsed: true,
+                  hintStyle: TextStyle(
+                    color: textSecondary.withOpacity(0.72),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 160),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  ),
+                );
+              },
+              child: hasText
+                  ? Padding(
+                key: const ValueKey('clear_search_button'),
+                padding: const EdgeInsets.only(left: 10),
+                child: GestureDetector(
+                  onTap: _clearSearch,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0x1A75EEFD),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: const Color(0x5575EEFD),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF75EEFD).withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF75EEFD),
+                      size: 19,
+                    ),
+                  ),
+                ),
+              )
+                  : const SizedBox.shrink(
+                key: ValueKey('empty_clear_search_button'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RatingsNothingFoundState extends StatelessWidget {
+  const _RatingsNothingFoundState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        'Ничего не найдено',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Color(0xFFAAABAB),
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -2018,18 +2307,39 @@ class _AllGamesForRatingScreen extends StatefulWidget {
 class _AllGamesForRatingScreenState extends State<_AllGamesForRatingScreen> {
   late List<LibraryGameModel> games;
 
+  final TextEditingController searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
 
     games = [...widget.games];
     LibraryChangeNotifier.version.addListener(_onLibraryChanged);
+    searchController.addListener(_onSearchChanged);
   }
 
   void _onLibraryChanged() {
     if (!mounted) return;
 
     _loadGames();
+  }
+
+  void _onSearchChanged() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  List<LibraryGameModel> _filterGamesBySearch(List<LibraryGameModel> source) {
+    final query = searchController.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return source;
+    }
+
+    return source.where((game) {
+      return game.title.trim().toLowerCase().contains(query);
+    }).toList();
   }
 
   Future<void> _loadGames() async {
@@ -2059,6 +2369,8 @@ class _AllGamesForRatingScreenState extends State<_AllGamesForRatingScreen> {
   @override
   void dispose() {
     LibraryChangeNotifier.version.removeListener(_onLibraryChanged);
+    searchController.removeListener(_onSearchChanged);
+    searchController.dispose();
     super.dispose();
   }
 
@@ -2081,6 +2393,8 @@ class _AllGamesForRatingScreenState extends State<_AllGamesForRatingScreen> {
       return b.addedAt.compareTo(a.addedAt);
     });
 
+    final visibleGames = _filterGamesBySearch(sortedGames);
+
     final unratedCount = sortedGames.where((game) {
       return game.userRating == null || game.userRating! <= 0;
     }).length;
@@ -2093,47 +2407,63 @@ class _AllGamesForRatingScreenState extends State<_AllGamesForRatingScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: _AllGamesHero(
-                  totalCount: sortedGames.length,
-                  unratedCount: unratedCount,
-                  onBack: () => Navigator.pop(context),
+                child: Column(
+                  children: [
+                    _AllGamesHero(
+                      totalCount: sortedGames.length,
+                      unratedCount: unratedCount,
+                      onBack: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(height: 18),
+                    _RatingsSearchField(
+                      controller: searchController,
+                    ),
+                  ],
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
-              sliver: SliverList.separated(
-                itemCount: sortedGames.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, index) {
-                  final game = sortedGames[index];
-                  final rating = widget.ratingOutOfTen(game.userRating);
-                  final hasRating = rating > 0;
+            if (visibleGames.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(24, 56, 24, 120),
+                  child: _RatingsNothingFoundState(),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+                sliver: SliverList.separated(
+                  itemCount: visibleGames.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final game = visibleGames[index];
+                    final rating = widget.ratingOutOfTen(game.userRating);
+                    final hasRating = rating > 0;
 
-                  return _AllGameForRatingCard(
-                    game: game,
-                    rating: rating,
-                    hasRating: hasRating,
-                    dateText: hasRating
-                        ? widget.formattedDate(widget.ratingDate(game))
-                        : widget.formattedDate(game.addedAt),
-                    color: hasRating
-                        ? widget.ratingColor(rating)
-                        : const Color(0xFF75EEFD),
-                    quality:
-                    hasRating ? widget.ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
-                    onTap: () => _openGame(
-                      game,
-                      openReview: false,
-                    ),
-                    onReviewTap: () => _openGame(
-                      game,
-                      openReview: true,
-                    ),
-                  );
-                },
+                    return _AllGameForRatingCard(
+                      game: game,
+                      rating: rating,
+                      hasRating: hasRating,
+                      dateText: hasRating
+                          ? widget.formattedDate(widget.ratingDate(game))
+                          : widget.formattedDate(game.addedAt),
+                      color: hasRating
+                          ? widget.ratingColor(rating)
+                          : const Color(0xFF75EEFD),
+                      quality:
+                      hasRating ? widget.ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
+                      onTap: () => _openGame(
+                        game,
+                        openReview: false,
+                      ),
+                      onReviewTap: () => _openGame(
+                        game,
+                        openReview: true,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),
