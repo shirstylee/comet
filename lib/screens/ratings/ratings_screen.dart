@@ -2887,6 +2887,7 @@ class _GamePickerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasRating = rating > 0;
+    final statusIcon = _pickerStatusIcon(game.status);
 
     return Material(
       color: Colors.transparent,
@@ -2932,35 +2933,75 @@ class _GamePickerItem extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        game.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFFF4F3F3),
-                          fontSize: 15,
-                          height: 1.2,
-                          fontWeight: FontWeight.w800,
+                  child: SizedBox(
+                    height: 52,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          game.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFF4F3F3),
+                            fontSize: 15,
+                            height: 1.2,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        game.status.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF75EEFD),
-                          fontSize: 9,
-                          height: 1.2,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
+                        Container(
+                          height: 24,
+                          constraints: const BoxConstraints(
+                            maxWidth: 128,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF081F23),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: const Color(0x5532B8C6),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                statusIcon,
+                                color: const Color(0xFF75EEFD),
+                                size: 12,
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    game.status.toUpperCase(),
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: const TextStyle(
+                                      color: Color(0xFF75EEFD),
+                                      fontSize: 9.5,
+                                      height: 1.1,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -3006,6 +3047,21 @@ class _GamePickerItem extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+IconData _pickerStatusIcon(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'пройдено':
+      return Icons.check_circle_rounded;
+    case 'играю':
+    case 'в процессе':
+      return Icons.sports_esports_rounded;
+    case 'планирую':
+    case 'хочу пройти':
+      return Icons.schedule_rounded;
+    default:
+      return Icons.label_rounded;
   }
 }
 
