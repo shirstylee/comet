@@ -1514,26 +1514,26 @@ class _RecentlyRatedCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _RatingSquareBadge(
-                    rating: rating,
-                    color: color,
-                    size: 54,
-                    fontSize: 22,
-                    starSize: 15,
-                    borderRadius: 15,
-                  ),
-                  if (rating >= 9.5) ...[
-                    const SizedBox(height: 6),
+              SizedBox(
+                height: 80,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _RatingSquareBadge(
+                      rating: rating,
+                      color: color,
+                      size: 54,
+                      fontSize: 22,
+                      starSize: 15,
+                      borderRadius: 15,
+                    ),
                     _QualityPill(
                       quality: quality,
                       color: color,
                     ),
                   ],
-                ],
+                ),
               ),
             ],
           ),
