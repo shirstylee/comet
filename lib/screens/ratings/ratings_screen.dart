@@ -1289,9 +1289,9 @@ class _DateInfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 32 : 34,
+      height: compact ? 28 : 30,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 9 : 10,
+        horizontal: compact ? 8 : 9,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFF081F23),
@@ -1302,8 +1302,8 @@ class _DateInfoPill extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF75EEFD).withOpacity(0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -1317,9 +1317,9 @@ class _DateInfoPill extends StatelessWidget {
                 ? Icons.calendar_month_rounded
                 : Icons.event_available_rounded,
             color: const Color(0xFF75EEFD),
-            size: compact ? 13 : 14,
+            size: compact ? 12 : 13,
           ),
-          SizedBox(width: compact ? 6 : 7),
+          SizedBox(width: compact ? 5 : 6),
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -1330,10 +1330,10 @@ class _DateInfoPill extends StatelessWidget {
                 softWrap: false,
                 style: TextStyle(
                   color: const Color(0xFF75EEFD),
-                  fontSize: compact ? 9.5 : 10.5,
-                  height: 1.2,
+                  fontSize: compact ? 8.8 : 9.8,
+                  height: 1.15,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.15,
+                  letterSpacing: 0.1,
                 ),
               ),
             ),
@@ -1407,6 +1407,42 @@ class _RatingSquareBadge extends StatelessWidget {
   }
 }
 
+class _QualityPill extends StatelessWidget {
+  const _QualityPill({
+    required this.quality,
+    required this.color,
+  });
+
+  final String quality;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withOpacity(0.28),
+        ),
+      ),
+      child: Text(
+        quality,
+        style: TextStyle(
+          color: color,
+          fontSize: 9.5,
+          height: 1.1,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
 class _RecentlyRatedCard extends StatelessWidget {
   const _RecentlyRatedCard({
     required this.game,
@@ -1448,33 +1484,35 @@ class _RecentlyRatedCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      game.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F3F3),
-                        fontSize: 18,
-                        height: 1.25,
-                        fontWeight: FontWeight.w800,
+                child: SizedBox(
+                  height: 80,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        game.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 18,
+                          height: 1.25,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    _DateInfoPill(
-                      label: 'ОЦЕНЕНО',
-                      dateText: dateText,
-                    ),
-                  ],
+                      _DateInfoPill(
+                        label: 'ОЦЕНЕНО',
+                        dateText: dateText,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _RatingSquareBadge(
                     rating: rating,
@@ -1485,25 +1523,10 @@ class _RecentlyRatedCard extends StatelessWidget {
                     borderRadius: 15,
                   ),
                   if (rating >= 9.5) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFBBFFB3).withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        quality,
-                        style: const TextStyle(
-                          color: Color(0xFFBBFFB3),
-                          fontSize: 10,
-                          height: 1.2,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    const SizedBox(height: 6),
+                    _QualityPill(
+                      quality: quality,
+                      color: color,
                     ),
                   ],
                 ],
@@ -1947,15 +1970,9 @@ class _AllRatingCard extends StatelessWidget {
                     borderRadius: 18,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    quality,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 9,
-                      height: 1.2,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.7,
-                    ),
+                  _QualityPill(
+                    quality: quality,
+                    color: color,
                   ),
                 ],
               ),
@@ -2324,17 +2341,8 @@ class _AllGameForRatingCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 7),
-                      Text(
-                        game.status.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF75EEFD),
-                          fontSize: 10,
-                          height: 1.2,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
+                      _GameStatusInfoPill(
+                        status: game.status,
                       ),
                       const Spacer(),
                       _DateInfoPill(
@@ -2873,6 +2881,70 @@ class _InsightPill extends StatelessWidget {
     );
   }
 }
+class _GameStatusInfoPill extends StatelessWidget {
+  const _GameStatusInfoPill({
+    required this.status,
+  });
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusIcon = _pickerStatusIcon(status);
+
+    return Container(
+      height: 24,
+      constraints: const BoxConstraints(
+        maxWidth: 128,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF081F23),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            statusIcon,
+            color: const Color(0xFF75EEFD),
+            size: 12,
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                status.toUpperCase(),
+                maxLines: 1,
+                softWrap: false,
+                style: const TextStyle(
+                  color: Color(0xFF75EEFD),
+                  fontSize: 9.5,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GamePickerItem extends StatelessWidget {
   const _GamePickerItem({
     required this.game,
@@ -2887,7 +2959,6 @@ class _GamePickerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasRating = rating > 0;
-    final statusIcon = _pickerStatusIcon(game.status);
 
     return Material(
       color: Colors.transparent,
@@ -2950,55 +3021,8 @@ class _GamePickerItem extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        Container(
-                          height: 24,
-                          constraints: const BoxConstraints(
-                            maxWidth: 128,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF081F23),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: const Color(0x5532B8C6),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF75EEFD).withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                statusIcon,
-                                color: const Color(0xFF75EEFD),
-                                size: 12,
-                              ),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    game.status.toUpperCase(),
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    style: const TextStyle(
-                                      color: Color(0xFF75EEFD),
-                                      fontSize: 9.5,
-                                      height: 1.1,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        _GameStatusInfoPill(
+                          status: game.status,
                         ),
                       ],
                     ),
