@@ -23,16 +23,16 @@ Color _ratingScaleColor(double rating) {
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
-    super.key,
-    this.onAllGamesTap,
-    this.onProfileTap,
-  });
+  super.key,
+  this.onAllGamesTap,
+  this.onProfileTap,
+});
 
-  final VoidCallback? onAllGamesTap;
-  final VoidCallback? onProfileTap;
+final VoidCallback? onAllGamesTap;
+final VoidCallback? onProfileTap;
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
+@override
+State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -866,34 +866,49 @@ class _ActivityInfoPill extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 11,
-          ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                text,
-                maxLines: 1,
-                softWrap: false,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10.5,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.1,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        widthFactor: 1,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Transform.translate(
+              offset: icon == Icons.check_circle_rounded
+                  ? const Offset(0, -0.5)
+                  : Offset.zero,
+              child: Icon(
+                icon,
+                color: color,
+                size: 11,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Transform.translate(
+                  offset: icon == Icons.access_time_rounded
+                      ? const Offset(0, 0.8)
+                      : Offset.zero,
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 10.5,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
