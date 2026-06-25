@@ -154,15 +154,7 @@ class _MainScreenState extends State<MainScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF151A1A),
-                  Color(0xFF202424),
-                  Color(0xFF141A1A),
-                ],
-              ),
+              color: const Color(0xFF0C0F0F),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
                 color: const Color(0x5532B8C6),
