@@ -842,16 +842,22 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFF111414),
+              color: background,
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: const Color(0x5532B8C6),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: accent.withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withOpacity(0.32),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: accent.withOpacity(0.075),
+                  blurRadius: 22,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
@@ -1035,16 +1041,22 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFF111414),
+              color: background,
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: const Color(0x5532B8C6),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: accent.withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withOpacity(0.32),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: accent.withOpacity(0.075),
+                  blurRadius: 22,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
@@ -1155,16 +1167,22 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF111414),
+              color: background,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: const Color(0x5532B8C6),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: accent.withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withOpacity(0.32),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: accent.withOpacity(0.075),
+                  blurRadius: 22,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
@@ -1259,16 +1277,22 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFF111414),
+              color: background,
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: const Color(0x5532B8C6),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: accent.withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withOpacity(0.32),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: accent.withOpacity(0.075),
+                  blurRadius: 22,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
@@ -1397,16 +1421,22 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF111414),
+                color: background,
                 borderRadius: BorderRadius.circular(26),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.06),
+                  color: const Color(0x5532B8C6),
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: accent.withOpacity(0.16),
-                    blurRadius: 34,
-                    offset: const Offset(0, 12),
+                    color: Colors.black.withOpacity(0.32),
+                    blurRadius: 28,
+                    offset: const Offset(0, 14),
+                  ),
+                  BoxShadow(
+                    color: accent.withOpacity(0.075),
+                    blurRadius: 22,
+                    offset: const Offset(0, 0),
                   ),
                 ],
               ),
@@ -2169,8 +2199,15 @@ class _BottomSheetHandle extends StatelessWidget {
       width: 44,
       height: 4,
       decoration: BoxDecoration(
-        color: const Color(0xFFAAABAB).withOpacity(0.35),
+        color: const Color(0xFF75EEFD).withOpacity(0.28),
         borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
     );
   }
@@ -2369,8 +2406,19 @@ class _TimeInputField extends StatelessWidget {
       height: 58,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
+        color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+          width: 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -2420,18 +2468,30 @@ class _StatusMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? color.withOpacity(0.10) : const Color(0xFF1D2020),
+      color: const Color(0xFF081F23),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
+        splashColor: const Color(0x2275EEFD),
+        highlightColor: const Color(0x1275EEFD),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected ? color.withOpacity(0.42) : Colors.transparent,
+              color: isSelected
+                  ? color.withOpacity(0.42)
+                  : const Color(0x5532B8C6),
+              width: 1.1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -2506,15 +2566,33 @@ class _StageMenuItem extends StatelessWidget {
     final color = danger ? const Color(0xFFFF716C) : const Color(0xFF75EEFD);
 
     return Material(
-      color: const Color(0xFF1D2020),
+      color: const Color(0xFF081F23),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
+        splashColor: const Color(0x2275EEFD),
+        highlightColor: const Color(0x1275EEFD),
+        child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 11,
             vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: danger
+                  ? const Color(0x66FF716C)
+                  : const Color(0x5532B8C6),
+              width: 1.1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -2568,8 +2646,19 @@ class _StageNameInput extends StatelessWidget {
       height: 58,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
+        color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+          width: 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -2606,8 +2695,19 @@ class _StageDescriptionInput extends StatelessWidget {
       height: 126,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2020),
+        color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+          width: 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
