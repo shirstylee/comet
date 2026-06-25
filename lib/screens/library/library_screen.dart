@@ -417,16 +417,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111414),
+                  color: background,
                   borderRadius: BorderRadius.circular(26),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.06),
+                    color: const Color(0x5532B8C6),
+                    width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: accent.withOpacity(0.16),
-                      blurRadius: 34,
-                      offset: const Offset(0, 12),
+                      color: Colors.black.withOpacity(0.32),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF75EEFD).withOpacity(0.075),
+                      blurRadius: 22,
+                      offset: const Offset(0, 0),
                     ),
                   ],
                 ),
@@ -523,16 +529,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111414),
+                  color: background,
                   borderRadius: BorderRadius.circular(26),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.06),
+                    color: const Color(0x5532B8C6),
+                    width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: accent.withOpacity(0.16),
-                      blurRadius: 34,
-                      offset: const Offset(0, 12),
+                      color: Colors.black.withOpacity(0.32),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF75EEFD).withOpacity(0.075),
+                      blurRadius: 22,
+                      offset: const Offset(0, 0),
                     ),
                   ],
                 ),
@@ -1446,21 +1458,35 @@ class _SortMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? const Color(0xFF75EEFD) : const Color(0xFFAAABAB);
+    final color = isSelected
+        ? const Color(0xFF75EEFD)
+        : const Color(0xFFAAABAB);
 
     return Material(
-      color: isSelected ? const Color(0x2675EEFD) : const Color(0xFF1D2020),
+      color: const Color(0xFF081F23),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
+        splashColor: const Color(0x2275EEFD),
+        highlightColor: const Color(0x1275EEFD),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected ? const Color(0x6675EEFD) : Colors.transparent,
+              color: isSelected
+                  ? const Color(0x6675EEFD)
+                  : const Color(0x5532B8C6),
+              width: 1.1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -1530,8 +1556,15 @@ class _BottomSheetHandle extends StatelessWidget {
       width: 44,
       height: 4,
       decoration: BoxDecoration(
-        color: const Color(0xFFAAABAB).withOpacity(0.35),
+        color: const Color(0xFF75EEFD).withOpacity(0.28),
         borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
     );
   }
