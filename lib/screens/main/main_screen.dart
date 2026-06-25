@@ -154,16 +154,30 @@ class _MainScreenState extends State<MainScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF111414),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF151A1A),
+                  Color(0xFF202424),
+                  Color(0xFF141A1A),
+                ],
+              ),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: const Color(0x5532B8C6),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF75EEFD).withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withOpacity(0.32),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF75EEFD).withOpacity(0.075),
+                  blurRadius: 22,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
@@ -176,8 +190,15 @@ class _MainScreenState extends State<MainScreen> {
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFAAABAB).withOpacity(0.35),
+                      color: const Color(0xFF75EEFD).withOpacity(0.28),
                       borderRadius: BorderRadius.circular(999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF75EEFD).withOpacity(0.12),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -371,59 +392,93 @@ class _AddMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF1D2020),
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0x1A75EEFD),
-                  borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: const Color(0xFF081F23),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0x5532B8C6),
+            width: 1.1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          splashColor: const Color(0x2275EEFD),
+          highlightColor: const Color(0x1275EEFD),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0x1A75EEFD),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0x5532B8C6),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF75EEFD).withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    icon,
+                    color: const Color(0xFF75EEFD),
+                    size: 26,
+                  ),
                 ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF75EEFD),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFAAABAB),
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF75EEFD),
                   size: 26,
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F3F3),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFFAAABAB),
-                        fontSize: 13,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFF75EEFD),
-                size: 26,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
