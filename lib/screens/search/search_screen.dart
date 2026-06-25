@@ -300,21 +300,9 @@ class _SearchHeaderState extends State<_SearchHeader> {
                   height: 42,
                   padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isFocused
-                          ? const [
-                        Color(0xFF111C1D),
-                        Color(0xFF1B2424),
-                        Color(0xFF102B2F),
-                      ]
-                          : const [
-                        Color(0xFF151A1A),
-                        Color(0xFF202424),
-                        Color(0xFF141A1A),
-                      ],
-                    ),
+                    color: isFocused
+                        ? const Color(0xFF111C1D)
+                        : const Color(0xFF151A1A),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: isFocused
