@@ -599,35 +599,66 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Text.rich(
-            TextSpan(
+          if (subtitle == '★')
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 36,
-                    height: 1,
-                    fontWeight: FontWeight.w900,
+                Flexible(
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 36,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                TextSpan(
-                  text: ' $subtitle',
-                  style: TextStyle(
-                    color: subtitle == '★'
-                        ? color
-                        : const Color(0xFFAAABAB),
-                    fontSize: subtitle == '★' ? 24 : 14,
-                    height: 1,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(width: 6),
+                Transform.translate(
+                  offset: const Offset(0, -5),
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 24,
+                      height: 1,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
+            )
+          else
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: value,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 36,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' $subtitle',
+                    style: const TextStyle(
+                      color: Color(0xFFAAABAB),
+                      fontSize: 14,
+                      height: 1,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.left,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.left,
-          ),
         ],
       ),
     );
