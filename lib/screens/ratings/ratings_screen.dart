@@ -234,12 +234,12 @@ class _RatingsScreenState extends State<RatingsScreen> {
   }
 
   String _ratingQuality(double rating) {
-    if (rating >= 9.5) return 'ШЕДЕВР';
-    if (rating >= 8.5) return 'ОТЛИЧНО';
-    if (rating >= 7.0) return 'ХОРОШО';
-    if (rating >= 5.0) return 'СРЕДНЕ';
+    if (rating >= 10) return 'Шедевр';
+    if (rating >= 8) return 'Отлично';
+    if (rating >= 6) return 'Хорошо';
+    if (rating >= 4) return 'Средне';
 
-    return 'СЛАБО';
+    return 'Ужасно';
   }
 
   String _formattedDate(DateTime date) {
@@ -423,6 +423,10 @@ class _RatingsScreenState extends State<RatingsScreen> {
                           game: game,
                           rating: 0,
                           onTap: () {
+                            Navigator.pop(bottomSheetContext);
+                            _openGameProgress(game);
+                          },
+                          onReviewTap: () {
                             Navigator.pop(bottomSheetContext);
                             _openGameProgress(
                               game,
@@ -1421,7 +1425,7 @@ class _QualityPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
-        vertical: 2,
+        vertical: 3,
       ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.10),
@@ -1431,10 +1435,10 @@ class _QualityPill extends StatelessWidget {
         ),
       ),
       child: Text(
-        quality,
+        quality.toUpperCase(),
         style: TextStyle(
           color: color,
-          fontSize: 9.5,
+          fontSize: 8.5,
           height: 1.1,
           fontWeight: FontWeight.w800,
         ),
@@ -2120,7 +2124,11 @@ class _AllGamesForRatingScreenState extends State<_AllGamesForRatingScreen> {
                     hasRating ? widget.ratingQuality(rating) : 'БЕЗ ОЦЕНКИ',
                     onTap: () => _openGame(
                       game,
-                      openReview: !hasRating,
+                      openReview: false,
+                    ),
+                    onReviewTap: () => _openGame(
+                      game,
+                      openReview: true,
                     ),
                   );
                 },
@@ -2283,6 +2291,7 @@ class _AllGameForRatingCard extends StatelessWidget {
     required this.color,
     required this.quality,
     required this.onTap,
+    required this.onReviewTap,
   });
 
   final LibraryGameModel game;
@@ -2292,6 +2301,7 @@ class _AllGameForRatingCard extends StatelessWidget {
   final Color color;
   final String quality;
   final VoidCallback onTap;
+  final VoidCallback onReviewTap;
 
   @override
   Widget build(BuildContext context) {
@@ -2368,37 +2378,35 @@ class _AllGameForRatingCard extends StatelessWidget {
                     borderRadius: 16,
                   ),
                   const SizedBox(height: 7),
-                  Text(
-                    quality,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 9,
-                      height: 1.2,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.7,
-                    ),
+                  _QualityPill(
+                    quality: quality,
+                    color: color,
                   ),
                 ],
               )
-                  : Container(
-                height: 34,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF081F23),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: const Color(0x6632B8C6),
+                  : GestureDetector(
+                onTap: onReviewTap,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF081F23),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0x6632B8C6),
+                    ),
                   ),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'ОЦЕНИТЬ',
-                  style: TextStyle(
-                    color: Color(0xFF75EEFD),
-                    fontSize: 10,
-                    height: 1.2,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'ОЦЕНИТЬ',
+                    style: TextStyle(
+                      color: Color(0xFF75EEFD),
+                      fontSize: 10,
+                      height: 1.2,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
               ),
@@ -2950,11 +2958,13 @@ class _GamePickerItem extends StatelessWidget {
     required this.game,
     required this.rating,
     required this.onTap,
+    required this.onReviewTap,
   });
 
   final LibraryGameModel game;
   final double rating;
   final VoidCallback onTap;
+  final VoidCallback onReviewTap;
 
   @override
   Widget build(BuildContext context) {
@@ -3029,40 +3039,44 @@ class _GamePickerItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  height: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF081F23),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: const Color(0x6632B8C6),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        hasRating ? _formatRating(rating) : 'Оценить',
-                        style: TextStyle(
-                          color: hasRating
-                              ? const Color(0xFF75EEFD)
-                              : const Color(0xFF75EEFD),
-                          fontSize: hasRating ? 14 : 11,
-                          height: 1.2,
-                          fontWeight: FontWeight.w900,
-                        ),
+                GestureDetector(
+                  onTap: onReviewTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    height: 30,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF081F23),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: const Color(0x6632B8C6),
                       ),
-                      if (hasRating) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Color(0xFF75EEFD),
-                          size: 14,
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          hasRating ? _formatRating(rating) : 'Оценить',
+                          style: TextStyle(
+                            color: hasRating
+                                ? const Color(0xFF75EEFD)
+                                : const Color(0xFF75EEFD),
+                            fontSize: hasRating ? 14 : 11,
+                            height: 1.2,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
+                        if (hasRating) ...[
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Color(0xFF75EEFD),
+                            size: 14,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ],
