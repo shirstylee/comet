@@ -430,94 +430,125 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
   Future<bool> _showDeleteGameDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.65),
+      barrierColor: Colors.black.withOpacity(0.72),
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF111414),
+          backgroundColor: background,
           surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-            side: BorderSide(
-              color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(26),
+            side: const BorderSide(
+              color: Color(0x5532B8C6),
+              width: 1.2,
             ),
           ),
-          title: const Row(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.delete_outline_rounded,
-                color: Color(0xFFFF716C),
-                size: 28,
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Удалить игру?',
-                  style: TextStyle(
-                    color: Color(0xFFF4F3F3),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFF716C),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x99FF716C),
+                    width: 1.2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF716C).withOpacity(0.18),
+                      blurRadius: 22,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFFF716C),
+                  size: 30,
                 ),
               ),
-            ],
-          ),
-          content: const Text(
-            'Игра будет удалена из библиотеки вместе с прогрессом, оценкой и этапами прохождения.',
-            style: TextStyle(
-              color: Color(0xFFAAABAB),
-              fontSize: 14,
-              height: 1.45,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          actions: [
-            SizedBox(
-              height: 40,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: const Color(0xFF081F23),
-                  side: const BorderSide(
-                    color: Color(0x6632B8C6),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                ),
-                child: const Text(
-                  'Отмена',
-                  style: TextStyle(
-                    color: Color(0xFF75EEFD),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              label: const Text(
-                'Удалить',
+              const SizedBox(height: 16),
+              const Text(
+                'Удалить игру?',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: textPrimary,
+                  fontSize: 22,
+                  height: 1.15,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE5484D),
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+              const SizedBox(height: 10),
+              const Text(
+                'Игра будет удалена из библиотеки вместе с прогрессом, оценкой и этапами прохождения.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFF081F23),
+                          side: const BorderSide(
+                            color: Color(0x6632B8C6),
+                            width: 1.1,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Отмена',
+                          style: TextStyle(
+                            color: accent,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5484D),
+                          shadowColor: const Color(0xFFFF716C).withOpacity(0.24),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Удалить',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -732,6 +763,13 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
 
     if (index < 0 || index >= stages.length) return;
 
+    final stage = stages[index];
+    final shouldDelete = await _showDeleteStageDialog(stage);
+
+    if (!shouldDelete) {
+      return;
+    }
+
     final oldStages = List<_GameStage>.from(stages);
     final nextStages = List<_GameStage>.from(stages)..removeAt(index);
 
@@ -759,6 +797,138 @@ class _GameProgressScreenState extends State<GameProgressScreen> {
     }
 
     _showTemporaryMessage('Этап удалён');
+  }
+
+  Future<bool> _showDeleteStageDialog(_GameStage stage) async {
+    final cleanTitle = stage.title.trim();
+    final stageTitle = cleanTitle.isEmpty ? 'выбранный этап' : cleanTitle;
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.72),
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: background,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+            side: const BorderSide(
+              color: Color(0x5532B8C6),
+              width: 1.2,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFF716C),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x99FF716C),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF716C).withOpacity(0.18),
+                      blurRadius: 22,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFFF716C),
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Удалить этап?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 22,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Этап «$stageTitle» будет удалён из истории прохождения.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFF081F23),
+                          side: const BorderSide(
+                            color: Color(0x6632B8C6),
+                            width: 1.1,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Отмена',
+                          style: TextStyle(
+                            color: accent,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5484D),
+                          shadowColor: const Color(0xFFFF716C).withOpacity(0.24),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Удалить',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   Future<void> _saveEditedStage({
@@ -1789,8 +1959,24 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: surface,
+                    color: const Color(0xFF081F23),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0x6632B8C6),
+                      width: 1.1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF75EEFD).withOpacity(0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [

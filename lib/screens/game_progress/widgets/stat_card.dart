@@ -16,6 +16,14 @@ class GameStatCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool compactValue;
 
+  bool get _hasRatingStar {
+    return compactValue && value.trim().endsWith('★');
+  }
+
+  String get _ratingValue {
+    return value.replaceAll('★', '').trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -82,7 +90,39 @@ class GameStatCard extends StatelessWidget {
                 child: Center(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(
+                    child: _hasRatingStar
+                        ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _ratingValue,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: valueColor,
+                            fontSize: 18,
+                            height: 1.15,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Transform.translate(
+                          offset: const Offset(0, -2.5),
+                          child: Text(
+                            '★',
+                            style: TextStyle(
+                              color: valueColor,
+                              fontSize: 14,
+                              height: 1,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                        : Text(
                       value,
                       textAlign: TextAlign.center,
                       maxLines: compactValue ? 1 : 2,
