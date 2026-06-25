@@ -358,16 +358,22 @@ class _RatingsScreenState extends State<RatingsScreen> {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: surface,
+              color: background,
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: const Color(0x5532B8C6),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: accent.withOpacity(0.16),
-                  blurRadius: 34,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withOpacity(0.32),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: accent.withOpacity(0.075),
+                  blurRadius: 22,
+                  offset: const Offset(0, 0),
                 ),
               ],
             ),
@@ -380,8 +386,15 @@ class _RatingsScreenState extends State<RatingsScreen> {
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: textSecondary.withOpacity(0.35),
+                      color: accent.withOpacity(0.28),
                       borderRadius: BorderRadius.circular(999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accent.withOpacity(0.12),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -442,8 +455,10 @@ class _RatingsScreenState extends State<RatingsScreen> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: accent.withOpacity(0.4),
+                        backgroundColor: const Color(0xFF081F23),
+                        side: const BorderSide(
+                          color: Color(0x5532B8C6),
+                          width: 1.1,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -2874,99 +2889,119 @@ class _GamePickerItem extends StatelessWidget {
     final hasRating = rating > 0;
 
     return Material(
-      color: const Color(0xFF1D2020),
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          height: 68,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 8,
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: const Color(0xFF081F23),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0x5532B8C6),
+            width: 1.1,
           ),
-          child: Row(
-            children: [
-              GameCover(
-                width: 42,
-                height: 52,
-                localImagePath: game.localImagePath,
-                imageUrl: game.imageUrl,
-                borderRadius: 8,
-                iconSize: 22,
-                gradientOpacity: 0.18,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      game.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F3F3),
-                        fontSize: 15,
-                        height: 1.2,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      game.status.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF75EEFD),
-                        fontSize: 9,
-                        height: 1.2,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF75EEFD).withOpacity(0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: const Color(0x2275EEFD),
+          highlightColor: const Color(0x1275EEFD),
+          child: Container(
+            height: 68,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
+            child: Row(
+              children: [
+                GameCover(
+                  width: 42,
+                  height: 52,
+                  localImagePath: game.localImagePath,
+                  imageUrl: game.imageUrl,
+                  borderRadius: 8,
+                  iconSize: 22,
+                  gradientOpacity: 0.18,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                height: 30,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF081F23),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: const Color(0x6632B8C6),
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      hasRating ? _formatRating(rating) : 'Оценить',
-                      style: TextStyle(
-                        color: hasRating
-                            ? const Color(0xFF75EEFD)
-                            : const Color(0xFF75EEFD),
-                        fontSize: hasRating ? 14 : 11,
-                        height: 1.2,
-                        fontWeight: FontWeight.w900,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        game.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F3F3),
+                          fontSize: 15,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    if (hasRating) ...[
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFF75EEFD),
-                        size: 14,
+                      const SizedBox(height: 4),
+                      Text(
+                        game.status.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF75EEFD),
+                          fontSize: 9,
+                          height: 1.2,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Container(
+                  height: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF081F23),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0x6632B8C6),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        hasRating ? _formatRating(rating) : 'Оценить',
+                        style: TextStyle(
+                          color: hasRating
+                              ? const Color(0xFF75EEFD)
+                              : const Color(0xFF75EEFD),
+                          fontSize: hasRating ? 14 : 11,
+                          height: 1.2,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (hasRating) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Color(0xFF75EEFD),
+                          size: 14,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
