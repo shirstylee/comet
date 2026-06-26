@@ -610,7 +610,7 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFF75EEFD);
+    final color = _notificationColor(notification);
     final title = _titleText(notification);
     final actionText = _actionText(notification);
 
@@ -629,12 +629,16 @@ class _NotificationCard extends StatelessWidget {
             color: const Color(0xFF081F23),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0x5532B8C6),
+              color: color.withOpacity(
+                notification.type == AppNotificationType.warning ? 0.46 : 0.32,
+              ),
               width: 1.1,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                color: color.withOpacity(
+                  notification.type == AppNotificationType.warning ? 0.10 : 0.05,
+                ),
                 blurRadius: 14,
                 offset: const Offset(0, 6),
               ),
@@ -724,8 +728,6 @@ class _NotificationCard extends StatelessWidget {
         return 'Успешно';
       case AppNotificationType.restore:
         return 'Восстановление данных';
-      case AppNotificationType.release:
-        return 'Релиз игры';
       case AppNotificationType.rating:
         return 'Оценка обновлена';
       case AppNotificationType.progress:
@@ -735,6 +737,14 @@ class _NotificationCard extends StatelessWidget {
       case AppNotificationType.warning:
         return 'Внимание';
     }
+  }
+
+  Color _notificationColor(AppNotificationModel notification) {
+    if (notification.type == AppNotificationType.warning) {
+      return const Color(0xFFFF716C);
+    }
+
+    return const Color(0xFF75EEFD);
   }
 
   String? _actionText(AppNotificationModel notification) {
@@ -819,15 +829,15 @@ class _NotificationIcon extends StatelessWidget {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: const Color(0x1A75EEFD),
+        color: color.withOpacity(0.10),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0x5532B8C6),
+          color: color.withOpacity(0.34),
           width: 1.1,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            color: color.withOpacity(0.08),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -862,7 +872,7 @@ class _NotificationTitlePill extends StatelessWidget {
           color: const Color(0xFF10262B),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: const Color(0x5532B8C6),
+            color: color.withOpacity(0.34),
             width: 0.9,
           ),
         ),

@@ -4,7 +4,6 @@ enum AppNotificationType {
   game,
   success,
   restore,
-  release,
   rating,
   progress,
   completed,
@@ -38,8 +37,6 @@ class AppNotificationModel {
         return Icons.done_rounded;
       case AppNotificationType.restore:
         return Icons.history_rounded;
-      case AppNotificationType.release:
-        return Icons.calendar_month_rounded;
       case AppNotificationType.rating:
         return Icons.star_rounded;
       case AppNotificationType.progress:
@@ -53,22 +50,15 @@ class AppNotificationModel {
 
   Color get accentColor {
     switch (type) {
-      case AppNotificationType.game:
-        return const Color(0xFF75EEFD);
-      case AppNotificationType.success:
-        return const Color(0xFFBBFFB3);
-      case AppNotificationType.restore:
-        return const Color(0xFFBBFFB3);
-      case AppNotificationType.release:
-        return const Color(0xFF61ACFE);
-      case AppNotificationType.rating:
-        return const Color(0xFFFACC15);
-      case AppNotificationType.progress:
-        return const Color(0xFF75EEFD);
-      case AppNotificationType.completed:
-        return const Color(0xFFBBFFB3);
       case AppNotificationType.warning:
-        return const Color(0xFFF97316);
+        return const Color(0xFFFF716C);
+      case AppNotificationType.game:
+      case AppNotificationType.success:
+      case AppNotificationType.restore:
+      case AppNotificationType.rating:
+      case AppNotificationType.progress:
+      case AppNotificationType.completed:
+        return const Color(0xFF75EEFD);
     }
   }
 
