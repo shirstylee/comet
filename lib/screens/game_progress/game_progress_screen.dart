@@ -1906,7 +1906,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
     return widget.rating > 0 || widget.review.trim().isNotEmpty;
   }
 
-  void _deleteReview() {
+  Future<void> _deleteReview() async {
     if (!hasSavedReview) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1928,6 +1928,12 @@ class _ReviewScreenState extends State<_ReviewScreen> {
       return;
     }
 
+    final shouldDelete = await _showDeleteReviewDialog();
+
+    if (!shouldDelete || !mounted) {
+      return;
+    }
+
     Navigator.pop(
       context,
       const _ReviewResult(
@@ -1936,6 +1942,135 @@ class _ReviewScreenState extends State<_ReviewScreen> {
         deleteReview: true,
       ),
     );
+  }
+
+  Future<bool> _showDeleteReviewDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.72),
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: background,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+            side: const BorderSide(
+              color: Color(0x5532B8C6),
+              width: 1.2,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFF716C),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x99FF716C),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF716C).withOpacity(0.18),
+                      blurRadius: 22,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.rate_review_outlined,
+                  color: Color(0xFFFF716C),
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Удалить отзыв?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 22,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Оценка и текст отзыва будут удалены из этой игры.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFF081F23),
+                          side: const BorderSide(
+                            color: Color(0x6632B8C6),
+                            width: 1.1,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Отмена',
+                          style: TextStyle(
+                            color: accent,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5484D),
+                          shadowColor: const Color(0xFFFF716C).withOpacity(0.24),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Удалить',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   @override
@@ -1975,20 +2110,20 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF081F23),
+                    color: const Color(0xFF0A2529),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0x6632B8C6),
-                      width: 1.1,
+                      color: const Color(0x8832B8C6),
+                      width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF75EEFD).withOpacity(0.08),
-                        blurRadius: 20,
+                        color: const Color(0xFF75EEFD).withOpacity(0.14),
+                        blurRadius: 26,
                         offset: const Offset(0, 8),
                       ),
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
+                        color: Colors.black.withOpacity(0.20),
                         blurRadius: 24,
                         offset: const Offset(0, 12),
                       ),
@@ -2352,19 +2487,21 @@ class _ReviewRatingCircle extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: isSelected
-                ? selectedColor.withOpacity(0.15)
-                : const Color(0xFF1D2020),
+                ? selectedColor.withOpacity(0.18)
+                : const Color(0xFF10262B),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isSelected ? selectedColor : const Color(0x1A464848),
-              width: isSelected ? 2 : 1,
+              color: isSelected
+                  ? selectedColor.withOpacity(0.92)
+                  : const Color(0x6632B8C6),
+              width: isSelected ? 1.8 : 1.1,
             ),
             boxShadow: [
               BoxShadow(
                 color: isSelected
-                    ? selectedColor.withOpacity(0.22)
-                    : Colors.black.withOpacity(0.20),
-                blurRadius: isSelected ? 18 : 15,
+                    ? selectedColor.withOpacity(0.24)
+                    : const Color(0xFF75EEFD).withOpacity(0.06),
+                blurRadius: isSelected ? 18 : 14,
                 offset: const Offset(0, 8),
               ),
             ],
