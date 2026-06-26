@@ -395,11 +395,7 @@ class _ProfileTopHeader extends StatelessWidget {
       children: [
         const Row(
           children: [
-            Icon(
-              Icons.person_rounded,
-              color: accent,
-              size: 30,
-            ),
+            _ProfileHeaderIcon(),
             SizedBox(width: 12),
             Text(
               'Профиль',
@@ -433,6 +429,30 @@ class _ProfileTopHeader extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ProfileHeaderIcon extends StatelessWidget {
+  const _ProfileHeaderIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: const Color(0x1A75EEFD),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0x6675EEFD),
+        ),
+      ),
+      child: const Icon(
+        Icons.person_rounded,
+        color: Color(0xFF75EEFD),
+        size: 23,
+      ),
     );
   }
 }

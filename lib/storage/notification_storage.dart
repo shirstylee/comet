@@ -65,7 +65,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      '$gameTitle добавлена в библиотеку. Теперь Comet будет отслеживать ваш игровой прогресс.',
+      '«$gameTitle» добавлена в библиотеку. Игра появилась в коллекции — теперь можно отслеживать время, оценку и этапы прохождения.',
       type: AppNotificationType.game,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -78,7 +78,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      '$gameTitle удалена из библиотеки. Запись исчезла с вашей игровой орбиты.',
+      '«$gameTitle» удалена из библиотеки. Вместе с игрой удалены сохранённый прогресс, время, оценка и этапы прохождения.',
       type: AppNotificationType.warning,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -90,13 +90,15 @@ class NotificationStorage {
     required String gameTitle,
     required double rating,
     required bool isUpdate,
+    double? previousRating,
   }) async {
-    final ratingText = _formatRating(rating);
-
     await addGameNotification(
-      message: isUpdate
-          ? 'Оценка $gameTitle обновлена до $ratingText/10. Игра поднялась в вашем личном рейтинге.'
-          : '$gameTitle получила $ratingText/10. Оценка добавлена в вашу игровую статистику.',
+      message: _ratingNotificationMessage(
+        gameTitle: gameTitle,
+        rating: rating,
+        previousRating: previousRating,
+        isUpdate: isUpdate,
+      ),
       type: AppNotificationType.rating,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -109,7 +111,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      'Игра $gameTitle отмечена как пройденная. Финал достигнут, ещё одна история завершена.',
+      '«$gameTitle» отмечена как пройденная. Прохождение завершено, игра перенесена в список завершённых.',
       type: AppNotificationType.completed,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -123,7 +125,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      'Для игры $gameTitle создан этап прохождения: $stageTitle. Прогресс добавлен в журнал прохождения.',
+      'В игре «$gameTitle» создан новый этап: «$stageTitle». Он добавлен в историю прохождения.',
       type: AppNotificationType.progress,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -137,7 +139,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      'Для игры $gameTitle завершён этап прохождения: $stageTitle. Прогресс обновлён в журнале прохождения.',
+      'В игре «$gameTitle» завершён этап: «$stageTitle». История прохождения обновлена.',
       type: AppNotificationType.completed,
       gameId: gameId,
       gameTitle: gameTitle,
@@ -150,7 +152,7 @@ class NotificationStorage {
   }) async {
     await addGameNotification(
       message:
-      'Экспорт завершён успешно. Архив $fileName сохранён, игр в архиве: $gamesCount.',
+      'Экспорт завершён. Файл «$fileName» сохранён, игр в резервной копии: $gamesCount.',
       type: AppNotificationType.success,
     );
   }
@@ -158,7 +160,7 @@ class NotificationStorage {
   static Future<void> addExportFailedNotification() async {
     await addGameNotification(
       message:
-      'Экспорт не выполнен. Архив не удалось сохранить, попробуйте выбрать другое место или повторить позже.',
+      'Экспорт не выполнен. Не удалось сохранить резервную копию — выберите другое место или повторите попытку позже.',
       type: AppNotificationType.warning,
     );
   }
@@ -173,7 +175,7 @@ class NotificationStorage {
     final notification = AppNotificationModel(
       id: _createNotificationId(),
       message:
-      'Импорт завершён успешно. Библиотека восстановлена, игр импортировано: $gamesCount.',
+      'Импорт завершён. Библиотека восстановлена, импортировано игр: $gamesCount.',
       type: AppNotificationType.restore,
       createdAt: DateTime.now(),
     );
@@ -186,7 +188,7 @@ class NotificationStorage {
   static Future<void> addImportFailedNotification() async {
     await addGameNotification(
       message:
-      'Импорт не выполнен. Архив не удалось восстановить, проверьте JSON-файл и попробуйте снова.',
+      'Импорт не выполнен. Не удалось восстановить библиотеку — проверьте JSON-файл и попробуйте снова.',
       type: AppNotificationType.warning,
     );
   }
@@ -209,6 +211,31 @@ class NotificationStorage {
 
   static String _createNotificationId() {
     return DateTime.now().microsecondsSinceEpoch.toString();
+  }
+
+  static String _ratingNotificationMessage({
+    required String gameTitle,
+    required double rating,
+    required double? previousRating,
+    required bool isUpdate,
+  }) {
+    final ratingText = _formatRating(rating);
+
+    if (!isUpdate || previousRating == null || previousRating <= 0) {
+      return 'Вы поставили игре «$gameTitle» $ratingText/10. Оценка сохранена в личной статистике.';
+    }
+
+    final previousRatingText = _formatRating(previousRating);
+
+    if (rating > previousRating) {
+      return 'Вы повысили оценку игры «$gameTitle» с $previousRatingText/10 до $ratingText/10. Игра поднялась в личном рейтинге.';
+    }
+
+    if (rating < previousRating) {
+      return 'Вы снизили оценку игры «$gameTitle» с $previousRatingText/10 до $ratingText/10. Игра опустилась в личном рейтинге.';
+    }
+
+    return 'Оценка игры «$gameTitle» обновлена: $ratingText/10.';
   }
 
   static String _formatRating(double rating) {

@@ -57,7 +57,144 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _clearNotifications() async {
     if (notifications.isEmpty) return;
 
+    final shouldClear = await _showClearNotificationsDialog();
+
+    if (!shouldClear) return;
+
     await NotificationStorage.clearNotifications();
+
+    if (!mounted) return;
+
+    _showMessage('Уведомления очищены');
+  }
+
+  Future<bool> _showClearNotificationsDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.72),
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: background,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+            side: const BorderSide(
+              color: Color(0x5532B8C6),
+              width: 1.2,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFF716C),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0x99FF716C),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF716C).withOpacity(0.18),
+                      blurRadius: 22,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.delete_sweep_rounded,
+                  color: Color(0xFFFF716C),
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Очистить уведомления?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFFF4F3F3),
+                  fontSize: 22,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Все уведомления будут удалены из центра уведомлений. Это действие нельзя отменить.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFFAAABAB),
+                  fontSize: 14,
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFF081F23),
+                          side: const BorderSide(
+                            color: Color(0x6632B8C6),
+                            width: 1.1,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Отмена',
+                          style: TextStyle(
+                            color: Color(0xFF75EEFD),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5484D),
+                          shadowColor: const Color(0xFFFF716C).withOpacity(0.24),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        child: const Text(
+                          'Очистить',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   Future<void> _openNotificationGame(AppNotificationModel notification) async {
@@ -163,79 +300,144 @@ class _NotificationsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: double.infinity,
-          height: 64,
-          color: const Color(0xCC0C0F0F),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                left: 24,
-                child: GestureDetector(
-                  onTap: onBack,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0x1A75EEFD),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0x6675EEFD),
+    return Container(
+      color: const Color(0xCC0C0F0F),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 64,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  left: 24,
+                  child: GestureDetector(
+                    onTap: onBack,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0x1A75EEFD),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0x6675EEFD),
+                        ),
                       ),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: Color(0xFF75EEFD),
-                      size: 23,
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Color(0xFF75EEFD),
+                        size: 23,
+                      ),
                     ),
                   ),
                 ),
+                const Text(
+                  'Уведомления',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFFF4F3F3),
+                    fontSize: 18,
+                    height: 1.4,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (showClearButton)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Центр событий',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xFFAAABAB),
+                        fontSize: 13,
+                        height: 1.2,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _ClearAllNotificationsButton(
+                    onTap: onClear,
+                  ),
+                ],
               ),
-              const Text(
-                'Уведомления',
-                textAlign: TextAlign.center,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClearAllNotificationsButton extends StatelessWidget {
+  const _ClearAllNotificationsButton({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        splashColor: const Color(0x2275EEFD),
+        highlightColor: const Color(0x1275EEFD),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF081F23),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0x6632B8C6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.08),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.delete_sweep_rounded,
+                color: Color(0xFF75EEFD),
+                size: 16,
+              ),
+              SizedBox(width: 7),
+              Text(
+                'Очистить всё',
+                maxLines: 1,
+                softWrap: false,
                 style: TextStyle(
-                  color: Color(0xFFF4F3F3),
-                  fontSize: 16,
-                  height: 1.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.4,
+                  color: Color(0xFF75EEFD),
+                  fontSize: 12,
+                  height: 1.2,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.4,
                 ),
               ),
             ],
           ),
         ),
-        if (showClearButton)
-          Container(
-            width: double.infinity,
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            color: const Color(0xCC0C0F0F),
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: onClear,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Очистить всё',
-                  style: TextStyle(
-                    color: Color(0xFF75EEFD),
-                    fontSize: 14,
-                    height: 1.4,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 }
@@ -379,7 +581,7 @@ class _NotificationsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 48),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 48),
       itemCount: notifications.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
@@ -408,67 +610,147 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = notification.accentColor;
+    const color = Color(0xFF75EEFD);
+    final title = _titleText(notification);
+    final actionText = _actionText(notification);
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
+        splashColor: color.withOpacity(0.10),
+        highlightColor: color.withOpacity(0.06),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF1D2020),
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFF081F23),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: const Color(0x5532B8C6),
+              width: 1.1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF75EEFD).withOpacity(0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _NotificationIcon(
-                icon: notification.icon,
-                color: color,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        notification.message,
-                        style: const TextStyle(
-                          color: Color(0xFFF4F3F3),
-                          fontSize: 16,
-                          height: 1.62,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _relativeDateText(notification.createdAt),
-                        style: const TextStyle(
-                          color: Color(0xFFAAABAB),
-                          fontSize: 16,
-                          height: 1.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _NotificationIcon(
+                    icon: notification.icon,
+                    color: color,
                   ),
-                ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 14,
+                              height: 1.2,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.15,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          Text(
+                            notification.message,
+                            style: const TextStyle(
+                              color: Color(0xFFF4F3F3),
+                              fontSize: 15,
+                              height: 1.45,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.05,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _DeleteNotificationButton(
+                    onTap: onDelete,
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              _DeleteNotificationButton(
-                onTap: onDelete,
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  _NotificationMetaPill(
+                    icon: Icons.schedule_rounded,
+                    text: _relativeDateText(notification.createdAt),
+                    color: color,
+                  ),
+                  if (actionText != null) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: _NotificationActionHint(
+                          text: actionText,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _titleText(AppNotificationModel notification) {
+    switch (notification.type) {
+      case AppNotificationType.game:
+        return 'Игра в библиотеке';
+      case AppNotificationType.success:
+        return 'Готово';
+      case AppNotificationType.restore:
+        return 'Восстановление данных';
+      case AppNotificationType.release:
+        return 'Игровой календарь';
+      case AppNotificationType.rating:
+        return 'Оценка обновлена';
+      case AppNotificationType.progress:
+        return 'Этап прохождения';
+      case AppNotificationType.completed:
+        return 'Прогресс завершён';
+      case AppNotificationType.warning:
+        return 'Внимание';
+    }
+  }
+
+  String? _actionText(AppNotificationModel notification) {
+    if (notification.gameId == null) {
+      return null;
+    }
+
+    return 'Открыть';
   }
 
   String _relativeDateText(DateTime date) {
@@ -542,16 +824,127 @@ class _NotificationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 40,
-      height: 40,
+      width: 46,
+      height: 46,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.20),
-        shape: BoxShape.circle,
+        color: const Color(0x1A75EEFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+          width: 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF75EEFD).withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Icon(
         icon,
         color: color,
-        size: 22,
+        size: 24,
+      ),
+    );
+  }
+}
+
+class _NotificationMetaPill extends StatelessWidget {
+  const _NotificationMetaPill({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10262B),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+          width: 0.9,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 14,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(
+              color: color,
+              fontSize: 11.5,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.05,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotificationActionHint extends StatelessWidget {
+  const _NotificationActionHint({
+    required this.text,
+    required this.color,
+  });
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10262B),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0x5532B8C6),
+          width: 0.9,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.open_in_new_rounded,
+            color: color,
+            size: 12,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(
+              color: color,
+              fontSize: 10.8,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.04,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -566,20 +959,23 @@ class _DeleteNotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: const SizedBox(
-          width: 32,
-          height: 34,
-          child: Icon(
-            Icons.delete_outline_rounded,
-            color: Color(0xFFAAABAB),
-            size: 28,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: const Color(0x1AFF716C),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0x99FF716C),
           ),
+        ),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: Color(0xFFFF716C),
+          size: 23,
         ),
       ),
     );

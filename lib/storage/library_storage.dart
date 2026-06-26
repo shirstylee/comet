@@ -129,15 +129,18 @@ class LibraryStorage {
   }) async {
     if (oldGame == null) return;
 
-    final ratingWasChanged = oldGame.userRating != newGame.userRating;
-    final ratingWasAdded = oldGame.userRating == null && newGame.userRating != null;
+    final oldRating = oldGame.userRating;
+    final newRating = newGame.userRating;
+    final ratingWasChanged = oldRating != newRating;
+    final ratingWasAdded = oldRating == null && newRating != null;
 
-    if (ratingWasChanged && newGame.userRating != null) {
+    if (ratingWasChanged && newRating != null) {
       await _safeCreateNotification(
             () => NotificationStorage.addRatingNotification(
           gameId: newGame.id,
           gameTitle: newGame.title,
-          rating: newGame.userRating!,
+          rating: newRating,
+          previousRating: oldRating,
           isUpdate: !ratingWasAdded,
         ),
       );
