@@ -611,6 +611,7 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _notificationColor(notification);
+    final isWarning = notification.type == AppNotificationType.warning;
     final title = _titleText(notification);
     final actionText = _actionText(notification);
 
@@ -626,7 +627,9 @@ class _NotificationCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF081F23),
+            color: isWarning
+                ? const Color(0xFF241315)
+                : const Color(0xFF081F23),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: color.withOpacity(
@@ -823,21 +826,23 @@ class _NotificationIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
 
+  bool get isWarningColor => color == const Color(0xFFFF716C);
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withOpacity(isWarningColor ? 0.16 : 0.10),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withOpacity(0.34),
+          color: color.withOpacity(isWarningColor ? 0.46 : 0.34),
           width: 1.1,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
+            color: color.withOpacity(isWarningColor ? 0.12 : 0.08),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -861,6 +866,8 @@ class _NotificationTitlePill extends StatelessWidget {
   final String text;
   final Color color;
 
+  bool get isWarningColor => color == const Color(0xFFFF716C);
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -869,10 +876,12 @@ class _NotificationTitlePill extends StatelessWidget {
         height: 28,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF10262B),
+          color: isWarningColor
+              ? const Color(0xFF35181B)
+              : const Color(0xFF10262B),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: color.withOpacity(0.34),
+            color: color.withOpacity(isWarningColor ? 0.46 : 0.34),
             width: 0.9,
           ),
         ),
@@ -909,16 +918,20 @@ class _NotificationMetaPill extends StatelessWidget {
   final String text;
   final Color color;
 
+  bool get isWarningColor => color == const Color(0xFFFF716C);
+
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF10262B),
+        color: isWarningColor
+            ? const Color(0xFF35181B)
+            : const Color(0xFF10262B),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: const Color(0x5532B8C6),
+          color: color.withOpacity(isWarningColor ? 0.46 : 0.34),
           width: 0.9,
         ),
       ),
@@ -958,16 +971,20 @@ class _NotificationActionHint extends StatelessWidget {
   final String text;
   final Color color;
 
+  bool get isWarningColor => color == const Color(0xFFFF716C);
+
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF10262B),
+        color: isWarningColor
+            ? const Color(0xFF35181B)
+            : const Color(0xFF10262B),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: const Color(0x5532B8C6),
+          color: color.withOpacity(isWarningColor ? 0.46 : 0.34),
           width: 0.9,
         ),
       ),
