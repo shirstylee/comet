@@ -1832,6 +1832,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
   late final TextEditingController reviewController =
   TextEditingController(text: widget.review);
   final FocusNode reviewFocusNode = FocusNode();
+  final ScrollController reviewScrollController = ScrollController();
 
   @override
   void initState() {
@@ -1852,12 +1853,25 @@ class _ReviewScreenState extends State<_ReviewScreen> {
     reviewFocusNode.requestFocus();
   }
 
+  void _scrollReviewInputFromRightSide(DragUpdateDetails details) {
+    if (!reviewScrollController.hasClients) return;
+
+    final position = reviewScrollController.position;
+    final nextOffset = (reviewScrollController.offset - details.delta.dy).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+
+    reviewScrollController.jumpTo(nextOffset.toDouble());
+  }
+
   @override
   void dispose() {
     reviewController.removeListener(_onReviewChanged);
     reviewFocusNode.removeListener(_onReviewChanged);
     reviewController.dispose();
     reviewFocusNode.dispose();
+    reviewScrollController.dispose();
     super.dispose();
   }
 
@@ -2249,6 +2263,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                                 child: TextField(
                                   focusNode: reviewFocusNode,
                                   controller: reviewController,
+                                  scrollController: reviewScrollController,
                                   maxLines: null,
                                   expands: true,
                                   keyboardType: TextInputType.multiline,
@@ -2277,6 +2292,20 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                                   ),
                                 ),
                               ),
+                              if (hasReviewText)
+                                Positioned(
+                                  top: 44,
+                                  right: 0,
+                                  bottom: 0,
+                                  width: 48,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.translucent,
+                                    onTap: () => reviewFocusNode.requestFocus(),
+                                    onVerticalDragUpdate:
+                                    _scrollReviewInputFromRightSide,
+                                    child: const SizedBox.expand(),
+                                  ),
+                                ),
                               Positioned(
                                 top: 0,
                                 right: 0,
@@ -3371,6 +3400,7 @@ class _StageDescriptionInput extends StatefulWidget {
 
 class _StageDescriptionInputState extends State<_StageDescriptionInput> {
   final FocusNode focusNode = FocusNode();
+  final ScrollController descriptionScrollController = ScrollController();
 
   @override
   void initState() {
@@ -3401,11 +3431,25 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
     focusNode.requestFocus();
   }
 
+  void _scrollDescriptionInputFromRightSide(DragUpdateDetails details) {
+    if (!descriptionScrollController.hasClients) return;
+
+    final position = descriptionScrollController.position;
+    final nextOffset =
+    (descriptionScrollController.offset - details.delta.dy).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+
+    descriptionScrollController.jumpTo(nextOffset.toDouble());
+  }
+
   @override
   void dispose() {
     focusNode.removeListener(_onInputChanged);
     widget.controller.removeListener(_onInputChanged);
     focusNode.dispose();
+    descriptionScrollController.dispose();
     super.dispose();
   }
 
@@ -3456,6 +3500,7 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
               child: TextField(
                 focusNode: focusNode,
                 controller: widget.controller,
+                scrollController: descriptionScrollController,
                 cursorColor: const Color(0xFF75EEFD),
                 maxLines: null,
                 expands: true,
@@ -3484,6 +3529,19 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
                 ),
               ),
             ),
+            if (hasText)
+              Positioned(
+                top: 44,
+                right: 0,
+                bottom: 0,
+                width: 48,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () => focusNode.requestFocus(),
+                  onVerticalDragUpdate: _scrollDescriptionInputFromRightSide,
+                  child: const SizedBox.expand(),
+                ),
+              ),
             Positioned(
               top: 0,
               right: 0,
