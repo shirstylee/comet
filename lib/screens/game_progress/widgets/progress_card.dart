@@ -20,7 +20,7 @@ class GameProgressCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF111414),
+        color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -31,7 +31,7 @@ class GameProgressCard extends StatelessWidget {
           ],
         ),
         border: Border.all(
-          color: Colors.white.withOpacity(0.04),
+          color: const Color(0x6632B8C6),
         ),
       ),
       child: Column(
@@ -39,18 +39,37 @@ class GameProgressCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'ТЕКУЩИЙ ЭТАП',
-                  style: TextStyle(
-                    color: Color(0xFFAAABAB),
-                    fontSize: 15,
-                    height: 1.2,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.6,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10262B),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: const Color(0x5532B8C6),
+                        width: 1.2,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Текущий этап',
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        color: Color(0xFF75EEFD),
+                        fontSize: 14,
+                        height: 1.2,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
               _StageStatusBadge(
                 text: statusText,
                 color: statusColor,
