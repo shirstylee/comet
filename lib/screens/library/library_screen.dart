@@ -61,16 +61,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void initState() {
     super.initState();
 
-    _loadGames();
-    _loadSavedLibraryPreferences();
+    _loadInitialLibraryState();
 
     LibraryChangeNotifier.version.addListener(_onLibraryChanged);
     searchController.addListener(_onSearchChanged);
   }
 
-  Future<void> _loadSavedLibraryPreferences() async {
-    final savedViewType = await LibraryPreferencesStorage.getViewType();
-    final savedSortType = await LibraryPreferencesStorage.getSortType();
+  Future<void> _loadInitialLibraryState() async {
+    final gamesFuture = LibraryStorage.getAllGames();
+    final viewTypeFuture = LibraryPreferencesStorage.getViewType();
+    final sortTypeFuture = LibraryPreferencesStorage.getSortType();
+
+    final loadedGames = await gamesFuture;
+    final savedViewType = await viewTypeFuture;
+    final savedSortType = await sortTypeFuture;
 
     if (!mounted) return;
 
@@ -81,6 +85,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           : LibraryViewType.list;
 
       selectedSortType = _sortTypeFromStorageValue(savedSortType);
+      games = loadedGames;
+      isLoading = false;
     });
   }
 
@@ -153,7 +159,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     setState(() {
       games = loadedGames;
-      isLoading = false;
     });
   }
 
@@ -765,27 +770,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  _ViewModeButton(
-                    title: selectedViewTitle,
-                    icon: selectedViewIcon,
-                    onTap: _openViewSheet,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: _SortButton(
-                        title: selectedSortTitle,
-                        icon: selectedSortIcon,
-                        onTap: _openSortSheet,
+              if (!isLoading) ...[
+                Row(
+                  children: [
+                    _ViewModeButton(
+                      title: selectedViewTitle,
+                      icon: selectedViewIcon,
+                      onTap: _openViewSheet,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: _SortButton(
+                          title: selectedSortTitle,
+                          icon: selectedSortIcon,
+                          onTap: _openSortSheet,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
               if (isLoading)
                 const _LibraryLoadingState()
               else if (!hasGames)
