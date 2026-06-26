@@ -662,17 +662,9 @@ class _NotificationCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 14,
-                              height: 1.2,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.15,
-                            ),
+                          _NotificationTitlePill(
+                            text: title,
+                            color: color,
                           ),
                           const SizedBox(height: 7),
                           Text(
@@ -729,17 +721,17 @@ class _NotificationCard extends StatelessWidget {
       case AppNotificationType.game:
         return 'Игра в библиотеке';
       case AppNotificationType.success:
-        return 'Готово';
+        return 'Успешно';
       case AppNotificationType.restore:
         return 'Восстановление данных';
       case AppNotificationType.release:
-        return 'Игровой календарь';
+        return 'Релиз игры';
       case AppNotificationType.rating:
         return 'Оценка обновлена';
       case AppNotificationType.progress:
         return 'Этап прохождения';
       case AppNotificationType.completed:
-        return 'Прогресс завершён';
+        return 'Этап завершён';
       case AppNotificationType.warning:
         return 'Внимание';
     }
@@ -850,6 +842,52 @@ class _NotificationIcon extends StatelessWidget {
   }
 }
 
+class _NotificationTitlePill extends StatelessWidget {
+  const _NotificationTitlePill({
+    required this.text,
+    required this.color,
+  });
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10262B),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: const Color(0x5532B8C6),
+            width: 0.9,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                color: color,
+                fontSize: 11.5,
+                height: 1.2,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.05,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NotificationMetaPill extends StatelessWidget {
   const _NotificationMetaPill({
     required this.icon,
@@ -913,8 +951,8 @@ class _NotificationActionHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 24,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF10262B),
         borderRadius: BorderRadius.circular(999),
@@ -929,19 +967,19 @@ class _NotificationActionHint extends StatelessWidget {
           Icon(
             Icons.open_in_new_rounded,
             color: color,
-            size: 12,
+            size: 14,
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 6),
           Text(
             text,
             maxLines: 1,
             softWrap: false,
             style: TextStyle(
               color: color,
-              fontSize: 10.8,
+              fontSize: 11.5,
               height: 1.2,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.04,
+              letterSpacing: 0.05,
             ),
           ),
         ],
