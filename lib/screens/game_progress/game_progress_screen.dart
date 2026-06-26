@@ -3253,7 +3253,7 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
         height: 126,
-        padding: const EdgeInsets.fromLTRB(18, 10, 8, 12),
+        padding: const EdgeInsets.fromLTRB(18, 12, 8, 10),
         decoration: BoxDecoration(
           color: isFocused
               ? const Color(0xFF111C1D)
