@@ -77,16 +77,20 @@ class GameProgressCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 26),
-          Text(
-            cleanTitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF75EEFD),
-              fontSize: 26,
-              height: 1.15,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.7,
+          Transform.translate(
+            offset: const Offset(-1.2, 0),
+            child: Text(
+              cleanTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.left,
+              style: const TextStyle(
+                color: Color(0xFF75EEFD),
+                fontSize: 26,
+                height: 1.15,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.7,
+              ),
             ),
           ),
         ],
