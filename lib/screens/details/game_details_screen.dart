@@ -1642,13 +1642,6 @@ class _MetaCard extends StatelessWidget {
           border: Border.all(
             color: const Color(0x6632B8C6),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF75EEFD).withOpacity(0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
         ),
         child: Stack(
           children: [
