@@ -2256,40 +2256,35 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                           ),
                           child: Stack(
                             children: [
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  right: hasReviewText ? 48 : 0,
+                              TextField(
+                                focusNode: reviewFocusNode,
+                                controller: reviewController,
+                                scrollController: reviewScrollController,
+                                maxLines: null,
+                                expands: true,
+                                keyboardType: TextInputType.multiline,
+                                textAlignVertical: TextAlignVertical.top,
+                                cursorColor: accent,
+                                scrollPadding: const EdgeInsets.only(bottom: 90),
+                                onTapOutside: (_) {
+                                  FocusManager.instance.primaryFocus?.unfocus();
+                                },
+                                style: const TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 16,
+                                  height: 1.5,
                                 ),
-                                child: TextField(
-                                  focusNode: reviewFocusNode,
-                                  controller: reviewController,
-                                  scrollController: reviewScrollController,
-                                  maxLines: null,
-                                  expands: true,
-                                  keyboardType: TextInputType.multiline,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  cursorColor: accent,
-                                  scrollPadding: const EdgeInsets.only(bottom: 90),
-                                  onTapOutside: (_) {
-                                    FocusManager.instance.primaryFocus?.unfocus();
-                                  },
-                                  style: const TextStyle(
-                                    color: textPrimary,
+                                decoration: InputDecoration(
+                                  hintText: 'Поделитесь своими впечатлениями...',
+                                  hintStyle: TextStyle(
+                                    color: textSecondary.withOpacity(0.72),
                                     fontSize: 16,
                                     height: 1.5,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  decoration: InputDecoration(
-                                    hintText: 'Поделитесь своими впечатлениями...',
-                                    hintStyle: TextStyle(
-                                      color: textSecondary.withOpacity(0.72),
-                                      fontSize: 16,
-                                      height: 1.5,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    border: InputBorder.none,
-                                    counterText: '',
-                                    isCollapsed: true,
-                                  ),
+                                  border: InputBorder.none,
+                                  counterText: '',
+                                  isCollapsed: true,
                                 ),
                               ),
                               if (hasReviewText)
@@ -2328,27 +2323,31 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                                     onTap: _clearReview,
                                     behavior: HitTestBehavior.opaque,
                                     child: Container(
-                                      width: 36,
-                                      height: 36,
+                                      width: 44,
+                                      height: 44,
+                                      alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: const Color(0x1A75EEFD),
-                                        borderRadius: BorderRadius.circular(999),
-                                        border: Border.all(
-                                          color: const Color(0x5575EEFD),
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFF75EEFD)
-                                                .withOpacity(0.08),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 5),
-                                          ),
-                                        ],
+                                        color: isReviewFocused
+                                            ? const Color(0xFF111C1D)
+                                            : const Color(0xFF151A1A),
+                                        shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: Color(0xFF75EEFD),
-                                        size: 19,
+                                      child: Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x1A75EEFD),
+                                          borderRadius: BorderRadius.circular(999),
+                                          border: Border.all(
+                                            color: const Color(0x5575EEFD),
+                                          ),
+
+                                        ),
+                                        child: const Icon(
+                                          Icons.close_rounded,
+                                          color: Color(0xFF75EEFD),
+                                          size: 19,
+                                        ),
                                       ),
                                     ),
                                   )
@@ -3493,39 +3492,34 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
         ),
         child: Stack(
           children: [
-            Padding(
-              padding: EdgeInsets.only(
-                right: hasText ? 48 : 0,
+            TextField(
+              focusNode: focusNode,
+              controller: widget.controller,
+              scrollController: descriptionScrollController,
+              cursorColor: const Color(0xFF75EEFD),
+              maxLines: null,
+              expands: true,
+              keyboardType: TextInputType.multiline,
+              textAlignVertical: TextAlignVertical.top,
+              scrollPadding: const EdgeInsets.only(bottom: 90),
+              onTapOutside: (_) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              style: const TextStyle(
+                color: Color(0xFFF4F3F3),
+                fontSize: 15,
+                height: 1.4,
+                fontWeight: FontWeight.w600,
               ),
-              child: TextField(
-                focusNode: focusNode,
-                controller: widget.controller,
-                scrollController: descriptionScrollController,
-                cursorColor: const Color(0xFF75EEFD),
-                maxLines: null,
-                expands: true,
-                keyboardType: TextInputType.multiline,
-                textAlignVertical: TextAlignVertical.top,
-                scrollPadding: const EdgeInsets.only(bottom: 90),
-                onTapOutside: (_) {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                },
-                style: const TextStyle(
-                  color: Color(0xFFF4F3F3),
+              decoration: InputDecoration(
+                hintText: 'Описание (необязательно)',
+                border: InputBorder.none,
+                isCollapsed: true,
+                hintStyle: TextStyle(
+                  color: const Color(0xFFAAABAB).withOpacity(0.72),
                   fontSize: 15,
                   height: 1.4,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Описание (необязательно)',
-                  border: InputBorder.none,
-                  isCollapsed: true,
-                  hintStyle: TextStyle(
-                    color: const Color(0xFFAAABAB).withOpacity(0.72),
-                    fontSize: 15,
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -3564,26 +3558,31 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
                   onTap: _clearText,
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0x1A75EEFD),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: const Color(0x5575EEFD),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF75EEFD).withOpacity(0.08),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                      color: isFocused
+                          ? const Color(0xFF111C1D)
+                          : const Color(0xFF151A1A),
+                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFF75EEFD),
-                      size: 19,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0x1A75EEFD),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: const Color(0x5575EEFD),
+                        ),
+
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFF75EEFD),
+                        size: 19,
+                      ),
                     ),
                   ),
                 )

@@ -22,14 +22,6 @@ class GameProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF081F23),
         borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF75EEFD).withOpacity(0.06),
-            Colors.transparent,
-          ],
-        ),
         border: Border.all(
           color: const Color(0x6632B8C6),
         ),
