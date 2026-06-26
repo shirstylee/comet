@@ -2289,7 +2289,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                               ),
                               if (hasReviewText)
                                 Positioned(
-                                  top: 44,
+                                  top: 36,
                                   right: 0,
                                   bottom: 0,
                                   width: 48,
@@ -2323,31 +2323,19 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                                     onTap: _clearReview,
                                     behavior: HitTestBehavior.opaque,
                                     child: Container(
-                                      width: 44,
-                                      height: 44,
-                                      alignment: Alignment.center,
+                                      width: 36,
+                                      height: 36,
                                       decoration: BoxDecoration(
-                                        color: isReviewFocused
-                                            ? const Color(0xFF111C1D)
-                                            : const Color(0xFF151A1A),
-                                        shape: BoxShape.circle,
+                                        color: const Color(0x1A75EEFD),
+                                        borderRadius: BorderRadius.circular(999),
+                                        border: Border.all(
+                                          color: const Color(0x5575EEFD),
+                                        ),
                                       ),
-                                      child: Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0x1A75EEFD),
-                                          borderRadius: BorderRadius.circular(999),
-                                          border: Border.all(
-                                            color: const Color(0x5575EEFD),
-                                          ),
-
-                                        ),
-                                        child: const Icon(
-                                          Icons.close_rounded,
-                                          color: Color(0xFF75EEFD),
-                                          size: 19,
-                                        ),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        color: Color(0xFF75EEFD),
+                                        size: 19,
                                       ),
                                     ),
                                   )
@@ -3525,7 +3513,7 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
             ),
             if (hasText)
               Positioned(
-                top: 44,
+                top: 36,
                 right: 0,
                 bottom: 0,
                 width: 48,
@@ -3558,31 +3546,19 @@ class _StageDescriptionInputState extends State<_StageDescriptionInput> {
                   onTap: _clearText,
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width: 44,
-                    height: 44,
-                    alignment: Alignment.center,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: isFocused
-                          ? const Color(0xFF111C1D)
-                          : const Color(0xFF151A1A),
-                      shape: BoxShape.circle,
+                      color: const Color(0x1A75EEFD),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: const Color(0x5575EEFD),
+                      ),
                     ),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0x1A75EEFD),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: const Color(0x5575EEFD),
-                        ),
-
-                      ),
-                      child: const Icon(
-                        Icons.close_rounded,
-                        color: Color(0xFF75EEFD),
-                        size: 19,
-                      ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF75EEFD),
+                      size: 19,
                     ),
                   ),
                 )
