@@ -378,6 +378,12 @@ class _StageDatePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentTextColor = isLocked
+        ? const Color(0xFF747675)
+        : isDone
+        ? const Color(0xFFD8FFD3)
+        : const Color(0xFFAAABAB);
+
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -396,25 +402,28 @@ class _StageDatePill extends StatelessWidget {
               : const Color(0x5532B8C6),
         ),
       ),
-      alignment: Alignment.center,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          text,
-          maxLines: 1,
-          softWrap: false,
-          style: TextStyle(
-            color: isLocked
-                ? const Color(0xFF747675)
-                : isDone
-                ? const Color(0xFFD8FFD3)
-                : const Color(0xFFAAABAB),
-            fontSize: 11,
-            height: 1.2,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                text,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: currentTextColor,
+                  fontSize: 11,
+                  height: 1.2,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
