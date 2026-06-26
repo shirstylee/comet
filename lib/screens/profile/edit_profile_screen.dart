@@ -285,9 +285,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           Text(
                             'Выберите основные',
                             style: TextStyle(
-                              color: Color(0xB3AAABAB),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w400,
+                              color: Color(0xCCAAABAB),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ],
