@@ -2001,7 +2001,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Оценка и текст отзыва будут удалены из этой игры.',
+                'Оценка и отзыв будут удалены из этой игры.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: textSecondary,
@@ -2168,142 +2168,171 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                const Padding(
-                  padding: EdgeInsets.only(left: 8),
-                  child: Text(
-                    'Отзыв',
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 20,
-                      height: 1.4,
-                      fontWeight: FontWeight.w800,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0A2529),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0x8832B8C6),
+                      width: 1.2,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFieldTapRegion(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    height: 240,
-                    padding: const EdgeInsets.fromLTRB(18, 16, 8, 14),
-                    decoration: BoxDecoration(
-                      color: isReviewFocused
-                          ? const Color(0xFF111C1D)
-                          : const Color(0xFF151A1A),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: isReviewFocused
-                            ? const Color(0x8875EEFD)
-                            : const Color(0x5532B8C6),
-                        width: 1.2,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF75EEFD).withOpacity(0.14),
+                        blurRadius: 26,
+                        offset: const Offset(0, 8),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.34),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF75EEFD).withOpacity(
-                            isReviewFocused ? 0.12 : 0.055,
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.20),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 2),
+                        child: Text(
+                          'Отзыв',
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 20,
+                            height: 1.4,
+                            fontWeight: FontWeight.w800,
                           ),
-                          blurRadius: isReviewFocused ? 26 : 18,
-                          spreadRadius: isReviewFocused ? 0.6 : 0,
-                          offset: const Offset(0, 0),
                         ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(
-                            right: hasReviewText ? 48 : 0,
-                          ),
-                          child: TextField(
-                            focusNode: reviewFocusNode,
-                            controller: reviewController,
-                            maxLines: null,
-                            expands: true,
-                            keyboardType: TextInputType.multiline,
-                            textAlignVertical: TextAlignVertical.top,
-                            cursorColor: accent,
-                            scrollPadding: const EdgeInsets.only(bottom: 90),
-                            onTapOutside: (_) {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                            },
-                            style: const TextStyle(
-                              color: textPrimary,
-                              fontSize: 16,
-                              height: 1.5,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFieldTapRegion(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          height: 240,
+                          padding: const EdgeInsets.fromLTRB(18, 16, 8, 14),
+                          decoration: BoxDecoration(
+                            color: isReviewFocused
+                                ? const Color(0xFF111C1D)
+                                : const Color(0xFF151A1A),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: isReviewFocused
+                                  ? const Color(0x8875EEFD)
+                                  : const Color(0x5532B8C6),
+                              width: 1.2,
                             ),
-                            decoration: InputDecoration(
-                              hintText: 'Поделитесь своими впечатлениями...',
-                              hintStyle: TextStyle(
-                                color: textSecondary.withOpacity(0.72),
-                                fontSize: 16,
-                                height: 1.5,
-                                fontWeight: FontWeight.w500,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.34),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
                               ),
-                              border: InputBorder.none,
-                              counterText: '',
-                              isCollapsed: true,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 160),
-                            switchInCurve: Curves.easeOutCubic,
-                            switchOutCurve: Curves.easeInCubic,
-                            transitionBuilder: (child, animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: ScaleTransition(
-                                  scale: animation,
-                                  child: child,
+                              BoxShadow(
+                                color: const Color(0xFF75EEFD).withOpacity(
+                                  isReviewFocused ? 0.12 : 0.055,
                                 ),
-                              );
-                            },
-                            child: hasReviewText
-                                ? GestureDetector(
-                              key: const ValueKey('clear_review_input_button'),
-                              onTap: _clearReview,
-                              behavior: HitTestBehavior.opaque,
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: const Color(0x1A75EEFD),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: const Color(0x5575EEFD),
+                                blurRadius: isReviewFocused ? 26 : 18,
+                                spreadRadius: isReviewFocused ? 0.6 : 0,
+                                offset: const Offset(0, 0),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  right: hasReviewText ? 48 : 0,
+                                ),
+                                child: TextField(
+                                  focusNode: reviewFocusNode,
+                                  controller: reviewController,
+                                  maxLines: null,
+                                  expands: true,
+                                  keyboardType: TextInputType.multiline,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  cursorColor: accent,
+                                  scrollPadding: const EdgeInsets.only(bottom: 90),
+                                  onTapOutside: (_) {
+                                    FocusManager.instance.primaryFocus?.unfocus();
+                                  },
+                                  style: const TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 16,
+                                    height: 1.5,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF75EEFD)
-                                          .withOpacity(0.08),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 5),
+                                  decoration: InputDecoration(
+                                    hintText: 'Поделитесь своими впечатлениями...',
+                                    hintStyle: TextStyle(
+                                      color: textSecondary.withOpacity(0.72),
+                                      fontSize: 16,
+                                      height: 1.5,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  color: Color(0xFF75EEFD),
-                                  size: 19,
+                                    border: InputBorder.none,
+                                    counterText: '',
+                                    isCollapsed: true,
+                                  ),
                                 ),
                               ),
-                            )
-                                : const SizedBox.shrink(
-                              key: ValueKey('empty_clear_review_input_button'),
-                            ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 160),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (child, animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: ScaleTransition(
+                                        scale: animation,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: hasReviewText
+                                      ? GestureDetector(
+                                    key: const ValueKey('clear_review_input_button'),
+                                    onTap: _clearReview,
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0x1A75EEFD),
+                                        borderRadius: BorderRadius.circular(999),
+                                        border: Border.all(
+                                          color: const Color(0x5575EEFD),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF75EEFD)
+                                                .withOpacity(0.08),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        color: Color(0xFF75EEFD),
+                                        size: 19,
+                                      ),
+                                    ),
+                                  )
+                                      : const SizedBox.shrink(
+                                    key: ValueKey('empty_clear_review_input_button'),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 48),
