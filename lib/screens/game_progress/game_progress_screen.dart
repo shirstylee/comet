@@ -2759,47 +2759,72 @@ class _TimeInputFieldState extends State<_TimeInputField> {
             ),
           ],
         ),
-        child: Center(
-          child: TextField(
-            focusNode: focusNode,
-            controller: widget.controller,
-            keyboardType: TextInputType.number,
-            cursorColor: const Color(0xFF75EEFD),
-            textAlignVertical: TextAlignVertical.center,
-            onTapOutside: (_) {
-              FocusManager.instance.primaryFocus?.unfocus();
-            },
-            scrollPadding: EdgeInsets.zero,
-            style: const TextStyle(
-              color: Color(0xFFF4F3F3),
-              fontSize: 16,
-              height: 1.15,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.1,
-            ),
-            decoration: InputDecoration(
-              labelText: widget.label,
-              suffixText: widget.suffix,
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.only(
-                top: 2,
-                bottom: 0,
-              ),
-              labelStyle: TextStyle(
-                color: const Color(0xFFAAABAB).withOpacity(0.72),
-                fontSize: 13,
-                height: 1.1,
-                fontWeight: FontWeight.w500,
-              ),
-              suffixStyle: const TextStyle(
-                color: Color(0xFF75EEFD),
-                fontSize: 14,
-                height: 1.1,
-                fontWeight: FontWeight.w800,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 7,
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  color: const Color(0xFFAAABAB).withOpacity(0.72),
+                  fontSize: 12,
+                  height: 1,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
+            Center(
+              child: TextField(
+                focusNode: focusNode,
+                controller: widget.controller,
+                keyboardType: TextInputType.number,
+                cursorColor: const Color(0xFF75EEFD),
+                textAlignVertical: TextAlignVertical.center,
+                onTapOutside: (_) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+                scrollPadding: EdgeInsets.zero,
+                style: const TextStyle(
+                  color: Color(0xFFF4F3F3),
+                  fontSize: 16,
+                  height: 1.15,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.1,
+                ),
+                decoration: InputDecoration(
+                  labelText: widget.label,
+                  suffixText: widget.suffix,
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.only(
+                    top: 2,
+                    bottom: 0,
+                  ),
+                  labelStyle: const TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 13,
+                    height: 1.1,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  floatingLabelStyle: const TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 13,
+                    height: 1.1,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  suffixStyle: const TextStyle(
+                    color: Color(0xFF75EEFD),
+                    fontSize: 14,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
