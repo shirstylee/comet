@@ -18,18 +18,18 @@ Color _ratingScaleColor(double rating) {
 
 String _formatStageDate(DateTime date) {
   const months = [
-    'янв',
-    'фев',
-    'мар',
-    'апр',
+    'января',
+    'февраля',
+    'марта',
+    'апреля',
     'мая',
-    'июн',
-    'июл',
-    'авг',
-    'сен',
-    'окт',
-    'ноя',
-    'дек',
+    'июня',
+    'июля',
+    'августа',
+    'сентября',
+    'октября',
+    'ноября',
+    'декабря',
   ];
 
   return '${date.day} ${months[date.month - 1]}, ${date.year}';
