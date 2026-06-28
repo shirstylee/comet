@@ -39,6 +39,8 @@ flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/logo.png"
+  adaptive_icon_background: "#0C0F0F"
+  adaptive_icon_foreground: "assets/logo_adaptive.png"
 
 flutter_native_splash:
   background_image: "assets/splash.png"
@@ -50,10 +52,15 @@ flutter_native_splash:
   fullscreen: true
   android_gravity: fill
 
+  android_12:
+    color: "#0C0F0F"
+    image: "assets/logo.png"
+
 flutter:
   uses-material-design: true
 
   assets:
     - assets/logo.png
+    - assets/logo_adaptive.png
     - assets/splash.png
     - assets/welcome_gallery.png
