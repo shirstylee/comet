@@ -2080,6 +2080,8 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
   late final PageController pageController;
   late int currentIndex;
 
+  bool isCurrentScreenshotZoomed = false;
+
   @override
   void initState() {
     super.initState();
@@ -2097,6 +2099,14 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
     super.dispose();
   }
 
+  void _setCurrentScreenshotZoomed(bool value) {
+    if (!mounted || isCurrentScreenshotZoomed == value) return;
+
+    setState(() {
+      isCurrentScreenshotZoomed = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2105,42 +2115,28 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
         children: [
           PageView.builder(
             controller: pageController,
+            physics: isCurrentScreenshotZoomed
+                ? const NeverScrollableScrollPhysics()
+                : const PageScrollPhysics(),
             itemCount: widget.screenshots.length,
             onPageChanged: (index) {
               setState(() {
                 currentIndex = index;
+                isCurrentScreenshotZoomed = false;
               });
             },
             itemBuilder: (context, index) {
               final screenshot = widget.screenshots[index];
 
-              return InteractiveViewer(
-                minScale: 1,
-                maxScale: 5,
-                child: Center(
-                  child: Image.network(
-                    screenshot,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
+              return _ZoomableScreenshot(
+                key: ValueKey(screenshot),
+                imageUrl: screenshot,
+                isActive: index == currentIndex,
+                onZoomChanged: (isZoomed) {
+                  if (index != currentIndex) return;
 
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF75EEFD),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Color(0xFFAAABAB),
-                          size: 46,
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                  _setCurrentScreenshotZoomed(isZoomed);
+                },
               );
             },
           ),
@@ -2219,6 +2215,151 @@ class _ScreenshotViewerScreenState extends State<_ScreenshotViewerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ZoomableScreenshot extends StatefulWidget {
+  const _ZoomableScreenshot({
+    super.key,
+    required this.imageUrl,
+    required this.isActive,
+    required this.onZoomChanged,
+  });
+
+  final String imageUrl;
+  final bool isActive;
+  final ValueChanged<bool> onZoomChanged;
+
+  @override
+  State<_ZoomableScreenshot> createState() => _ZoomableScreenshotState();
+}
+
+class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
+  static const double doubleTapScale = 2.6;
+
+  final TransformationController transformationController =
+  TransformationController();
+
+  TapDownDetails? doubleTapDetails;
+  bool isZoomed = false;
+
+  @override
+  void didUpdateWidget(covariant _ZoomableScreenshot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.isActive && !widget.isActive) {
+      _resetZoom(notify: false);
+    }
+  }
+
+  @override
+  void dispose() {
+    transformationController.dispose();
+
+    super.dispose();
+  }
+
+  void _handleDoubleTapDown(TapDownDetails details) {
+    doubleTapDetails = details;
+  }
+
+  void _handleDoubleTap() {
+    if (isZoomed) {
+      _resetZoom();
+      return;
+    }
+
+    final tapPosition = doubleTapDetails?.localPosition ?? Offset.zero;
+
+    final matrix = Matrix4.identity()
+      ..translate(
+        -tapPosition.dx * (doubleTapScale - 1),
+        -tapPosition.dy * (doubleTapScale - 1),
+      )
+      ..scale(doubleTapScale);
+
+    transformationController.value = matrix;
+    _updateZoomState(forceNotify: true);
+  }
+
+  void _resetZoom({bool notify = true}) {
+    transformationController.value = Matrix4.identity();
+    isZoomed = false;
+
+    if (notify) {
+      widget.onZoomChanged(false);
+    }
+  }
+
+  void _updateZoomState({bool forceNotify = false}) {
+    final nextZoomed =
+        transformationController.value.getMaxScaleOnAxis() > 1.01;
+
+    if (!forceNotify && nextZoomed == isZoomed) return;
+
+    isZoomed = nextZoomed;
+    widget.onZoomChanged(nextZoomed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onDoubleTapDown: _handleDoubleTapDown,
+      onDoubleTap: _handleDoubleTap,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return ClipRect(
+            child: InteractiveViewer(
+              transformationController: transformationController,
+              minScale: 1,
+              maxScale: 5,
+              panEnabled: true,
+              scaleEnabled: true,
+              clipBehavior: Clip.hardEdge,
+              boundaryMargin: EdgeInsets.zero,
+              constrained: true,
+              onInteractionStart: (details) {
+                if (details.pointerCount > 1) {
+                  widget.onZoomChanged(true);
+                }
+              },
+              onInteractionUpdate: (_) {
+                _updateZoomState();
+              },
+              onInteractionEnd: (_) {
+                _updateZoomState(forceNotify: true);
+              },
+              child: SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                child: Image.network(
+                  widget.imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF75EEFD),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Color(0xFFAAABAB),
+                        size: 46,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
