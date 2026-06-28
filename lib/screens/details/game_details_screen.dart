@@ -2237,17 +2237,47 @@ class _ZoomableScreenshot extends StatefulWidget {
 }
 
 class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
+  static const double minZoomScale = 1;
+  static const double maxZoomScale = 5;
   static const double doubleTapScale = 2.6;
 
-  final TransformationController transformationController =
-  TransformationController();
+  ImageStream? imageStream;
+  ImageStreamListener? imageStreamListener;
+  Size? naturalImageSize;
 
   TapDownDetails? doubleTapDetails;
+
+  double scale = minZoomScale;
+  double startScale = minZoomScale;
+
+  Offset offset = Offset.zero;
+  Offset startOffset = Offset.zero;
+  Offset startFocalPoint = Offset.zero;
+
   bool isZoomed = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _resolveImageSize();
+  }
 
   @override
   void didUpdateWidget(covariant _ZoomableScreenshot oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _removeImageListener();
+
+      setState(() {
+        naturalImageSize = null;
+      });
+
+      _resetZoom(notify: false);
+      _resolveImageSize();
+      return;
+    }
 
     if (oldWidget.isActive && !widget.isActive) {
       _resetZoom(notify: false);
@@ -2256,37 +2286,234 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
 
   @override
   void dispose() {
-    transformationController.dispose();
+    _removeImageListener();
 
     super.dispose();
+  }
+
+  void _removeImageListener() {
+    final listener = imageStreamListener;
+
+    if (listener != null) {
+      imageStream?.removeListener(listener);
+    }
+
+    imageStream = null;
+    imageStreamListener = null;
+  }
+
+  void _resolveImageSize() {
+    final stream = NetworkImage(widget.imageUrl).resolve(
+      const ImageConfiguration(),
+    );
+
+    imageStream = stream;
+
+    late final ImageStreamListener listener;
+
+    listener = ImageStreamListener(
+          (imageInfo, synchronousCall) {
+        if (!mounted) return;
+
+        setState(() {
+          naturalImageSize = Size(
+            imageInfo.image.width.toDouble(),
+            imageInfo.image.height.toDouble(),
+          );
+        });
+
+        stream.removeListener(listener);
+
+        if (imageStreamListener == listener) {
+          imageStream = null;
+          imageStreamListener = null;
+        }
+      },
+      onError: (error, stackTrace) {
+        stream.removeListener(listener);
+
+        if (imageStreamListener == listener) {
+          imageStream = null;
+          imageStreamListener = null;
+        }
+      },
+    );
+
+    imageStreamListener = listener;
+    stream.addListener(listener);
+  }
+
+  Size _getContainedImageSize(BoxConstraints constraints) {
+    final viewportSize = Size(
+      constraints.maxWidth,
+      constraints.maxHeight,
+    );
+
+    final imageSize = naturalImageSize;
+
+    if (imageSize == null ||
+        imageSize.width <= 0 ||
+        imageSize.height <= 0 ||
+        viewportSize.width <= 0 ||
+        viewportSize.height <= 0) {
+      return viewportSize;
+    }
+
+    final imageRatio = imageSize.width / imageSize.height;
+    final viewportRatio = viewportSize.width / viewportSize.height;
+
+    if (imageRatio > viewportRatio) {
+      return Size(
+        viewportSize.width,
+        viewportSize.width / imageRatio,
+      );
+    }
+
+    return Size(
+      viewportSize.height * imageRatio,
+      viewportSize.height,
+    );
+  }
+
+  Offset _getBoundedOffset({
+    required Offset nextOffset,
+    required double nextScale,
+    required BoxConstraints constraints,
+    required Size containedImageSize,
+  }) {
+    final viewportWidth = constraints.maxWidth;
+    final viewportHeight = constraints.maxHeight;
+
+    final scaledWidth = containedImageSize.width * nextScale;
+    final scaledHeight = containedImageSize.height * nextScale;
+
+    final maxX =
+    ((scaledWidth - viewportWidth) / 2).clamp(0.0, double.infinity).toDouble();
+    final maxY =
+    ((scaledHeight - viewportHeight) / 2).clamp(0.0, double.infinity).toDouble();
+
+    return Offset(
+      nextOffset.dx.clamp(-maxX, maxX).toDouble(),
+      nextOffset.dy.clamp(-maxY, maxY).toDouble(),
+    );
+  }
+
+  Offset _getOffsetForScale({
+    required Offset focalPoint,
+    required double nextScale,
+    required BoxConstraints constraints,
+    required Size containedImageSize,
+  }) {
+    final viewportCenter = Offset(
+      constraints.maxWidth / 2,
+      constraints.maxHeight / 2,
+    );
+
+    final focalPointInImage = (startFocalPoint - viewportCenter - startOffset) /
+        startScale;
+
+    final nextOffset = focalPoint - viewportCenter - focalPointInImage * nextScale;
+
+    return _getBoundedOffset(
+      nextOffset: nextOffset,
+      nextScale: nextScale,
+      constraints: constraints,
+      containedImageSize: containedImageSize,
+    );
   }
 
   void _handleDoubleTapDown(TapDownDetails details) {
     doubleTapDetails = details;
   }
 
-  void _handleDoubleTap() {
+  void _handleDoubleTap(
+      BoxConstraints constraints,
+      Size containedImageSize,
+      ) {
     if (isZoomed) {
       _resetZoom();
       return;
     }
 
-    final tapPosition = doubleTapDetails?.localPosition ?? Offset.zero;
+    final focalPoint = doubleTapDetails?.localPosition ??
+        Offset(
+          constraints.maxWidth / 2,
+          constraints.maxHeight / 2,
+        );
 
-    final matrix = Matrix4.identity()
-      ..translate(
-        -tapPosition.dx * (doubleTapScale - 1),
-        -tapPosition.dy * (doubleTapScale - 1),
-      )
-      ..scale(doubleTapScale);
+    startScale = scale;
+    startOffset = offset;
+    startFocalPoint = focalPoint;
 
-    transformationController.value = matrix;
+    final nextOffset = _getOffsetForScale(
+      focalPoint: focalPoint,
+      nextScale: doubleTapScale,
+      constraints: constraints,
+      containedImageSize: containedImageSize,
+    );
+
+    setState(() {
+      scale = doubleTapScale;
+      offset = nextOffset;
+    });
+
+    _updateZoomState(forceNotify: true);
+  }
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    startScale = scale;
+    startOffset = offset;
+    startFocalPoint = details.localFocalPoint;
+
+    if (details.pointerCount > 1) {
+      widget.onZoomChanged(true);
+    }
+  }
+
+  void _handleScaleUpdate(
+      ScaleUpdateDetails details,
+      BoxConstraints constraints,
+      Size containedImageSize,
+      ) {
+    final nextScale = (startScale * details.scale)
+        .clamp(
+      minZoomScale,
+      maxZoomScale,
+    )
+        .toDouble();
+
+    final nextOffset = _getOffsetForScale(
+      focalPoint: details.localFocalPoint,
+      nextScale: nextScale,
+      constraints: constraints,
+      containedImageSize: containedImageSize,
+    );
+
+    setState(() {
+      scale = nextScale;
+      offset = nextOffset;
+    });
+
+    _updateZoomState();
+  }
+
+  void _handleScaleEnd() {
+    if (scale <= 1.01) {
+      _resetZoom();
+      return;
+    }
+
     _updateZoomState(forceNotify: true);
   }
 
   void _resetZoom({bool notify = true}) {
-    transformationController.value = Matrix4.identity();
-    isZoomed = false;
+    if (!mounted) return;
+
+    setState(() {
+      scale = minZoomScale;
+      offset = Offset.zero;
+      isZoomed = false;
+    });
 
     if (notify) {
       widget.onZoomChanged(false);
@@ -2294,8 +2521,7 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
   }
 
   void _updateZoomState({bool forceNotify = false}) {
-    final nextZoomed =
-        transformationController.value.getMaxScaleOnAxis() > 1.01;
+    final nextZoomed = scale > 1.01;
 
     if (!forceNotify && nextZoomed == isZoomed) return;
 
@@ -2305,62 +2531,66 @@ class _ZoomableScreenshotState extends State<_ZoomableScreenshot> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onDoubleTapDown: _handleDoubleTapDown,
-      onDoubleTap: _handleDoubleTap,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return ClipRect(
-            child: InteractiveViewer(
-              transformationController: transformationController,
-              minScale: 1,
-              maxScale: 5,
-              panEnabled: true,
-              scaleEnabled: true,
-              clipBehavior: Clip.hardEdge,
-              boundaryMargin: EdgeInsets.zero,
-              constrained: true,
-              onInteractionStart: (details) {
-                if (details.pointerCount > 1) {
-                  widget.onZoomChanged(true);
-                }
-              },
-              onInteractionUpdate: (_) {
-                _updateZoomState();
-              },
-              onInteractionEnd: (_) {
-                _updateZoomState(forceNotify: true);
-              },
-              child: SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: Image.network(
-                  widget.imageUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final containedImageSize = _getContainedImageSize(constraints);
 
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF75EEFD),
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onDoubleTapDown: _handleDoubleTapDown,
+          onDoubleTap: () => _handleDoubleTap(
+            constraints,
+            containedImageSize,
+          ),
+          onScaleStart: _handleScaleStart,
+          onScaleUpdate: (details) => _handleScaleUpdate(
+            details,
+            constraints,
+            containedImageSize,
+          ),
+          onScaleEnd: (_) => _handleScaleEnd(),
+          child: ClipRect(
+            child: SizedBox(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              child: Center(
+                child: Transform.translate(
+                  offset: offset,
+                  child: Transform.scale(
+                    scale: scale,
+                    child: SizedBox(
+                      width: containedImageSize.width,
+                      height: containedImageSize.height,
+                      child: Image.network(
+                        widget.imageUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF75EEFD),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              color: Color(0xFFAAABAB),
+                              size: 46,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: Color(0xFFAAABAB),
-                        size: 46,
-                      ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
