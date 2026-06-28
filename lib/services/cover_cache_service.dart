@@ -54,8 +54,6 @@ class CoverCacheService {
         return file.path;
       }
 
-      // Если сжатие не сработало, всё равно сохраняем оригинал.
-      // Главное — чтобы обложка была доступна без интернета.
       await file.writeAsBytes(
         response.bodyBytes,
         flush: true,
@@ -95,7 +93,6 @@ class CoverCacheService {
         await file.delete();
       }
     } catch (_) {
-      // Если файл уже удалён или недоступен, приложение не должно падать.
     }
   }
 

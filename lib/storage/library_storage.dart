@@ -227,7 +227,6 @@ class LibraryStorage {
     try {
       await createNotification();
     } catch (_) {
-      // Ошибка уведомлений не должна ломать сохранение игры.
     }
   }
 }

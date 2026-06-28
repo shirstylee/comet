@@ -58,7 +58,6 @@ class AvatarStorageService {
         await file.delete();
       }
     } catch (_) {
-      // Ошибка удаления аватара не должна ломать сохранение профиля.
     }
   }
 

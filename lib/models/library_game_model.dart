@@ -26,11 +26,8 @@ class LibraryGameModel {
   final String title;
   final String status;
 
-  /// Дата добавления игры в библиотеку.
   final DateTime addedAt;
 
-  /// Реальная дата выставления/изменения пользовательской оценки.
-  /// Берётся с телефона пользователя через DateTime.now().
   final DateTime? ratedAt;
 
   final String? imageUrl;
@@ -251,7 +248,6 @@ class LibraryGameModel {
       try {
         stages.add(GameStageModel.fromMap(item));
       } catch (_) {
-        // Повреждённый этап не должен ломать импорт всей игры.
       }
     }
 

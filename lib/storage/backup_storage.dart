@@ -243,8 +243,6 @@ class BackupStorage {
 
           importedGames.add(game);
         } catch (_) {
-          // Повреждённая запись игры пропускается.
-          // Количество таких записей показывается пользователю на предпросмотре.
         }
       }
 
@@ -389,7 +387,6 @@ class BackupStorage {
 
         await CoverCacheService.deleteCover(localImagePath);
       } catch (_) {
-        // Если старая запись повреждена, импорт всё равно должен продолжиться.
       }
     }
   }
@@ -413,7 +410,6 @@ class BackupStorage {
         await file.delete();
       }
     } catch (_) {
-      // Если временный аватар удалить не удалось, импорт всё равно откатывается.
     }
   }
 
@@ -443,9 +439,6 @@ class BackupStorage {
         'base64': base64Encode(bytes),
       };
     } catch (_) {
-      // Если локальную обложку не удалось прочитать, экспорт всё равно должен
-      // завершиться. В таком случае останется imageUrl, который загрузится с
-      // интернетом.
     }
 
     return gameMap;
@@ -477,7 +470,6 @@ class BackupStorage {
         'base64': base64Encode(bytes),
       };
     } catch (_) {
-      // Профиль всё равно экспортируется, даже если аватар не удалось прочитать.
     }
 
     return profileMap;
@@ -517,8 +509,6 @@ class BackupStorage {
 
       gameMap['localImagePath'] = file.path;
     } catch (_) {
-      // Если восстановление обложки не удалось, игра всё равно импортируется.
-      // Тогда GameCover попробует загрузить imageUrl при наличии интернета.
     }
 
     gameMap.remove('coverBackup');
@@ -558,7 +548,6 @@ class BackupStorage {
 
       profileMap['avatarPath'] = file.path;
     } catch (_) {
-      // Если аватар не восстановился, профиль всё равно импортируется.
     }
 
     profileMap.remove('avatarBackup');

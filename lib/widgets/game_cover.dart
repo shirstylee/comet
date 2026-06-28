@@ -116,7 +116,6 @@ class _GameCoverState extends State<GameCover>
       try {
         await CachedNetworkImage.evictFromCache(url);
       } catch (_) {
-        // Ошибка очистки кэша не должна ломать экран.
       }
 
       if (!mounted) {
