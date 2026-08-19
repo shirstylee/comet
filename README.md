@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/readme-comet.png" alt="Comet Logo" width="150">
+  <img src="assets/readme-comet.png" alt="Comet Logo" width="100%">
 </p>
 
 <h1 align="center">☄️ Comet</h1>
@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
   <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
-  <img src="https://img.shields.io/badge/Status-In%20Development-75EEFD?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Status-Completed-2EA44F?style=for-the-badge" alt="Status: Completed">
 </p>
 
 ---
