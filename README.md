@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Comet Logo" width="150">
+  <img src="assets/readme-comet.png" alt="Comet Logo" width="150">
 </p>
 
 <h1 align="center">☄️ Comet</h1>
