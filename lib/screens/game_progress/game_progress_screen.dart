@@ -1822,8 +1822,6 @@ class _ReviewScreen extends StatefulWidget {
 
 class _ReviewScreenState extends State<_ReviewScreen> {
   static const Color background = Color(0xFF0C0F0F);
-  static const Color surface = Color(0xFF111414);
-  static const Color surfaceLight = Color(0xFF232626);
   static const Color accent = Color(0xFF75EEFD);
   static const Color textPrimary = Color(0xFFF4F3F3);
   static const Color textSecondary = Color(0xFFAAABAB);

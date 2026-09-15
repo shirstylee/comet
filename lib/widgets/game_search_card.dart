@@ -69,11 +69,9 @@ class _GameSearchCardState extends State<GameSearchCard>
     return '${game.hours}ч.';
   }
 
-  static const Color cardColor = Color(0xFF111414);
   static const Color green = Color(0xFFBBFFB3);
   static const Color accent = Color(0xFF75EEFD);
   static const Color textPrimary = Color(0xFFF4F3F3);
-  static const Color textSecondary = Color(0xFFAAABAB);
 
   Future<void> _openDetails(BuildContext context) async {
     FocusManager.instance.primaryFocus?.unfocus();

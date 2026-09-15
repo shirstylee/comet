@@ -48,7 +48,6 @@ class RatingsScreen extends StatefulWidget {
 
 class _RatingsScreenState extends State<RatingsScreen> {
   static const Color background = Color(0xFF0C0F0F);
-  static const Color surface = Color(0xFF111414);
   static const Color accent = Color(0xFF75EEFD);
   static const Color textPrimary = Color(0xFFF4F3F3);
   static const Color textSecondary = Color(0xFFAAABAB);

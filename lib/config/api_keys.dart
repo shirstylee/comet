@@ -1,3 +1,4 @@
+/// Build-time configuration. Keep real keys in an ignored local JSON file.
 class ApiKeys {
-  static const String rawgApiKey = '82ca577e983040a086629a06df819ed8';
+  static const String rawgApiKey = String.fromEnvironment('RAWG_API_KEY');
 }

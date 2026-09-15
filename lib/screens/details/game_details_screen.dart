@@ -703,30 +703,21 @@ class _PrimaryButton extends StatelessWidget {
     required this.text,
     required this.icon,
     required this.onTap,
-    this.isDisabled = false,
     this.isLibraryAction = false,
   });
 
   final String text;
   final IconData icon;
   final VoidCallback? onTap;
-  final bool isDisabled;
   final bool isLibraryAction;
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor = isDisabled
-        ? const Color(0xFFAAABAB)
-        : isLibraryAction
+    final Color textColor = isLibraryAction
         ? const Color(0xFF75EEFD)
         : const Color(0xFF00575F);
 
-    final List<Color> gradientColors = isDisabled
-        ? const [
-      Color(0xFF2B2F2F),
-      Color(0xFF1D2020),
-    ]
-        : isLibraryAction
+    final List<Color> gradientColors = isLibraryAction
         ? const [
       Color(0xFF1D3033),
       Color(0xFF132224),
@@ -736,15 +727,11 @@ class _PrimaryButton extends StatelessWidget {
       Color(0xFF25B0BE),
     ];
 
-    final Color borderColor = isDisabled
-        ? Colors.white.withOpacity(0.06)
-        : isLibraryAction
+    final Color borderColor = isLibraryAction
         ? const Color(0x6632B8C6)
         : Colors.transparent;
 
-    final Color shadowColor = isDisabled
-        ? Colors.black.withOpacity(0.16)
-        : isLibraryAction
+    final Color shadowColor = isLibraryAction
         ? Colors.black.withOpacity(0.22)
         : const Color(0xFF75EEFD).withOpacity(0.2);
 
@@ -2633,18 +2620,5 @@ class _DetailBadge extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _SmallBadge extends StatelessWidget {
-  const _SmallBadge({
-    required this.text,
-  });
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return _DetailBadge(text: text);
   }
 }

@@ -100,12 +100,14 @@ class _SearchScreenState extends State<SearchScreen> {
           results = foundGames;
           isLoading = false;
         });
-      } catch (_) {
+      } catch (error) {
         if (!mounted || currentRequestId != searchRequestId) return;
 
         setState(() {
           isLoading = false;
-          errorMessage = 'Не удалось загрузить игры. Проверьте интернет.';
+          errorMessage = error is RawgConfigurationException
+              ? error.toString()
+              : 'Не удалось загрузить игры. Проверьте интернет.';
         });
       }
     });

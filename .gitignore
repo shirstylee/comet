@@ -27,11 +27,34 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+**/.kotlin/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# Local API configuration and environment files
+.env
+.env.*
+*.env
+!.env.example
+/config/*.json
+!/config/*.example.json
+*.local.json
+
+# Signing material, packaged builds, and local user data
+*.jks
+*.jks.old
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.apk
+*.aab
+*.hive
+*.hive.lock
 
 # Symbolication related
 app.*.symbols

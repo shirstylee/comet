@@ -918,11 +918,10 @@ class _FileSmallPill extends StatelessWidget {
   const _FileSmallPill({
     required this.icon,
     required this.text,
-    this.color = _ImportDataScreenState.accent,
   });
   final IconData icon;
   final String text;
-  final Color color;
+  static const Color color = _ImportDataScreenState.accent;
 
   @override
   Widget build(BuildContext context) {

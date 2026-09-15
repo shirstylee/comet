@@ -5,8 +5,19 @@ import 'package:http/http.dart' as http;
 import '../config/api_keys.dart';
 import '../models/game_model.dart';
 
+class RawgConfigurationException implements Exception {
+  const RawgConfigurationException();
+
+  @override
+  String toString() =>
+      'Поиск недоступен: ключ RAWG API не настроен в этой сборке.';
+}
+
 class RawgApiService {
-  RawgApiService();
+  RawgApiService({String apiKey = ApiKeys.rawgApiKey})
+      : _apiKey = apiKey.trim();
+
+  final String _apiKey;
 
   static const String _baseUrl = 'api.rawg.io';
   static const Duration _requestTimeout = Duration(seconds: 10);
@@ -18,11 +29,13 @@ class RawgApiService {
       return [];
     }
 
+    _requireApiKey();
+
     final uri = Uri.https(
       _baseUrl,
       '/api/games',
       {
-        'key': ApiKeys.rawgApiKey,
+        'key': _apiKey,
         'search': trimmedQuery,
         'page_size': '20',
         'search_precise': 'false',
@@ -55,11 +68,13 @@ class RawgApiService {
   }
 
   Future<GameModel> getGameDetails(GameModel game) async {
+    _requireApiKey();
+
     final detailsUri = Uri.https(
       _baseUrl,
       '/api/games/${game.id}',
       {
-        'key': ApiKeys.rawgApiKey,
+        'key': _apiKey,
       },
     );
 
@@ -67,7 +82,7 @@ class RawgApiService {
       _baseUrl,
       '/api/games/${game.id}/movies',
       {
-        'key': ApiKeys.rawgApiKey,
+        'key': _apiKey,
       },
     );
 
@@ -75,7 +90,7 @@ class RawgApiService {
       _baseUrl,
       '/api/games/${game.id}/screenshots',
       {
-        'key': ApiKeys.rawgApiKey,
+        'key': _apiKey,
       },
     );
 
@@ -83,7 +98,7 @@ class RawgApiService {
       _baseUrl,
       '/api/games/${game.id}/game-series',
       {
-        'key': ApiKeys.rawgApiKey,
+        'key': _apiKey,
       },
     );
 
@@ -149,6 +164,12 @@ class RawgApiService {
       screenshots: screenshots,
       franchise: franchise,
     );
+  }
+
+  void _requireApiKey() {
+    if (_apiKey.isEmpty) {
+      throw const RawgConfigurationException();
+    }
   }
 
   Future<http.Response> _get(Uri uri) {
